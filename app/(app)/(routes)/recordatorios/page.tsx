@@ -1,0 +1,182 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { Bell, Clock, Plus, Trash2, CheckCircle2 } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+
+interface Reminder {
+  id: string
+  title: string
+  time: string
+  days: string[]
+  enabled: boolean
+}
+
+export default function RecordatoriosPage() {
+  const [loading, setLoading] = useState(true)
+  const [reminders, setReminders] = useState<Reminder[]>([])
+  const [showForm, setShowForm] = useState(false)
+  const [newReminder, setNewReminder] = useState({ title: "", time: "09:00", days: ["1", "2", "3", "4", "5"] })
+
+  const daysMap: Record<string, string> = {
+    "0": "Dom", "1": "Lun", "2": "Mar", "3": "Mié", "4": "Jue", "5": "Vie", "6": "Sáb"
+  }
+
+  useEffect(() => {
+    const load = async () => {
+      const res = await fetch("/api/reminders")
+      if (res.ok) {
+        const data = await res.json()
+        setReminders(data.reminders || [])
+      }
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const toggleDay = (day: string) => {
+    setNewReminder(prev => ({
+      ...prev,
+      days: prev.days.includes(day) 
+        ? prev.days.filter(d => d !== day)
+        : [...prev.days, day].sort()
+    }))
+  }
+
+  const saveReminder = async () => {
+    if (!newReminder.title) return
+    
+    const res = await fetch("/api/reminders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newReminder),
+    })
+    
+    if (res.ok) {
+      const data = await res.json()
+      setReminders([...reminders, data.reminder])
+      setShowForm(false)
+      setNewReminder({ title: "", time: "09:00", days: ["1", "2", "3", "4", "5"] })
+    }
+  }
+
+  const toggleReminder = async (id: string, enabled: boolean) => {
+    await fetch(`/api/reminders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: !enabled }),
+    })
+    setReminders(reminders.map(r => r.id === id ? { ...r, enabled: !enabled } : r))
+  }
+
+  const deleteReminder = async (id: string) => {
+    await fetch(`/api/reminders/${id}`, { method: "DELETE" })
+    setReminders(reminders.filter(r => r.id !== id))
+  }
+
+  if (loading) return <div className="p-4 text-center">Cargando...</div>
+
+  return (
+    <div className="p-4 max-w-4xl mx-auto space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Recordatorios</h1>
+        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+          <Plus className="h-4 w-4 mr-1" />
+          Nuevo
+        </Button>
+      </div>
+
+      {showForm && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Nuevo recordatorio</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Nombre</Label>
+              <Input 
+                value={newReminder.title} 
+                onChange={(e) => setNewReminder(p => ({ ...p, title: e.target.value }))}
+                placeholder="Ej: Tomar agua"
+              />
+            </div>
+            <div>
+              <Label>Hora</Label>
+              <Input 
+                type="time" 
+                value={newReminder.time}
+                onChange={(e) => setNewReminder(p => ({ ...p, time: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label>Días</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {Object.entries(daysMap).map(([num, name]) => (
+                  <button
+                    key={num}
+                    onClick={() => toggleDay(num)}
+                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                      newReminder.days.includes(num)
+                        ? "bg-emerald-500 text-white"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={saveReminder}>Guardar</Button>
+              <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {reminders.length === 0 && !showForm ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">No tienes recordatorios</p>
+            <Button className="mt-4" onClick={() => setShowForm(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Crear recordatorio
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {reminders.map((reminder) => (
+            <Card key={reminder.id} className={reminder.enabled ? "" : "opacity-60"}>
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => toggleReminder(reminder.id, reminder.enabled)}>
+                    {reminder.enabled ? (
+                      <CheckCircle2 className="h-6 w-6 text-green-500" />
+                    ) : (
+                      <Clock className="h-6 w-6 text-muted-foreground" />
+                    )}
+                  </button>
+                  <div>
+                    <p className="font-medium">{reminder.title}</p>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {reminder.time} • {reminder.days.map(d => daysMap[d]).join(", ")}
+                    </p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => deleteReminder(reminder.id)}>
+                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
