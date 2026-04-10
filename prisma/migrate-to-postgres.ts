@@ -1,9 +1,6 @@
-import { PrismaClient as SqlitePrisma } from "@prisma/client"
-import { PrismaClient as PgPrisma } from "@prisma-client-pg"
-import { hash, compare } from "bcryptjs"
-
-const sqlite = new SqlitePrisma()
-const pg = new PgPrisma()
+import { Pool } from "pg"
+import Database from "better-sqlite3"
+import path from "path"
 
 const MODELS = [
   "User",
@@ -24,38 +21,48 @@ const MODELS = [
   "RateLimitBucket",
 ] as const
 
-async function migrateModel(model: (typeof MODELS)[number]) {
-  const records = await (sqlite as any)[model.charAt(0).toLowerCase() + model.slice(1)].findMany()
-  if (records.length === 0) {
+function sqliteModelName(model: (typeof MODELS)[number]) {
+  return model.charAt(0).toLowerCase() + model.slice(1)
+}
+
+async function migrateModel(sqlite: Database.Database, pg: Pool, model: (typeof MODELS)[number]) {
+  const table = sqliteModelName(model)
+  const rows: any[] = sqlite.prepare(`SELECT * FROM "${table}"`).all()
+  if (rows.length === 0) {
     console.log(`  ${model}: 0 registros, omitido`)
     return
   }
 
-  const results = await Promise.allSettled(
-    records.map((record: any) =>
-      (pg as any)[model.charAt(0).toLowerCase() + model.slice(1)].upsert({
-        where: { id: record.id },
-        update: record,
-        create: record,
-      }),
-    ),
-  )
+  const columns = Object.keys(rows[0])
+  const setClause = columns.filter((c) => c !== "id").map((c) => `"${c}" = EXCLUDED."${c}"`).join(", ")
+  const insertCols = columns.map((c) => `"${c}"`).join(", ")
+  const placeholders = columns.map((_, i) => `$${i + 1}`).join(", ")
 
-  const succeeded = results.filter((r) => r.status === "fulfilled").length
-  const failed = results.filter((r) => r.status === "rejected").length
-  console.log(`  ${model}: ${succeeded} migrados${failed > 0 ? `, ${failed} errores` : ""}`)
-  if (failed > 0) {
-    const errors = results
-      .filter((r): r is PromiseRejectedResult => r.status === "rejected")
-      .slice(0, 3)
-      .map((r) => r.reason?.message || String(r.reason))
-    console.log(`    Primeros errores: ${errors.join("; ")}`)
+  let succeeded = 0
+  let failed = 0
+  for (const row of rows) {
+    try {
+      const values = columns.map((c) => {
+        const v = (row as any)[c]
+        if (typeof v === "bigint") return Number(v)
+        return v
+      })
+      await pg.query(
+        `INSERT INTO "${table}" (${insertCols}) VALUES (${placeholders}) ON CONFLICT ("id") DO UPDATE SET ${setClause}`,
+        values,
+      )
+      succeeded++
+    } catch (err) {
+      failed++
+    }
   }
+
+  console.log(`  ${model}: ${succeeded} migrados${failed > 0 ? `, ${failed} errores` : ""}`)
 }
 
 async function main() {
-  const sqliteUrl = process.env.SQLITE_URL || "file:./prisma/dev.db"
   const pgUrl = process.env.DATABASE_URL
+  const sqlitePath = process.env.SQLITE_PATH || path.join(__dirname, "dev.db")
 
   if (!pgUrl) {
     console.error("ERROR: DATABASE_URL (PostgreSQL) no está definido.")
@@ -65,7 +72,7 @@ async function main() {
 
   console.log("=== SapoFit: Migración SQLite → PostgreSQL ===")
   console.log("")
-  console.log("ATENCIÓN: haz un backup de la base de datos antes de continuar.")
+  console.log("ATENCIÓN: haz un backup antes de continuar.")
   console.log("")
 
   const confirm = process.argv.includes("--confirm")
@@ -77,13 +84,16 @@ async function main() {
     process.exit(0)
   }
 
-  console.log(`Origen  (SQLite):  ${sqliteUrl}`)
+  console.log(`Origen  (SQLite):  ${sqlitePath}`)
   console.log(`Destino (PG):     ${pgUrl}`)
   console.log("")
 
-  console.log("Creando esquema en PostgreSQL...")
+  const sqlite = new Database(sqlitePath)
+  console.log("  Conexión a SQLite: OK")
+
+  const pg = new Pool({ connectionString: pgUrl })
   try {
-    await pg.$connect()
+    await pg.query("SELECT 1")
     console.log("  Conexión a PostgreSQL: OK")
   } catch (err) {
     console.error("ERROR: No se pudo conectar a PostgreSQL:", err)
@@ -93,14 +103,14 @@ async function main() {
   console.log("")
   console.log("Migrando modelos...")
   for (const model of MODELS) {
-    await migrateModel(model)
+    await migrateModel(sqlite, pg, model)
   }
 
   console.log("")
   console.log("Migración completada.")
 
-  await sqlite.$disconnect()
-  await pg.$disconnect()
+  sqlite.close()
+  await pg.end()
 }
 
 main().catch((err) => {
