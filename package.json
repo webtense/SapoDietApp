@@ -10,7 +10,12 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "prisma db seed"
+    "db:migrate:pg": "prisma --schema=prisma/schema.postgresql.prisma migrate dev",
+    "db:migrate:pg:deploy": "prisma --schema=prisma/schema.postgresql.prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:pg:migrate:data": "npx tsx prisma/migrate-to-postgres.ts",
+    "db:docker:up": "docker compose up -d postgres && sleep 3",
+    "db:docker:down": "docker compose down"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

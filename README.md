@@ -1,23 +1,28 @@
 # SapoFit
 
-Aplicacion de nutricion y entrenamiento con persistencia local en SQLite, autenticacion segura y seguimiento diario.
+Planificador de nutrición y entrenamiento con autenticación segura, seguimiento diario y panel de administración.
 
-## Caracteristicas
+## Características
 
-- Registro e inicio de sesion con cookie HttpOnly.
-- Onboarding guiado en 5 pasos con validaciones.
-- Generacion de plan nutricional y plan de ejercicios.
+- Registro e inicio de sesión con cookie HttpOnly y sesiones persistidas en DB.
+- Onboarding guiado en 5 pasos con validaciones Zod.
+- Generación de plan nutricional y plan de ejercicios.
 - Lista de compra semanal persistida.
 - Seguimiento de comidas, ejercicios y check-in diario.
+- Rate limiting persistente (Prisma).
+- Migración lista a PostgreSQL para producción.
 
 ## Stack
 
-- Next.js 15 + React 19
-- Prisma + SQLite
+- Next.js 15 + React 19 + TypeScript
+- Prisma ORM (SQLite local / PostgreSQL producción)
 - Tailwind + componentes UI
 - Zod para validaciones de API
+- bcryptjs + sesiones con cookie HttpOnly
 
-## Puesta en marcha local
+## Desarrollo local
+
+### SQLite (predeterminado)
 
 ```bash
 cp .env.example .env
@@ -28,22 +33,36 @@ npm run db:seed
 npm run dev
 ```
 
-## Despliegue en produccion
+### PostgreSQL (docker-compose)
+
+```bash
+docker compose up -d postgres
+# Editar .env y descomentar DATABASE_URL con la URL de postgres
+npm run db:generate -- --schema=prisma/schema.postgresql.prisma
+npm run db:migrate:pg
+npm run dev
+```
+
+## Tests
+
+```bash
+npm test
+```
+
+## Despliegue en producción
 
 ### Requisitos previos
 - Docker y Docker Swarm configurados
 - Traefik como reverse proxy
 
 ### Variables de entorno recomendadas
-- `DATABASE_URL=file:./dev.db`
+- `DATABASE_URL` — PostgreSQL en producción (`postgresql://...`); SQLite (`file:./dev.db`) en desarrollo local
 - `SESSION_COOKIE_NAME=sapofit_session`
 - `SESSION_DAYS=7`
 - `CRON_SECRET` (obligatoria para ejecutar `/api/cron/reminders`)
-- `ADMIN_EMAIL` (por defecto `webtense@gmail.com`)
-- `ADMIN_NAME` (por defecto `Andres`)
-- `ADMIN_PASSWORD` (opcional, usado al seed para fijar contraseña del administrador)
-- `APP_URL` (URL pública usada en los enlaces de invitación)
-- `INVITATION_TTL_DAYS` (días de validez de la invitación, por defecto `7`)
+- `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` — seed del administrador
+- `APP_URL` — URL pública usada en los enlaces de invitación
+- `INVITATION_TTL_DAYS=7`
 
 ### Despliegue manual
 

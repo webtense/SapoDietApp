@@ -1,0 +1,284 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/@prisma-client-pg"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String        @id @default(cuid())
+  email           String        @unique
+  passwordHash    String?
+  name            String?
+  displayName     String?
+  role            String        @default("USER")
+  status          String        @default("INVITED")
+  timezone        String?
+  lastLoginAt     DateTime?
+  invitedById     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  invitedBy       User?         @relation("UserInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  invitedUsers    User[]        @relation("UserInvitedBy")
+  sessions        Session[]
+  profile         Profile?
+  goal            Goal?
+  mealPlans       MealPlan[]
+  exerciseLogs    ExerciseLog[]
+  mealLogs        MealLog[]
+  shopping        ShoppingList[]
+  dailyLogs       DailyLog[]
+  invitationsCreated  Invitation[] @relation("InvitationCreatedBy")
+  invitationsReceived Invitation[] @relation("InvitationAcceptedUser")
+  loginEvents         LoginEvent[]
+  modules             UserModule[]
+  pricing             UserPricing?
+  reminders           Reminder[]
+
+  @@index([status])
+  @@index([role])
+  @@index([invitedById])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Invitation {
+  id               String    @id @default(cuid())
+  email            String
+  name             String?
+  tokenHash        String    @unique
+  status           String    @default("PENDING")
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  invitedByUserId  String
+  invitedUserId    String?
+  priceLabel       String?
+  monthlyPrice     Float?
+
+  invitedByUser    User             @relation("InvitationCreatedBy", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  invitedUser      User?            @relation("InvitationAcceptedUser", fields: [invitedUserId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([invitedByUserId])
+  @@index([invitedUserId])
+}
+
+model LoginEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model UserModule {
+  id         String   @id @default(cuid())
+  userId     String
+  moduleKey  String
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleKey])
+  @@index([userId])
+}
+
+model UserPricing {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  label        String
+  monthlyPrice Float?
+  currency     String   @default("EUR")
+  notes        String?
+  activeFrom   DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Profile {
+  id                     String   @id @default(cuid())
+  userId                  String   @unique
+  age                     Int?
+  heightCm                Float?
+  weightKg                Float?
+  bodyType                String?
+  sex                     String?
+  wakeUpTime              String?
+  sleepTime               String?
+  lunchTime               String?
+  dietType                String?
+  forbiddenFoods          String?
+  supermarket             String?
+  trainingFrequency        String?
+  trainingPlaces          String?
+  homeEquipment           String?
+  onboardingCompleted      Boolean  @default(false)
+  lastCalculatedCalories  Float?
+  lastCalculatedProtein   Float?
+  lastCalculatedCarbs     Float?
+  lastCalculatedFat       Float?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Goal {
+  id              String    @id @default(cuid())
+  userId           String    @unique
+  targetWeightKg   Float?
+  targetWeeks      Int?
+  targetDate       DateTime?
+  viabilityStatus  String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MealPlan {
+  id            String   @id @default(cuid())
+  userId        String
+  planJson      String
+  caloriesTarget Float
+  proteinTarget  Float
+  carbsTarget    Float
+  fatTarget      Float
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model MealLog {
+  id             String   @id @default(cuid())
+  userId         String
+  date           DateTime
+  mealType       String
+  completed      Boolean  @default(false)
+  consumedAt     DateTime?
+  imagePath      String?
+  caloriesActual Float?
+  notes          String?
+  followsPlan    Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@unique([userId, date, mealType])
+}
+
+model ExerciseLog {
+  id         String   @id @default(cuid())
+  userId     String
+  date       DateTime
+  exerciseId String
+  completed  Boolean  @default(false)
+  durationSec Int     @default(0)
+  setsJson   String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@unique([userId, date, exerciseId])
+}
+
+model ShoppingList {
+  id             String         @id @default(cuid())
+  userId         String
+  supermarket    String
+  totalEstimated Float
+  createdAt      DateTime       @default(now())
+  items          ShoppingItem[]
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model ShoppingItem {
+  id              String       @id @default(cuid())
+  shoppingListId  String
+  name            String
+  amount          Float
+  unit            String
+  category        String
+  aisle           String
+  purchased       Boolean      @default(false)
+  estimatedPrice  Float?
+  shoppingList    ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+
+  @@index([shoppingListId])
+}
+
+model DailyLog {
+  id                 String   @id @default(cuid())
+  userId              String
+  date                DateTime
+  caloriesConsumed    Float?
+  caloriesTarget      Float?
+  waterLiters         Float?
+  waterTarget         Float?
+  weightKg            Float?
+  energy              Int?
+  mood                Int?
+  mealsCompleted      Int      @default(0)
+  totalMeals          Int      @default(0)
+  exercisesCompleted  Int      @default(0)
+  totalExercises      Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model Reminder {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  time      String
+  days      String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model RateLimitBucket {
+  key       String   @id
+  count     Int
+  resetAt   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+}
