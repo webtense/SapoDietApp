@@ -22,24 +22,23 @@ Planificador de nutrición y entrenamiento con autenticación segura, seguimient
 
 ## Desarrollo local
 
-### SQLite (predeterminado)
+### PostgreSQL (recomendado)
 
 ```bash
 cp .env.example .env
 npm install
+docker compose up -d postgres
 npm run db:generate
 npm run db:migrate -- --name init
 npm run db:seed
 npm run dev
 ```
 
-### PostgreSQL (docker-compose)
+### SQLite (solo legado)
 
 ```bash
-docker compose up -d postgres
-# Editar .env y descomentar DATABASE_URL con la URL de postgres
-npm run db:generate -- --schema=prisma/schema.postgresql.prisma
-npm run db:migrate:pg
+# Mantener prisma/schema.prisma solo para leer instalaciones antiguas.
+# No se usa para producción ni para nuevas migraciones.
 npm run dev
 ```
 
@@ -70,17 +69,26 @@ npm test
 # 1. Construir imagen
 docker build -t sapofit:latest .
 
-# 2. Crear volumen para datos persistentes
-docker volume create sapofit_prisma
+# 2. Crear volumen para PostgreSQL si no existe
+docker volume create sapofit_postgres_data
 
-# 3. Desplegar servicio
+# 3. Desplegar PostgreSQL
+docker service create --name sapofit_postgres \
+  --network easypanel \
+  --env POSTGRES_DB='sapofit' \
+  --env POSTGRES_USER='sapofit' \
+  --env POSTGRES_PASSWORD='REEMPLAZAR' \
+  --mount type=volume,source=sapofit_postgres_data,target=/var/lib/postgresql/data \
+  postgres:16-alpine
+
+# 4. Desplegar servicio web
 docker service create --name sapofit \
   --network easypanel \
   --replicas 1 \
-  --env DATABASE_URL='file:./dev.db' \
+  --env DATABASE_URL='postgresql://sapofit:REEMPLAZAR@sapofit_postgres:5432/sapofit' \
+  --env PRISMA_SCHEMA='prisma/schema.prisma' \
   --env SESSION_COOKIE_NAME='sapofit_session' \
   --env SESSION_DAYS='7' \
-  --mount type=volume,source=sapofit_prisma,target=/app/prisma \
   --label traefik.enable=true \
   --label 'traefik.http.routers.sapofit-http.rule=Host(`sapofit.semillasdeti.com`)' \
   --label 'traefik.http.routers.sapofit-http.entrypoints=http' \
@@ -101,6 +109,12 @@ docker service create --name sapofit \
 rsync -az --exclude 'node_modules' --exclude '.next' --exclude '.env' ./ root@TU_SERVITOR:/opt/sapofit/
 ssh root@TU_SERVITOR "docker build -t sapofit:latest /opt/sapofit && docker service update --force sapofit"
 ```
+
+### Staging y producción
+
+- `develop` despliega a staging cuando el workflow `ci` termina en verde y existe `EASYPANEL_STAGING_WEBHOOK`.
+- `main` despliega a producción cuando el workflow `ci` termina en verde y existe `EASYPANEL_PROD_WEBHOOK`.
+- Mantén las variables reales solo en `.env` local, GitHub Secrets y Easypanel.
 
 ### Backup
 

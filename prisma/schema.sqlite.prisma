@@ -3,8 +3,37 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum ModuleKey {
+  NUTRITION
+  TRAINING
+  SHOPPING
+  REMINDERS
+  MEASUREMENTS
+  CALENDAR
+  REPORTS
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
 }
 
 model User {
@@ -13,8 +42,8 @@ model User {
   passwordHash    String?
   name            String?
   displayName     String?
-  role            String        @default("USER")
-  status          String        @default("INVITED")
+  role            UserRole      @default(USER)
+  status          UserStatus    @default(INVITED)
   timezone        String?
   lastLoginAt     DateTime?
   invitedById     String?
@@ -55,15 +84,15 @@ model Session {
 }
 
 model Invitation {
-  id               String    @id @default(cuid())
+  id               String           @id @default(cuid())
   email            String
   name             String?
-  tokenHash        String    @unique
-  status           String    @default("PENDING")
+  tokenHash        String           @unique
+  status           InvitationStatus @default(PENDING)
   expiresAt        DateTime
   acceptedAt       DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
   invitedByUserId  String
   invitedUserId    String?
   priceLabel       String?
@@ -81,25 +110,25 @@ model Invitation {
 
 model LoginEvent {
   id        String   @id @default(cuid())
-  userId    String
-  ip        String?
-  userAgent String?
-  createdAt DateTime @default(now())
+  userId     String
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }
 
 model UserModule {
-  id         String   @id @default(cuid())
-  userId     String
-  moduleKey  String
-  enabled    Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id         String     @id @default(cuid())
+  userId      String
+  moduleKey   ModuleKey
+  enabled     Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, moduleKey])
   @@index([userId])
@@ -107,16 +136,16 @@ model UserModule {
 
 model UserPricing {
   id           String   @id @default(cuid())
-  userId       String   @unique
-  label        String
-  monthlyPrice Float?
-  currency     String   @default("EUR")
-  notes        String?
-  activeFrom   DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  userId        String   @unique
+  label         String
+  monthlyPrice  Float?
+  currency      String   @default("EUR")
+  notes         String?
+  activeFrom    DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Profile {
@@ -133,10 +162,10 @@ model Profile {
   dietType                String?
   forbiddenFoods          String?
   supermarket             String?
-  trainingFrequency        String?
+  trainingFrequency       String?
   trainingPlaces          String?
   homeEquipment           String?
-  onboardingCompleted      Boolean  @default(false)
+  onboardingCompleted     Boolean  @default(false)
   lastCalculatedCalories  Float?
   lastCalculatedProtein   Float?
   lastCalculatedCarbs     Float?
@@ -147,62 +176,62 @@ model Profile {
 }
 
 model Goal {
-  id              String    @id @default(cuid())
-  userId           String    @unique
-  targetWeightKg   Float?
-  targetWeeks      Int?
-  targetDate       DateTime?
-  viabilityStatus  String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  userId          String   @unique
+  targetWeightKg  Float?
+  targetWeeks     Int?
+  targetDate      DateTime?
+  viabilityStatus String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model MealPlan {
   id            String   @id @default(cuid())
-  userId        String
-  planJson      String
+  userId         String
+  planJson       String
   caloriesTarget Float
   proteinTarget  Float
   carbsTarget    Float
   fatTarget      Float
-  createdAt     DateTime @default(now())
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }
 
 model MealLog {
   id             String   @id @default(cuid())
-  userId         String
-  date           DateTime
-  mealType       String
-  completed      Boolean  @default(false)
-  consumedAt     DateTime?
-  imagePath      String?
-  caloriesActual Float?
-  notes          String?
-  followsPlan    Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  date            DateTime
+  mealType        String
+  completed       Boolean  @default(false)
+  consumedAt      DateTime?
+  imagePath       String?
+  caloriesActual  Float?
+  notes           String?
+  followsPlan     Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
   @@unique([userId, date, mealType])
 }
 
 model ExerciseLog {
-  id         String   @id @default(cuid())
-  userId     String
-  date       DateTime
-  exerciseId String
-  completed  Boolean  @default(false)
-  durationSec Int     @default(0)
-  setsJson   String?
-  notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  userId         String
+  date           DateTime
+  exerciseId     String
+  completed      Boolean  @default(false)
+  durationSec    Int      @default(0)
+  setsJson       String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
   @@unique([userId, date, exerciseId])
@@ -210,18 +239,18 @@ model ExerciseLog {
 
 model ShoppingList {
   id             String         @id @default(cuid())
-  userId         String
-  supermarket    String
-  totalEstimated Float
-  createdAt      DateTime       @default(now())
-  items          ShoppingItem[]
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  supermarket     String
+  totalEstimated  Float
+  createdAt       DateTime       @default(now())
+  items           ShoppingItem[]
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }
 
 model ShoppingItem {
-  id              String       @id @default(cuid())
+  id             String       @id @default(cuid())
   shoppingListId  String
   name            String
   amount          Float
@@ -236,23 +265,23 @@ model ShoppingItem {
 }
 
 model DailyLog {
-  id                 String   @id @default(cuid())
-  userId              String
-  date                DateTime
-  caloriesConsumed    Float?
-  caloriesTarget      Float?
-  waterLiters         Float?
-  waterTarget         Float?
-  weightKg            Float?
-  energy              Int?
-  mood                Int?
-  mealsCompleted      Int      @default(0)
-  totalMeals          Int      @default(0)
-  exercisesCompleted  Int      @default(0)
-  totalExercises      Int      @default(0)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(cuid())
+  userId               String
+  date                 DateTime
+  caloriesConsumed     Float?
+  caloriesTarget       Float?
+  waterLiters          Float?
+  waterTarget          Float?
+  weightKg             Float?
+  energy               Int?
+  mood                 Int?
+  mealsCompleted       Int      @default(0)
+  totalMeals           Int      @default(0)
+  exercisesCompleted   Int      @default(0)
+  totalExercises       Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
   @@index([userId, date])

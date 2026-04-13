@@ -1,6 +1,4 @@
-import { ModuleKey } from "@prisma/client"
-
-export const DEFAULT_MODULE_KEYS: ModuleKey[] = [
+export const DEFAULT_MODULE_KEYS = [
   "NUTRITION",
   "TRAINING",
   "SHOPPING",
@@ -8,4 +6,6 @@ export const DEFAULT_MODULE_KEYS: ModuleKey[] = [
   "MEASUREMENTS",
   "CALENDAR",
   "REPORTS",
-]
+] as const
+
+export type ModuleKey = (typeof DEFAULT_MODULE_KEYS)[number]

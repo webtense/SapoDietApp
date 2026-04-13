@@ -5,18 +5,7 @@ import { Clock, Utensils, Flame, Droplets, RefreshCw, CheckCircle2 } from "lucid
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-
-interface NutritionalNeeds {
-  calories: number
-  protein: number
-  carbs: number
-  fat: number
-  water: number
-}
-
-interface MealPlan {
-  [key: string]: { main: string; side: string; dessert?: string; calories: number }[]
-}
+import { normalizeMacros, normalizeMealPlan } from "@/lib/plan-normalizers"
 
 interface Adaptations {
   adaptations?: string[]
@@ -24,24 +13,36 @@ interface Adaptations {
 
 export default function NutricionPage() {
   const [loading, setLoading] = useState(true)
-  const [plan, setPlan] = useState<{ necesidades: NutritionalNeeds; planComidas: MealPlan } & Adaptations | null>(null)
+  const [plan, setPlan] = useState<{ necesidades: ReturnType<typeof normalizeMacros>; planComidas: ReturnType<typeof normalizeMealPlan> } & Adaptations | null>(null)
   const [adapting, setAdapting] = useState(false)
   const [adapted, setAdapted] = useState(false)
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch("/api/plan")
-      if (res.ok) {
-        const data = await res.json()
-        if (data.plan?.planJson) {
-          const parsed = JSON.parse(data.plan.planJson)
-          setPlan(parsed)
-          if (parsed.adaptations && parsed.adaptations.length > 0) {
-            setAdapted(true)
+      try {
+        const res = await fetch("/api/plan")
+        if (res.ok) {
+          const data = await res.json()
+          if (data.plan?.planJson) {
+            const parsed = JSON.parse(data.plan.planJson)
+
+            const normalizedPlan = {
+              necesidades: normalizeMacros(parsed.necesidades || parsed.macros),
+              planComidas: normalizeMealPlan(parsed.planComidas || parsed.mealPlan),
+              adaptations: parsed.adaptations || []
+            }
+
+            setPlan(normalizedPlan)
+            if (normalizedPlan.adaptations && normalizedPlan.adaptations.length > 0) {
+              setAdapted(true)
+            }
           }
         }
+      } catch (err) {
+        console.error("Error loading nutrition plan:", err)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     load()
   }, [])
@@ -57,7 +58,11 @@ export default function NutricionPage() {
       if (res.ok) {
         const data = await res.json()
         if (data.plan) {
-          setPlan(data.plan)
+          setPlan({
+            necesidades: normalizeMacros(data.plan.necesidades || data.plan.macros),
+            planComidas: normalizeMealPlan(data.plan.planComidas || data.plan.mealPlan),
+            adaptations: data.plan.adaptations || [],
+          })
           setAdapted(true)
         }
       }
@@ -128,33 +133,50 @@ export default function NutricionPage() {
         <Card className="bg-blue-50">
           <CardContent className="p-3 text-center">
             <Droplets className="h-5 w-5 mx-auto text-blue-500 mb-1" />
-            <p className="text-xl font-bold">{plan.necesidades.water}L</p>
+            <p className="text-xl font-bold">{plan.necesidades.water.toFixed(1)}L</p>
             <p className="text-xs text-muted-foreground">agua</p>
           </CardContent>
         </Card>
         <Card className="bg-red-50">
           <CardContent className="p-3 text-center">
-            <span className="text-xl font-bold text-red-600">{plan.necesidades.protein}g</span>
+            <span className="text-xl font-bold text-red-600">
+              {Math.round(plan.necesidades.protein || (plan.necesidades as any).proteinas || 0)}g
+            </span>
             <p className="text-xs text-muted-foreground">proteína</p>
           </CardContent>
         </Card>
         <Card className="bg-green-50">
           <CardContent className="p-3 text-center">
-            <span className="text-xl font-bold text-green-600">{plan.necesidades.carbs}g</span>
+            <span className="text-xl font-bold text-green-600">
+              {Math.round(plan.necesidades.carbs || (plan.necesidades as any).carbohidratos || 0)}g
+            </span>
             <p className="text-xs text-muted-foreground">carbs</p>
           </CardContent>
         </Card>
         <Card className="bg-yellow-50">
           <CardContent className="p-3 text-center">
-            <span className="text-xl font-bold text-yellow-600">{plan.necesidades.fat}g</span>
+            <span className="text-xl font-bold text-yellow-600">
+              {Math.round(plan.necesidades.fat || (plan.necesidades as any).grasas || 0)}g
+            </span>
             <p className="text-xs text-muted-foreground">grasa</p>
           </CardContent>
         </Card>
       </div>
 
       {mealTypes.map((tipo) => {
-        const meals = plan.planComidas[tipo]
-        if (!meals || meals.length === 0) return null
+        // Map display name to key used in backend
+        const keyMap: Record<string, string> = {
+          "Desayuno": "desayuno",
+          "Almuerzo": "almuerzo",
+          "Comida": "almuerzo", // If both exist, they might be synonyms in the UI
+          "Merienda": "merienda",
+          "Cena": "cena"
+        }
+        
+        const mealKey = keyMap[tipo] || tipo.toLowerCase()
+        const meal = plan.planComidas[mealKey]
+        
+        if (!meal) return null
 
         return (
           <Card key={tipo}>
@@ -163,20 +185,39 @@ export default function NutricionPage() {
                 <span className="flex items-center gap-2">
                   <Utensils className="h-4 w-4" /> {tipo}
                 </span>
-                <Badge variant="secondary">{meals.reduce((sum, m) => sum + m.calories, 0)} kcal</Badge>
+                <Badge variant="secondary">{meal.calorias} kcal</Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {meals.map((meal, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                  <div>
-                    <p className="font-medium text-sm">{meal.main}</p>
-                    {meal.side && <p className="text-xs text-muted-foreground">{meal.side}</p>}
-                    {meal.dessert && <p className="text-xs text-muted-foreground">Postre: {meal.dessert}</p>}
-                  </div>
-                  <Badge variant="outline">{meal.calories} kcal</Badge>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                <div>
+                  <p className="font-medium text-sm">{meal.nombre}</p>
                 </div>
-              ))}
+                <Badge variant="outline">{meal.calorias} kcal</Badge>
+              </div>
+              
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase">Ingredientes:</p>
+                <div className="flex flex-wrap gap-2">
+                  {meal.ingredientes.map((ing, i) => (
+                    <Badge key={i} variant="secondary" className="font-normal text-[10px]">
+                      {ing.nombre} ({ing.cantidad}{ing.unidad || ""})
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {meal.instrucciones && meal.instrucciones.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Instrucciones:</p>
+                  <ul className="text-xs space-y-1 list-disc list-inside text-muted-foreground">
+                    {meal.instrucciones.slice(0, 3).map((inst, i) => (
+                      <li key={i}>{inst}</li>
+                    ))}
+                    {meal.instrucciones.length > 3 && <li>...</li>}
+                  </ul>
+                </div>
+              )}
             </CardContent>
           </Card>
         )
@@ -189,16 +230,26 @@ export default function NutricionPage() {
         <CardContent>
           <div className="space-y-2">
             {mealTypes.map((tipo) => {
-              const meals = plan.planComidas[tipo] || []
-              const total = meals.reduce((sum, m) => sum + m.calories, 0)
-              const pct = plan.necesidades.calories > 0 ? Math.round((total / plan.necesidades.calories) * 100) : 0
+              const keyMap: Record<string, string> = {
+                "Desayuno": "desayuno",
+                "Almuerzo": "almuerzo",
+                "Comida": "almuerzo",
+                "Merienda": "merienda",
+                "Cena": "cena"
+              }
+              const mealKey = keyMap[tipo] || tipo.toLowerCase()
+              const meal = plan.planComidas[mealKey]
+              const calories = meal?.calorias || 0
+              const totalCalories = plan.necesidades.calories || 1
+              const pct = Math.min(100, Math.round((calories / totalCalories) * 100))
+              
               return (
                 <div key={tipo} className="flex items-center gap-2">
                   <span className="w-20 text-sm text-muted-foreground">{tipo}</span>
                   <div className="flex-1 bg-muted rounded-full h-2">
                     <div className="bg-emerald-500 h-2 rounded-full" style={{ width: `${pct}%` }} />
                   </div>
-                  <span className="text-xs w-12 text-right">{total} kcal</span>
+                  <span className="text-xs w-12 text-right">{calories} kcal</span>
                 </div>
               )
             })}

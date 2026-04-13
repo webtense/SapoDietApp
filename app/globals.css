@@ -121,7 +121,18 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    color-scheme: light;
+  }
+
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
 }

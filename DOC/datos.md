@@ -3,7 +3,8 @@
 ## Tecnologia
 
 - Prisma ORM.
-- SQLite local en `prisma/dev.db`.
+- PostgreSQL como base principal.
+- SQLite local solo para lectura y migración de instalaciones antiguas.
 
 ## Entidades principales
 
@@ -25,11 +26,12 @@
 
 ## Migraciones
 
-- Generar cliente: `pnpm db:generate`.
-- Crear/aplicar migracion: `pnpm db:migrate --name init`.
-- Seed: `pnpm db:seed`.
+- Generar cliente: `npm run db:generate`.
+- Crear/aplicar migracion: `npm run db:migrate -- --name init`.
+- Desplegar migraciones: `npm run db:deploy`.
+- Seed: `npm run db:seed`.
 
 ## Evolucion futura
 
-- Migrar a Postgres en servidor sin cambiar dominio de entidades.
+- Mantener una única historia de migraciones PostgreSQL en `prisma/migrations-postgresql`.
 - Separar snapshots de plan en tablas normalizadas si se requiere analitica avanzada.

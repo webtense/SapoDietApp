@@ -1,6 +1,6 @@
 # Despliegue
 
-## Local (SQLite — desarrollo)
+## Local (PostgreSQL — desarrollo recomendado)
 
 1. Copiar variables:
 
@@ -12,6 +12,7 @@ cp .env.example .env
 
 ```bash
 npm install
+docker compose up -d postgres
 ```
 
 3. Inicializar DB:
@@ -28,15 +29,11 @@ npm run db:seed
 npm run dev
 ```
 
-## Local con Docker Compose (PostgreSQL)
+## Local con SQLite (solo legado)
 
 ```bash
-docker compose up -d postgres
 cp .env.example .env
-# Editar .env y descomentar la línea DATABASE_URL con la URL de PostgreSQL
-# DATABASE_URL="postgresql://sapofit:sapofit_local@localhost:5432/sapofit"
-npm run db:generate -- --schema=prisma/schema.postgresql.prisma
-npm run db:migrate:pg
+# El schema SQLite se conserva solo para lectura y migración de datos antiguos.
 npm run dev
 ```
 
@@ -59,9 +56,19 @@ docker compose down
 - Configurar servicio Node con build `npm run build` y start `npm run start`.
 - Definir variables de entorno:
   - `DATABASE_URL` (PostgreSQL)
+  - `PRISMA_SCHEMA=prisma/schema.prisma`
   - `SESSION_COOKIE_NAME`, `SESSION_DAYS`
   - `CRON_SECRET`
   - `APP_URL`
+  - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
+
+## Staging y producción por CI/CD
+
+- `ci.yml` ejecuta `lint`, `test` y `build`.
+- `deploy.yml` solo dispara staging/prod cuando `ci` termina con éxito.
+- Secrets requeridos en GitHub:
+  - `EASYPANEL_STAGING_WEBHOOK`
+  - `EASYPANEL_PROD_WEBHOOK`
 
 ## Migración SQLite → PostgreSQL (produccion)
 

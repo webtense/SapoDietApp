@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { MainNav } from "@/components/main-nav"
+import { MainNav, MobileNav } from "@/components/main-nav"
 import { getSessionUser } from "@/lib/server/security"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -10,9 +10,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#daf8e8,_#f7fffb_35%,_#f4f7f6)]">
-      <MainNav />
-      <main className="pb-20 md:pb-8">{children}</main>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(80,200,120,0.18),_#f7fffb_35%,_#f1f6f3)]">
+      <div className="mx-auto flex min-h-screen max-w-7xl md:px-4 md:py-4">
+        <MainNav />
+        <div className="flex min-h-screen flex-1 flex-col">
+          <main className="flex-1 pb-24 md:pb-8">{children}</main>
+        </div>
+      </div>
+      <MobileNav />
     </div>
   )
 }

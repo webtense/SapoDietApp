@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity, Calendar, Home, ListTodo, MessageSquare, ShoppingCart, Utensils, User, BarChart3 } from "lucide-react"
+import { Activity, BarChart3, Calendar, Flame, Home, ListTodo, MessageSquare, ShoppingCart, Utensils, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -21,36 +21,61 @@ export function MainNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-5xl mx-auto px-2">
-        <div className="flex items-center justify-between h-12">
-          <Link href="/inicio" className="font-bold text-lg text-emerald-600 shrink-0">
-            SapoFit
+    <>
+      <nav className="sticky top-0 z-50 border-b border-white/50 bg-white/80 backdrop-blur-sm md:hidden">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+          <Link href="/inicio" className="flex items-center gap-2 font-semibold text-emerald-700">
+            <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-sm">
+              <Flame className="h-4 w-4" />
+            </span>
+            <span>SapoFit v3</span>
           </Link>
-          <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex flex-col items-center justify-center px-2 py-1 rounded-md text-xs transition-colors min-w-fit",
-                    isActive
-                      ? "text-emerald-600 bg-emerald-50"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
-                  )}
-                >
-                  <Icon className="h-4 w-4 mb-0.5" />
-                  <span className="hidden sm:inline">{item.label}</span>
-                </Link>
-              )
-            })}
-          </div>
+          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">Mobile first</span>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-white/60 bg-white/75 p-4 backdrop-blur md:flex md:flex-col">
+        <Link href="/inicio" className="rounded-3xl border border-emerald-100 bg-[linear-gradient(135deg,_rgba(80,200,120,0.16),_rgba(10,20,14,0.02))] p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-sm">
+              <Flame className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-lg font-semibold text-foreground">SapoFit v3</p>
+              <p className="text-sm text-muted-foreground">Nutrición, entreno y hábitos</p>
+            </div>
+          </div>
+        </Link>
+
+        <div className="mt-6 space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-emerald-500 text-white shadow-sm"
+                    : "text-muted-foreground hover:bg-emerald-50 hover:text-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </Link>
+            )
+          })}
+        </div>
+
+        <div className="mt-auto rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm">
+          <p className="text-sm font-medium text-foreground">Resumen v3</p>
+          <p className="mt-1 text-sm text-muted-foreground">Onboarding guiado, vistas más inmersivas y seguimiento diario más rápido.</p>
+        </div>
+      </aside>
+    </>
   )
 }
 
@@ -58,8 +83,8 @@ export function MobileNav() {
   const pathname = usePathname()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 border-t bg-white/95 backdrop-blur-sm z-50 md:hidden">
-      <div className="flex items-center justify-around h-14">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/60 bg-white/95 backdrop-blur-sm md:hidden">
+      <div className="safe-bottom flex h-16 items-center justify-around px-2">
         {navItems.slice(0, 5).map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
@@ -68,8 +93,8 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center p-2 rounded-md text-xs transition-colors",
-                isActive ? "text-emerald-600" : "text-muted-foreground",
+                "flex min-w-14 flex-col items-center justify-center rounded-2xl px-2 py-2 text-xs transition-colors",
+                isActive ? "bg-emerald-50 text-emerald-700" : "text-muted-foreground",
               )}
             >
               <Icon className="h-5 w-5" />

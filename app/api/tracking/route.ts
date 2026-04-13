@@ -4,6 +4,18 @@ import { apiError, requireUser } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
 import { dailyLogSchema, exerciseLogSchema, mealLogSchema } from "@/lib/validation"
 
+function normalizeDailyLog<T extends Record<string, any> | null>(item: T): T {
+  if (!item) return item
+  return {
+    ...item,
+    caloriesTarget: item.caloriesTarget == null ? null : Math.round(Number(item.caloriesTarget)),
+    caloriesConsumed: item.caloriesConsumed == null ? null : Math.round(Number(item.caloriesConsumed)),
+    waterTarget: item.waterTarget == null ? null : Number(Number(item.waterTarget).toFixed(1)),
+    waterLiters: item.waterLiters == null ? null : Number(Number(item.waterLiters).toFixed(1)),
+    weightKg: item.weightKg == null ? null : Number(Number(item.weightKg).toFixed(1)),
+  } as T
+}
+
 export async function GET(req: NextRequest) {
   const { user, error } = await requireUser()
   if (error) return error
@@ -43,7 +55,7 @@ export async function GET(req: NextRequest) {
       : null
 
     return NextResponse.json({
-      dailyLogs,
+      dailyLogs: dailyLogs.map((item) => normalizeDailyLog(item)),
       weeklyStats: {
         avgWeight: avgWeight || null,
         avgWater: avgWater || null,
@@ -75,7 +87,7 @@ export async function GET(req: NextRequest) {
         take: 100,
       }),
     ])
-    return NextResponse.json({ dailyLogs, mealLogs, exerciseLogs })
+     return NextResponse.json({ dailyLogs: dailyLogs.map((item) => normalizeDailyLog(item)), mealLogs, exerciseLogs })
   }
 
   const [mealLogs, exerciseLogs, dailyLog] = await Promise.all([
@@ -84,7 +96,7 @@ export async function GET(req: NextRequest) {
     prisma.dailyLog.findUnique({ where: { userId_date: { userId: user.id, date: today } } }),
   ])
 
-  return NextResponse.json({ mealLogs, exerciseLogs, dailyLog })
+  return NextResponse.json({ mealLogs, exerciseLogs, dailyLog: normalizeDailyLog(dailyLog) })
 }
 
 export async function POST(req: NextRequest) {

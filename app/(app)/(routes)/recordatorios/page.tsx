@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Bell, Clock, Plus, Trash2, CheckCircle2 } from "lucide-react"
+import { Activity, Clock, MessageSquare, Plus, Trash2, Bell, AlertCircle, CheckCircle2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
@@ -17,6 +19,7 @@ interface Reminder {
 
 export default function RecordatoriosPage() {
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [showForm, setShowForm] = useState(false)
   const [newReminder, setNewReminder] = useState({ title: "", time: "09:00", days: ["1", "2", "3", "4", "5"] })
@@ -46,35 +49,72 @@ export default function RecordatoriosPage() {
     }))
   }
 
-  const saveReminder = async () => {
-    if (!newReminder.title) return
+  const createReminder = async () => {
+    if (!newReminder.title) {
+      toast.error("El título es obligatorio")
+      return
+    }
+    if (newReminder.days.length === 0) {
+      toast.error("Selecciona al menos un día")
+      return
+    }
     
-    const res = await fetch("/api/reminders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newReminder),
-    })
-    
-    if (res.ok) {
+    try {
+      setSaving(true)
+      const res = await fetch("/api/reminders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newReminder),
+      })
+      
       const data = await res.json()
-      setReminders([...reminders, data.reminder])
-      setShowForm(false)
-      setNewReminder({ title: "", time: "09:00", days: ["1", "2", "3", "4", "5"] })
+
+      if (res.ok) {
+        setReminders([...reminders, data.reminder])
+        setShowForm(false)
+        setNewReminder({ title: "", time: "09:00", days: ["1", "2", "3", "4", "5"] })
+        toast.success("Recordatorio guardado")
+      } else {
+        toast.error(data.error || "Error al guardar el recordatorio")
+      }
+    } catch (err) {
+      toast.error("Error de conexión al servidor")
+    } finally {
+      setSaving(false)
     }
   }
 
   const toggleReminder = async (id: string, enabled: boolean) => {
-    await fetch(`/api/reminders/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ enabled: !enabled }),
-    })
-    setReminders(reminders.map(r => r.id === id ? { ...r, enabled: !enabled } : r))
+    try {
+      const res = await fetch(`/api/reminders/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !enabled }),
+      })
+      
+      if (res.ok) {
+        setReminders(reminders.map(r => r.id === id ? { ...r, enabled: !enabled } : r))
+        toast.success(enabled ? "Recordatorio desactivado" : "Recordatorio activado")
+      } else {
+        toast.error("No se pudo actualizar el estado")
+      }
+    } catch (err) {
+      toast.error("Error de conexión")
+    }
   }
 
   const deleteReminder = async (id: string) => {
-    await fetch(`/api/reminders/${id}`, { method: "DELETE" })
-    setReminders(reminders.filter(r => r.id !== id))
+    try {
+      const res = await fetch(`/api/reminders/${id}`, { method: "DELETE" })
+      if (res.ok) {
+        setReminders(reminders.filter(r => r.id !== id))
+        toast.success("Recordatorio eliminado")
+      } else {
+        toast.error("No se pudo eliminar")
+      }
+    } catch (err) {
+      toast.error("Error de conexión")
+    }
   }
 
   if (loading) return <div className="p-4 text-center">Cargando...</div>
@@ -130,9 +170,9 @@ export default function RecordatoriosPage() {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button onClick={saveReminder}>Guardar</Button>
-              <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
-            </div>
+               <Button onClick={createReminder} disabled={saving}>{saving ? "Guardando..." : "Guardar"}</Button>
+               <Button variant="outline" onClick={() => setShowForm(false)} disabled={saving}>Cancelar</Button>
+             </div>
           </CardContent>
         </Card>
       )}
@@ -163,9 +203,16 @@ export default function RecordatoriosPage() {
                   </button>
                   <div>
                     <p className="font-medium">{reminder.title}</p>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {reminder.days.map((day) => (
+                        <span key={day} className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                          {daysMap[day]}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                       <Clock className="h-3 w-3" />
-                      {reminder.time} • {reminder.days.map(d => daysMap[d]).join(", ")}
+                      {reminder.time}
                     </p>
                   </div>
                 </div>

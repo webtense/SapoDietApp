@@ -1,82 +1,94 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Droplets, Scale, Battery, Smile, CheckCircle2, Circle, Clock, Utensils, Activity } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { Activity, CheckCircle2, Circle, Droplets, Flame, Scale, SkipForward, Sparkles, Utensils } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { defaultV3Preferences, parseV3Preferences, V3_PREFERENCES_KEY } from "@/lib/v3-preferences"
+import type { NutritionalNeeds } from "@/lib/diet-calculator"
 
-interface NutritionalNeeds {
-  calories: number
-  protein: number
-  carbs: number
-  fat: number
-  water: number
+interface Ingredient {
+  nombre: string
+  cantidad: number
+  unidad: string
+}
+
+interface Meal {
+  nombre: string
+  ingredientes: Ingredient[]
+  instrucciones: string[]
+  calorias: number
+  proteinas: number
+  carbohidratos: number
+  grasas: number
+  tiempoPreparacion?: number
 }
 
 interface MealPlan {
-  [key: string]: { main: string; side: string; dessert?: string; calories: number }[]
+  desayuno?: Meal
+  mediaManana?: Meal
+  almuerzo?: Meal
+  merienda?: Meal
+  cena?: Meal
 }
 
 interface MealTracking {
-  id: string
-  tipoComida: string
-  completado: boolean
-  horaConsumida?: string
-  observaciones?: string
+  mealType: string
+  completed: boolean
+  followsPlan?: boolean
 }
 
 interface ExerciseTracking {
-  id: string
-  ejercicio: string
-  completado: boolean
-  duracionTotal?: number
+  exerciseId: string
+  completed: boolean
 }
+
+const mealConfig = [
+  { label: "Desayuno", key: "desayuno" },
+  { label: "Snack", key: "mediaManana" },
+  { label: "Comida", key: "almuerzo" },
+  { label: "Merienda", key: "merienda" },
+  { label: "Cena", key: "cena" },
+] as const
 
 export default function HoyPage() {
   const [loading, setLoading] = useState(true)
-  const [plan, setPlan] = useState<{ necesidades: NutritionalNeeds; planComidas: MealPlan } | null>(null)
+  const [saved, setSaved] = useState(false)
+  const [plan, setPlan] = useState<{ necesidades: NutritionalNeeds; planComidas: MealPlan; planEntreno?: any[] } | null>(null)
   const [mealTracking, setMealTracking] = useState<MealTracking[]>([])
   const [exerciseTracking, setExerciseTracking] = useState<ExerciseTracking[]>([])
   const [checkin, setCheckin] = useState({ water: "", weight: "", energy: 3, mood: 3 })
-  const [saved, setSaved] = useState(false)
+  const [prefs, setPrefs] = useState(defaultV3Preferences)
 
   useEffect(() => {
     const load = async () => {
-      const [planRes, trackingRes] = await Promise.all([
-        fetch("/api/plan"),
-        fetch("/api/tracking"),
-      ])
+      const stored = window.localStorage.getItem(V3_PREFERENCES_KEY)
+      if (stored) {
+        setPrefs(parseV3Preferences(JSON.parse(stored)))
+      }
+
+      const [planRes, trackingRes] = await Promise.all([fetch("/api/plan"), fetch("/api/tracking")])
 
       if (planRes.ok) {
         const p = await planRes.json()
         if (p.plan?.planJson) {
           const parsed = JSON.parse(p.plan.planJson)
-          setPlan({ necesidades: parsed.macros, planComidas: parsed.mealPlan })
+          setPlan({
+            necesidades: parsed.macros || parsed.necesidades,
+            planComidas: parsed.mealPlan || parsed.planComidas,
+            planEntreno: parsed.exercisePlan || parsed.planEntreno || [],
+          })
         }
       }
 
       if (trackingRes.ok) {
         const t = await trackingRes.json()
-        if (t.mealLogs) {
-          setMealTracking(t.mealLogs.map((m: any) => ({
-            id: m.id,
-            tipoComida: m.mealType,
-            completado: m.completed,
-            horaConsumida: m.consumedAt,
-            observaciones: m.notes,
-          })))
-        }
-        if (t.exerciseLogs) {
-          setExerciseTracking(t.exerciseLogs.map((e: any) => ({
-            id: e.id,
-            ejercicio: e.exerciseId,
-            completado: e.completed,
-            duracionTotal: e.durationSec,
-          })))
-        }
+        setMealTracking((t.mealLogs || []).map((m: any) => ({ mealType: m.mealType, completed: m.completed, followsPlan: m.followsPlan })))
+        setExerciseTracking((t.exerciseLogs || []).map((e: any) => ({ exerciseId: e.exerciseId, completed: e.completed })))
         if (t.dailyLog) {
           setCheckin({
             water: t.dailyLog.waterLiters ? String(t.dailyLog.waterLiters) : "",
@@ -86,8 +98,10 @@ export default function HoyPage() {
           })
         }
       }
+
       setLoading(false)
     }
+
     load()
   }, [])
 
@@ -109,10 +123,10 @@ export default function HoyPage() {
       }),
     })
     setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setTimeout(() => setSaved(false), 1800)
   }
 
-  const toggleMeal = async (tipoComida: string, completado: boolean) => {
+  const updateMeal = async (mealType: string, completed: boolean, followsPlan = true) => {
     await fetch("/api/tracking", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -120,208 +134,137 @@ export default function HoyPage() {
         kind: "meal",
         payload: {
           dateIso: new Date().toISOString(),
-          mealType: tipoComida,
-          completed: !completado,
+          mealType,
+          completed,
+          followsPlan,
         },
       }),
     })
-    setMealTracking(prev => prev.map(m => 
-      m.tipoComida === tipoComida ? { ...m, completado: !completado } : m
-    ))
+
+    setMealTracking((prev) => {
+      const current = prev.find((item) => item.mealType === mealType)
+      if (!current) {
+        return [...prev, { mealType, completed, followsPlan }]
+      }
+      return prev.map((item) => item.mealType === mealType ? { ...item, completed, followsPlan } : item)
+    })
   }
 
-  const toggleExercise = async (ejercicio: string, completado: boolean) => {
-    await fetch("/api/tracking", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        kind: "exercise",
-        payload: {
-          dateIso: new Date().toISOString(),
-          exerciseId: ejercicio,
-          completed: !completado,
-        },
-      }),
-    })
-    setExerciseTracking(prev => prev.map(e => 
-      e.ejercicio === ejercicio ? { ...e, completado: !completado } : e
-    ))
-  }
+  const completedMeals = useMemo(() => mealTracking.filter((item) => item.completed).length, [mealTracking])
+  const completedExercises = useMemo(() => exerciseTracking.filter((item) => item.completed).length, [exerciseTracking])
+  const dailyProgress = Math.round((((completedMeals / mealConfig.length) * 0.6) + ((plan?.planEntreno?.length ? completedExercises / plan.planEntreno.length : 0) * 0.4)) * 100)
 
   if (loading) return <div className="p-4 text-center">Cargando...</div>
 
-  const today = new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })
-
-  const mealTypes = ["Desayuno", "Almuerzo", "Comida", "Merienda", "Cena"]
-
   return (
-    <div className="p-4 max-w-4xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Hoy</h1>
-          <p className="text-sm text-muted-foreground capitalize">{today}</p>
+    <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
+      <section className="rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium">Agenda del día</div>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight">Hoy</h1>
+            <p className="mt-2 max-w-2xl text-sm text-white/80">
+              {prefs.needsTupperMeals ? "Modo tupper activado" : "Modo cocina en casa"} · {prefs.hasAirfryer ? "recetas con opción Airfryer" : "recetas estándar"} · {prefs.primaryGoal.toLowerCase()}.
+            </p>
+          </div>
+          <div className="min-w-64 rounded-[1.5rem] bg-white/12 p-4 backdrop-blur">
+            <div className="mb-2 flex items-center justify-between text-sm"><span>Progreso diario</span><span>{dailyProgress}%</span></div>
+            <Progress value={dailyProgress} className="bg-white/20 [&_[data-slot=progress-indicator]]:bg-white" />
+            <div className="mt-3 grid grid-cols-3 gap-3 text-center text-sm">
+              <div><p className="text-lg font-semibold">{completedMeals}/{mealConfig.length}</p><p className="text-white/75">Comidas</p></div>
+              <div><p className="text-lg font-semibold">{completedExercises}</p><p className="text-white/75">Ejercicios</p></div>
+              <div><p className="text-lg font-semibold">{plan?.necesidades.water || 2.5}L</p><p className="text-white/75">Meta agua</p></div>
+            </div>
+          </div>
         </div>
-        {saved && <Badge className="bg-green-500">Guardado</Badge>}
-      </div>
+      </section>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Check-in diario</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <Label className="text-xs text-muted-foreground flex items-center gap-1">
-              <Droplets className="h-3 w-3" /> Agua (L)
-            </Label>
-            <Input 
-              type="number" 
-              step="0.1" 
-              value={checkin.water} 
-              onChange={(e) => setCheckin(p => ({ ...p, water: e.target.value }))}
-              className="h-9"
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground flex items-center gap-1">
-              <Scale className="h-3 w-3" /> Peso (kg)
-            </Label>
-            <Input 
-              type="number" 
-              step="0.1" 
-              value={checkin.weight} 
-              onChange={(e) => setCheckin(p => ({ ...p, weight: e.target.value }))}
-              className="h-9"
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground flex items-center gap-1">
-              <Battery className="h-3 w-3" /> Energía (1-5)
-            </Label>
-            <Input 
-              type="number" 
-              min={1} 
-              max={5} 
-              value={checkin.energy}
-              onChange={(e) => setCheckin(p => ({ ...p, energy: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))}
-              className="h-9"
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground flex items-center gap-1">
-              <Smile className="h-3 w-3" /> Ánimo (1-5)
-            </Label>
-            <Input 
-              type="number" 
-              min={1} 
-              max={5} 
-              value={checkin.mood}
-              onChange={(e) => setCheckin(p => ({ ...p, mood: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))}
-              className="h-9"
-            />
-          </div>
-          <div className="md:col-span-4">
-            <Button onClick={guardarCheckin} size="sm">Guardar check-in</Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+        <div className="space-y-4">
+          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><Utensils className="h-4 w-4" /> Menú diario interactivo</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {mealConfig.map((mealInfo) => {
+                const meal = plan?.planComidas[mealInfo.key as keyof MealPlan]
+                const track = mealTracking.find((item) => item.mealType === mealInfo.key)
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Utensils className="h-4 w-4" /> Comidas
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {mealTypes.map((tipo) => {
-            const meal = plan?.planComidas[tipo]?.[0]
-            const tracking = mealTracking.find(m => m.tipoComida === tipo)
-            return (
-              <div key={tipo} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                <button 
-                  onClick={() => toggleMeal(tipo, tracking?.completado || false)}
-                  className="flex items-center gap-3 flex-1 text-left"
-                >
-                  {tracking?.completado ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <Circle className="h-5 w-5 text-muted-foreground" />
-                  )}
-                  <div>
-                    <p className="font-medium text-sm">{tipo}</p>
+                return (
+                  <div key={mealInfo.key} className="rounded-[1.5rem] border bg-white p-4 shadow-sm">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <button onClick={() => updateMeal(mealInfo.key, !(track?.completed || false), true)} className="flex flex-1 items-start gap-3 text-left">
+                        {track?.completed ? <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-500" /> : <Circle className="mt-0.5 h-5 w-5 text-muted-foreground" />}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{mealInfo.label}</p>
+                            {meal && <Badge variant="secondary">{meal.calorias} kcal</Badge>}
+                            {prefs.needsTupperMeals && mealInfo.key === "almuerzo" && <Badge variant="outline">Apto tupper</Badge>}
+                            {prefs.hasAirfryer && (mealInfo.key === "cena" || mealInfo.key === "almuerzo") && <Badge variant="outline">Airfryer</Badge>}
+                          </div>
+                          <p className="mt-1 text-sm text-muted-foreground">{meal?.nombre || "Pendiente de generar en tu plan"}</p>
+                        </div>
+                      </button>
+
+                      <div className="flex flex-wrap gap-2 md:justify-end">
+                        <Button size="sm" variant="outline" onClick={() => updateMeal(mealInfo.key, true, true)}>Hecho</Button>
+                        <Button size="sm" variant="outline" onClick={() => updateMeal(mealInfo.key, false, false)}><SkipForward className="mr-1 h-4 w-4" /> Omitir</Button>
+                        <Button size="sm" variant="outline" disabled><Sparkles className="mr-1 h-4 w-4" /> Cambiar receta</Button>
+                      </div>
+                    </div>
+
                     {meal && (
-                      <p className="text-xs text-muted-foreground">{meal.main} {meal.side && `+ ${meal.side}`}</p>
+                      <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto]">
+                        <div>
+                          <div className="flex flex-wrap gap-2">
+                            {meal.ingredientes.slice(0, 5).map((ingredient) => (
+                              <Badge key={`${mealInfo.key}-${ingredient.nombre}`} variant="secondary" className="font-normal">
+                                {ingredient.nombre} · {ingredient.cantidad}{ingredient.unidad}
+                              </Badge>
+                            ))}
+                          </div>
+                          <p className="mt-3 text-sm text-muted-foreground">
+                            {meal.instrucciones?.[0] || "Sigue la receta del plan."}
+                            {prefs.hasAirfryer && (mealInfo.key === "almuerzo" || mealInfo.key === "cena") ? " También puedes adaptarla a Airfryer para reducir tiempo." : ""}
+                          </p>
+                        </div>
+                        <div className="rounded-2xl bg-muted/50 p-3 text-sm">
+                          <p><span className="font-medium">P</span> {meal.proteinas}g</p>
+                          <p><span className="font-medium">C</span> {meal.carbohidratos}g</p>
+                          <p><span className="font-medium">G</span> {meal.grasas}g</p>
+                        </div>
+                      </div>
                     )}
                   </div>
-                </button>
-                {meal && (
-                  <Badge variant="secondary" className="text-xs">{meal.calories} kcal</Badge>
-                )}
+                )
+              })}
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-4">
+          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-base">Check-in diario</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Droplets className="h-3 w-3" /> Agua</Label><Input type="number" step="0.1" value={checkin.water} onChange={(e) => setCheckin((prev) => ({ ...prev, water: e.target.value }))} /></div>
+                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Scale className="h-3 w-3" /> Peso</Label><Input type="number" step="0.1" value={checkin.weight} onChange={(e) => setCheckin((prev) => ({ ...prev, weight: e.target.value }))} /></div>
+                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Flame className="h-3 w-3" /> Energía</Label><Input type="number" min={1} max={5} value={checkin.energy} onChange={(e) => setCheckin((prev) => ({ ...prev, energy: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))} /></div>
+                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Activity className="h-3 w-3" /> Ánimo</Label><Input type="number" min={1} max={5} value={checkin.mood} onChange={(e) => setCheckin((prev) => ({ ...prev, mood: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))} /></div>
               </div>
-            )
-          })}
-        </CardContent>
-      </Card>
+              <Button className="w-full rounded-2xl" onClick={guardarCheckin}>Guardar check-in</Button>
+              {saved && <Badge className="bg-emerald-500 text-white">Check-in guardado</Badge>}
+            </CardContent>
+          </Card>
 
-      {plan?.planComidas["Entreno"] && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Activity className="h-4 w-4" /> Entrenamiento
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {plan.planComidas["Entreno"].map((ejercicio: any, idx: number) => {
-              const tracking = exerciseTracking[idx]
-              return (
-                <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                  <button 
-                    onClick={() => toggleExercise(String(idx), tracking?.completado || false)}
-                    className="flex items-center gap-3 flex-1 text-left"
-                  >
-                    {tracking?.completado ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <Circle className="h-5 w-5 text-muted-foreground" />
-                    )}
-                    <div>
-                      <p className="font-medium text-sm">{ejercicio.name || ejercicio}</p>
-                      {ejercicio.sets && (
-                        <p className="text-xs text-muted-foreground">{ejercicio.sets} series × {ejercicio.reps} repes</p>
-                      )}
-                    </div>
-                  </button>
-                </div>
-              )
-            })}
-          </CardContent>
-        </Card>
-      )}
-
-      {plan?.necesidades && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Macros del día</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-orange-500">{plan.necesidades.calories}</p>
-              <p className="text-xs text-muted-foreground">Calorías</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-blue-500">{plan.necesidades.protein}g</p>
-              <p className="text-xs text-muted-foreground">Proteína</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-green-500">{plan.necesidades.carbs}g</p>
-              <p className="text-xs text-muted-foreground">Carbs</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-yellow-500">{plan.necesidades.fat}g</p>
-              <p className="text-xs text-muted-foreground">Grasa</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="text-base">Objetivos del día</CardTitle></CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Hidratación</p><p className="mt-1 text-muted-foreground">Meta {plan?.necesidades.water || 2.5}L. Hoy llevas {checkin.water || 0}L.</p></div>
+              <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Proteína</p><p className="mt-1 text-muted-foreground">Objetivo de {plan?.necesidades.protein || 0}g para apoyar {prefs.primaryGoal.toLowerCase()}.</p></div>
+              <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Constancia</p><p className="mt-1 text-muted-foreground">Marca tus comidas y tu entreno aunque estés offline; el módulo de entrenamiento ya conserva progreso local.</p></div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

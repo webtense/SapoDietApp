@@ -1,26 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { ChevronLeft, ChevronRight, Utensils, Dumbbell, Scale, Droplets } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { ChevronLeft, ChevronRight, Dumbbell, Scale } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface DailyLog {
   date: string
   weightKg: number | null
-  waterLiters: number | null
-  energy: number | null
-  mood: number | null
 }
 
 interface MealLog {
   date: string
-  mealType: string
   completed: boolean
 }
 
 interface ExerciseLog {
   date: string
-  exerciseId: string
   completed: boolean
 }
 
@@ -33,12 +28,12 @@ export default function CalendarioPage() {
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch("/api/tracking")
+      const res = await fetch("/api/tracking?type=all")
       if (res.ok) {
         const data = await res.json()
-        if (data.dailyLog) setDailyLogs([data.dailyLog])
-        if (data.mealLogs) setMealLogs(data.mealLogs)
-        if (data.exerciseLogs) setExerciseLogs(data.exerciseLogs)
+        setDailyLogs(data.dailyLogs || [])
+        setMealLogs(data.mealLogs || [])
+        setExerciseLogs(data.exerciseLogs || [])
       }
       setLoading(false)
     }
@@ -52,53 +47,49 @@ export default function CalendarioPage() {
     const lastDay = new Date(year, month + 1, 0)
     const daysInMonth = lastDay.getDate()
     const startingDay = firstDay.getDay()
-
     const days: { day: number; date: string; inMonth: boolean }[] = []
-    
+
     for (let i = 0; i < startingDay; i++) {
       const prevDate = new Date(year, month, -startingDay + i + 1)
-      days.push({
-        day: prevDate.getDate(),
-        date: prevDate.toISOString().split("T")[0],
-        inMonth: false,
-      })
+      days.push({ day: prevDate.getDate(), date: prevDate.toISOString().split("T")[0], inMonth: false })
     }
-    
+
     for (let i = 1; i <= daysInMonth; i++) {
-      const d = new Date(year, month, i)
-      days.push({
-        day: i,
-        date: d.toISOString().split("T")[0],
-        inMonth: true,
-      })
+      const next = new Date(year, month, i)
+      days.push({ day: i, date: next.toISOString().split("T")[0], inMonth: true })
     }
-    
-    const remaining = 42 - days.length
-    for (let i = 1; i <= remaining; i++) {
-      const nextDate = new Date(year, month + 1, i)
-      days.push({
-        day: i,
-        date: nextDate.toISOString().split("T")[0],
-        inMonth: false,
-      })
+
+    while (days.length < 42) {
+      const next = new Date(year, month + 1, days.length - daysInMonth - startingDay + 1)
+      days.push({ day: next.getDate(), date: next.toISOString().split("T")[0], inMonth: false })
     }
-    
+
     return days
   }
 
   const getLogForDate = (dateStr: string) => {
-    const daily = dailyLogs.find(d => d.date?.startsWith(dateStr))
-    const meals = mealLogs.filter(m => m.date?.startsWith(dateStr))
-    const exercises = exerciseLogs.filter(e => e.date?.startsWith(dateStr))
-    
-    const mealProgress = meals.length > 0 ? meals.filter(m => m.completed).length / meals.length : 0
-    const exerciseProgress = exercises.length > 0 ? exercises.filter(e => e.completed).length : 0
-    
-    return { daily, mealProgress, exerciseProgress }
+    const daily = dailyLogs.find((entry) => entry.date?.startsWith(dateStr))
+    const meals = mealLogs.filter((entry) => entry.date?.startsWith(dateStr))
+    const exercises = exerciseLogs.filter((entry) => entry.date?.startsWith(dateStr))
+    return {
+      daily,
+      mealDone: meals.some((entry) => entry.completed),
+      exerciseDone: exercises.some((entry) => entry.completed),
+      fullyDone: meals.some((entry) => entry.completed) || exercises.some((entry) => entry.completed),
+    }
   }
 
-  const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))
-  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))
+  const last30Days = useMemo(() => {
+    const days: string[] = []
+    for (let index = 29; index >= 0; index -= 1) {
+      const date = new Date()
+      date.setDate(date.getDate() - index)
+      days.push(date.toISOString().split("T")[0])
+    }
+    return days
+  }, [])
+
+  const streakCount = useMemo(() => last30Days.filter((day) => getLogForDate(day).fullyDone).length, [last30Days, mealLogs, exerciseLogs])
 
   if (loading) return <div className="p-4 text-center">Cargando...</div>
 
@@ -107,56 +98,40 @@ export default function CalendarioPage() {
   const today = new Date().toISOString().split("T")[0]
 
   return (
-    <div className="p-4 max-w-4xl mx-auto space-y-4">
-      <h1 className="text-2xl font-bold">Calendario</h1>
+    <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
+      <section className="rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,_rgba(80,200,120,0.16),_rgba(255,255,255,0.95))] p-5 shadow-sm">
+        <h1 className="text-3xl font-semibold tracking-tight">Calendario y reto 30 días</h1>
+        <p className="mt-2 text-sm text-muted-foreground">La vista v3 convierte el calendario en una superficie de hábito: peso, entreno y checks visuales de adherencia.</p>
+        <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="rounded-2xl bg-white/85 p-4"><p className="text-xs text-muted-foreground">Checks últimos 30 días</p><p className="mt-1 text-2xl font-semibold">{streakCount}/30</p></div>
+          <div className="rounded-2xl bg-white/85 p-4"><p className="text-xs text-muted-foreground">Entreno registrado</p><p className="mt-1 text-2xl font-semibold">{exerciseLogs.filter((item) => item.completed).length}</p></div>
+          <div className="rounded-2xl bg-white/85 p-4"><p className="text-xs text-muted-foreground">Comidas marcadas</p><p className="mt-1 text-2xl font-semibold">{mealLogs.filter((item) => item.completed).length}</p></div>
+          <div className="rounded-2xl bg-white/85 p-4"><p className="text-xs text-muted-foreground">Pesos guardados</p><p className="mt-1 text-2xl font-semibold">{dailyLogs.filter((item) => item.weightKg).length}</p></div>
+        </div>
+      </section>
 
-      <Card>
+      <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <button onClick={prevMonth} className="p-2 hover:bg-muted rounded-lg">
-              <ChevronLeft className="h-5 w-5" />
-            </button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))} className="rounded-2xl p-2 hover:bg-muted"><ChevronLeft className="h-5 w-5" /></button>
             <CardTitle className="text-base capitalize">{monthName}</CardTitle>
-            <button onClick={nextMonth} className="p-2 hover:bg-muted rounded-lg">
-              <ChevronRight className="h-5 w-5" />
-            </button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))} className="rounded-2xl p-2 hover:bg-muted"><ChevronRight className="h-5 w-5" /></button>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-7 gap-1 text-center">
-            {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map(d => (
-              <div key={d} className="text-xs font-medium text-muted-foreground py-2">{d}</div>
-            ))}
-            {days.map((day, idx) => {
+          <div className="grid grid-cols-7 gap-2 text-center">
+            {["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"].map((label) => <div key={label} className="py-2 text-xs font-medium text-muted-foreground">{label}</div>)}
+            {days.map((day) => {
               const log = getLogForDate(day.date)
               const isToday = day.date === today
-              
               return (
-                <div
-                  key={idx}
-                  className={`p-2 text-sm min-h-[60px] rounded-lg ${
-                    !day.inMonth ? "text-muted-foreground/50" : ""
-                  } ${isToday ? "bg-emerald-50 ring-2 ring-emerald-500" : "hover:bg-muted/50"}`}
-                >
+                <div key={day.date} className={`min-h-[76px] rounded-2xl p-2 text-sm ${day.inMonth ? "bg-white" : "bg-muted/35 text-muted-foreground"} ${isToday ? "ring-2 ring-emerald-500" : ""}`}>
                   <div className="font-medium">{day.day}</div>
                   {day.inMonth && (
-                    <div className="flex flex-col gap-0.5 mt-1">
-                      {log.daily?.weightKg && (
-                        <div className="flex items-center justify-center gap-0.5">
-                          <Scale className="h-3 w-3 text-blue-500" />
-                          <span className="text-[10px]">{log.daily.weightKg}</span>
-                        </div>
-                      )}
-                      {log.mealProgress > 0 && (
-                        <div className="w-full bg-muted rounded-full h-1">
-                          <div className="bg-green-500 h-1 rounded-full" style={{ width: `${log.mealProgress * 100}%` }} />
-                        </div>
-                      )}
-                      {log.exerciseProgress > 0 && (
-                        <div className="flex justify-center">
-                          <Dumbbell className="h-3 w-3 text-purple-500" />
-                        </div>
-                      )}
+                    <div className="mt-2 flex flex-col items-center gap-1">
+                      <div className={`h-2 w-2 rounded-full ${log.fullyDone ? "bg-emerald-500" : "bg-muted"}`} />
+                      {log.daily?.weightKg ? <div className="flex items-center gap-1 text-[10px] text-blue-600"><Scale className="h-3 w-3" />{log.daily.weightKg}</div> : <div className="h-3" />}
+                      {log.exerciseDone && <Dumbbell className="h-3 w-3 text-purple-500" />}
                     </div>
                   )}
                 </div>
@@ -166,22 +141,14 @@ export default function CalendarioPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Leyenda</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-3 gap-4">
-          <div className="flex items-center gap-2">
-            <Scale className="h-4 w-4 text-blue-500" />
-            <span className="text-sm">Peso registrado</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-1 bg-green-500 rounded-full" />
-            <span className="text-sm">Comidas</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Dumbbell className="h-4 w-4 text-purple-500" />
-            <span className="text-sm">Entreno</span>
+      <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+        <CardHeader className="pb-3"><CardTitle className="text-base">Reto visual 30 días</CardTitle></CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-10 gap-2 md:grid-cols-15">
+            {last30Days.map((day) => {
+              const status = getLogForDate(day)
+              return <div key={day} className={`aspect-square rounded-xl ${status.fullyDone ? "bg-emerald-500" : "bg-muted"}`} title={day} />
+            })}
           </div>
         </CardContent>
       </Card>

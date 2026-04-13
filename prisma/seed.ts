@@ -5,8 +5,8 @@ import { DEFAULT_MODULE_KEYS } from "../lib/constants/modules"
 const prisma = new PrismaClient()
 
 async function upsertAdminUser() {
-  const adminEmail = process.env.ADMIN_EMAIL || "webtense@gmail.com"
-  const adminName = process.env.ADMIN_NAME || "Andres"
+  const adminEmail = process.env.ADMIN_EMAIL || "admin@example.com"
+  const adminName = process.env.ADMIN_NAME || "Admin"
   const rawPassword = process.env.ADMIN_PASSWORD
   const passwordHash = rawPassword ? await hash(rawPassword, 12) : undefined
 

@@ -7,6 +7,12 @@
 - Listo para escalar horizontalmente.
 - Prisma soporta ambos motores sin cambios profundos en el código.
 
+## Estado actual del repo
+
+- `prisma.config.ts` usa `prisma/schema.prisma`.
+- Las migraciones activas de producción viven en `prisma/migrations-postgresql`.
+- `prisma/schema.prisma` se conserva solo para leer y exportar datos desde SQLite legado.
+
 ## Paso 0 — Backup
 
 ```bash
@@ -37,21 +43,21 @@ postgresql://sapofit:sapofit_local@localhost:5432/sapofit
 ## Paso 2 — Generar cliente Prisma para PostgreSQL
 
 ```bash
-npm run db:generate -- --schema=prisma/schema.postgresql.prisma
+npm run db:generate
 ```
 
-Esto genera el cliente en `node_modules/@prisma-client-pg`.
+Esto genera el cliente estándar en `node_modules/@prisma/client`.
 
 ## Paso 3 — Crear esquema en PostgreSQL
 
 ```bash
-npm run db:migrate:pg -- --name init_pg
+npm run db:migrate -- --name init_pg
 ```
 
 O para producción (sin crear migración nueva, solo aplicar las existentes):
 
 ```bash
-npm run db:migrate:pg:deploy
+npm run db:deploy
 ```
 
 ## Paso 4 — Migrar datos existentes
@@ -103,7 +109,7 @@ npm run db:generate
 
 ### Enums
 
-El schema de PostgreSQL (`schema.postgresql.prisma`) usa `String` en lugar de enums nativos de Prisma. Esto evita conflictos de tipos entre SQLite (TEXT) y PostgreSQL (CREATE TYPE). El código de la aplicación no cambia.
+El schema de PostgreSQL (`schema.prisma`) usa `String` en lugar de enums nativos de Prisma. Esto evita conflictos de tipos entre SQLite (TEXT) y PostgreSQL (CREATE TYPE). El código de la aplicación no cambia.
 
 ### Rate limit
 

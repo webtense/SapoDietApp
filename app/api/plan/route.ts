@@ -4,6 +4,18 @@ import { prisma } from "@/lib/server/prisma"
 import { calcularMacronutrientes, calcularNecesidadesCaloricas, generarPlanComidas } from "@/lib/diet-calculator"
 import { generarPlanEjercicios } from "@/lib/tracking-system"
 
+function normalizeMacrosForStorage(macros: ReturnType<typeof calcularMacronutrientes>) {
+  return {
+    ...macros,
+    calories: Math.round(macros.calories),
+    protein: Math.round(macros.protein),
+    carbs: Math.round(macros.carbs),
+    fat: Math.round(macros.fat),
+    fiber: Math.round(macros.fiber),
+    water: Number(macros.water.toFixed(1)),
+  }
+}
+
 export async function GET() {
   const { user, error } = await requireUser()
   if (error) return error
@@ -51,7 +63,7 @@ export async function POST(req: NextRequest) {
     profile.trainingFrequency || "1-2",
     objective,
   )
-  const macros = calcularMacronutrientes(calories, profile.dietType || "Mediterránea")
+  const macros = normalizeMacrosForStorage(calcularMacronutrientes(calories, profile.dietType || "Mediterránea"))
   const forbidden = (profile.forbiddenFoods || "")
     .split(",")
     .map((item: string) => item.trim())

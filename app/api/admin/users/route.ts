@@ -27,6 +27,13 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "desc" },
     include: {
       pricing: true,
+      modules: {
+        orderBy: { moduleKey: "asc" },
+      },
+      invitationsReceived: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
       _count: { select: { loginEvents: true } },
     },
   })
@@ -40,7 +47,16 @@ export async function GET(req: NextRequest) {
       status: u.status,
       lastLoginAt: u.lastLoginAt,
       loginCount: u._count.loginEvents,
+      modules: u.modules.map((module) => ({ moduleKey: module.moduleKey, enabled: module.enabled })),
       pricing: u.pricing ? { label: u.pricing.label, monthlyPrice: u.pricing.monthlyPrice } : null,
+      latestInvitation: u.invitationsReceived[0]
+        ? {
+            id: u.invitationsReceived[0].id,
+            status: u.invitationsReceived[0].status,
+            expiresAt: u.invitationsReceived[0].expiresAt,
+            createdAt: u.invitationsReceived[0].createdAt,
+          }
+        : null,
     })),
   })
 }

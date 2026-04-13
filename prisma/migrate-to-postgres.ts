@@ -26,13 +26,24 @@ function sqliteModelName(model: (typeof MODELS)[number]) {
 }
 
 async function migrateModel(sqlite: Database.Database, pg: Pool, model: (typeof MODELS)[number]) {
-  const table = sqliteModelName(model)
+  const candidates = [sqliteModelName(model), model]
+  const table = candidates.find((candidate) =>
+    sqlite.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?").get(candidate),
+  )
+
+  if (!table) {
+    console.log(`  ${model}: tabla ausente en SQLite, omitido`)
+    return
+  }
+
   const rows: any[] = sqlite.prepare(`SELECT * FROM "${table}"`).all()
   if (rows.length === 0) {
     console.log(`  ${model}: 0 registros, omitido`)
     return
   }
 
+  const sqliteColumnInfo = sqlite.prepare(`PRAGMA table_info("${table}")`).all() as Array<{ name: string; type: string }>
+  const sqliteColumnTypes = new Map(sqliteColumnInfo.map((column) => [column.name, (column.type || "").toUpperCase()]))
   const columns = Object.keys(rows[0])
   const setClause = columns.filter((c) => c !== "id").map((c) => `"${c}" = EXCLUDED."${c}"`).join(", ")
   const insertCols = columns.map((c) => `"${c}"`).join(", ")
@@ -45,6 +56,9 @@ async function migrateModel(sqlite: Database.Database, pg: Pool, model: (typeof 
       const values = columns.map((c) => {
         const v = (row as any)[c]
         if (typeof v === "bigint") return Number(v)
+        const columnType = sqliteColumnTypes.get(c) || ""
+        if (typeof v === "number" && columnType.includes("DATE")) return new Date(v)
+        if (typeof v === "number" && columnType.includes("BOOL")) return Boolean(v)
         return v
       })
       await pg.query(
@@ -54,6 +68,7 @@ async function migrateModel(sqlite: Database.Database, pg: Pool, model: (typeof 
       succeeded++
     } catch (err) {
       failed++
+      console.error(`    ${model}#${(row as any).id ?? "?"}:`, err)
     }
   }
 

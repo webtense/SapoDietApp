@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import { apiError, requireUser } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
 
+function parseReminderDays(value: string) {
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : []
+  } catch {
+    return []
+  }
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, error } = await requireUser()
   if (error) return error
@@ -23,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       ...(body.enabled !== undefined && { enabled: body.enabled }),
       ...(body.title !== undefined && { title: body.title.slice(0, 100) }),
       ...(body.time !== undefined && { time: body.time }),
-      ...(body.days !== undefined && { days: JSON.stringify(body.days) }),
+      ...(body.days !== undefined && { days: JSON.stringify(Array.isArray(body.days) ? body.days.filter((item: unknown) => typeof item === "string") : []) }),
     },
   })
 
@@ -32,7 +41,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       id: updated.id,
       title: updated.title,
       time: updated.time,
-      days: JSON.parse(updated.days),
+      days: parseReminderDays(updated.days),
       enabled: updated.enabled,
     },
   })

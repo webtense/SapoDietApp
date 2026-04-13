@@ -5,6 +5,48 @@ import { DEFAULT_MODULE_KEYS } from "@/lib/constants/modules"
 import { createInvitationForUser } from "@/lib/server/invitations"
 import { adminCreateInvitationSchema } from "@/lib/validation"
 
+export async function GET() {
+  const { user: admin, error } = await requireAdmin()
+  if (error || !admin) return error
+
+  const invitations = await prisma.invitation.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    include: {
+      invitedUser: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          status: true,
+        },
+      },
+      invitedByUser: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+        },
+      },
+    },
+  })
+
+  return NextResponse.json({
+    ok: true,
+    invitations: invitations.map((invitation) => ({
+      id: invitation.id,
+      email: invitation.email,
+      name: invitation.name,
+      status: invitation.status,
+      expiresAt: invitation.expiresAt,
+      acceptedAt: invitation.acceptedAt,
+      createdAt: invitation.createdAt,
+      invitedUser: invitation.invitedUser,
+      invitedByUser: invitation.invitedByUser,
+    })),
+  })
+}
+
 export async function POST(req: NextRequest) {
   const { user: admin, error } = await requireAdmin()
   if (error || !admin) return error
