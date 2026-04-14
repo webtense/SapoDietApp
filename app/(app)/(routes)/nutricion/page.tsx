@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Clock, Utensils, Flame, Droplets, RefreshCw, CheckCircle2 } from "lucide-react"
+import { useEffect, useState, useRef } from "react"
+import { Clock, Utensils, Flame, Droplets, RefreshCw, CheckCircle2, Camera, X, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,11 +11,25 @@ interface Adaptations {
   adaptations?: string[]
 }
 
+interface AnalysisResult {
+  id: string
+  calories: number
+  protein: number
+  carbs: number
+  fat: number
+  ingredients: string[]
+}
+
 export default function NutricionPage() {
   const [loading, setLoading] = useState(true)
   const [plan, setPlan] = useState<{ necesidades: ReturnType<typeof normalizeMacros>; planComidas: ReturnType<typeof normalizeMealPlan> } & Adaptations | null>(null)
   const [adapting, setAdapting] = useState(false)
   const [adapted, setAdapted] = useState(false)
+  const [showCamera, setShowCamera] = useState(false)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
+  const [selectedMealType, setSelectedMealType] = useState("desayuno")
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -71,6 +85,41 @@ export default function NutricionPage() {
     }
   }
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setAnalyzing(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('mealType', selectedMealType)
+
+      const res = await fetch('/api/ai/meal-photo', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setAnalysisResult(data)
+      } else {
+        const error = await res.json()
+        alert(error.error?.message || 'Error analyzing image')
+      }
+    } catch (err) {
+      console.error('Analysis error:', err)
+      alert('Failed to analyze image')
+    } finally {
+      setAnalyzing(false)
+    }
+  }
+
+  const openCamera = (mealType: string) => {
+    setSelectedMealType(mealType)
+    setShowCamera(true)
+  }
+
   if (loading) return <div className="p-4 text-center">Cargando...</div>
 
   if (!plan) {
@@ -92,14 +141,20 @@ export default function NutricionPage() {
     <div className="p-4 max-w-4xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Nutrición</h1>
-        <Button variant="outline" size="sm" onClick={adaptarPlan} disabled={adapting}>
-          {adapting ? (
-            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4 mr-2" />
-          )}
-          Adaptar plan
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => openCamera('desayuno')}>
+            <Camera className="h-4 w-4 mr-2" />
+            Analizar comida
+          </Button>
+          <Button variant="outline" size="sm" onClick={adaptarPlan} disabled={adapting}>
+            {adapting ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Adaptar plan
+          </Button>
+        </div>
       </div>
 
       {adapted && plan.adaptations && plan.adaptations.length > 0 && (
@@ -164,11 +219,10 @@ export default function NutricionPage() {
       </div>
 
       {mealTypes.map((tipo) => {
-        // Map display name to key used in backend
         const keyMap: Record<string, string> = {
           "Desayuno": "desayuno",
           "Almuerzo": "almuerzo",
-          "Comida": "almuerzo", // If both exist, they might be synonyms in the UI
+          "Comida": "almuerzo",
           "Merienda": "merienda",
           "Cena": "cena"
         }
@@ -185,7 +239,12 @@ export default function NutricionPage() {
                 <span className="flex items-center gap-2">
                   <Utensils className="h-4 w-4" /> {tipo}
                 </span>
-                <Badge variant="secondary">{meal.calorias} kcal</Badge>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => openCamera(mealKey)}>
+                    <Camera className="h-3 w-3" />
+                  </Button>
+                  <Badge variant="secondary">{meal.calorias} kcal</Badge>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -256,6 +315,93 @@ export default function NutricionPage() {
           </div>
         </CardContent>
       </Card>
+
+      {showCamera && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Analizar Comida</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => { setShowCamera(false); setAnalysisResult(null) }}>
+                <X className="h-4 w-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Selecciona una foto de tu comida para analizar sus macronutrientes.
+              </p>
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              
+              <Button 
+                className="w-full" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={analyzing}
+              >
+                {analyzing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Analizando...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="h-4 w-4 mr-2" />
+                    Tomar/Seleccionar foto
+                  </>
+                )}
+              </Button>
+
+              {analysisResult && (
+                <div className="mt-4 p-4 bg-muted rounded-lg space-y-3">
+                  <h4 className="font-semibold">Resultados del análisis:</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Calorías:</span>
+                      <span className="font-medium">{analysisResult.calories} kcal</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Proteína:</span>
+                      <span className="font-medium">{analysisResult.protein}g</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Carbs:</span>
+                      <span className="font-medium">{analysisResult.carbs}g</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Grasa:</span>
+                      <span className="font-medium">{analysisResult.fat}g</span>
+                    </div>
+                  </div>
+                  {analysisResult.ingredients.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mt-2">Ingredientes detectados:</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {analysisResult.ingredients.map((ing, i) => (
+                          <Badge key={i} variant="outline" className="text-[10px]">{ing}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full mt-2"
+                    onClick={() => { setShowCamera(false); setAnalysisResult(null) }}
+                  >
+                    Cerrar
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

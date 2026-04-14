@@ -36,6 +36,10 @@ model User {
   modules             UserModule[]
   pricing             UserPricing?
   reminders           Reminder[]
+  aiTokensUsed       Int         @default(0)
+  aiTokenLimit       Int         @default(1)
+  lastAiTokenReset   DateTime?
+  foodAnalyses       FoodAnalysis[]
 
   @@index([status])
   @@index([role])
@@ -270,6 +274,22 @@ model Reminder {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model FoodAnalysis {
+  id          String   @id @default(cuid())
+  userId      String
+  imageHash   String
+  calories    Float?
+  protein     Float?
+  carbs       Float?
+  fat         Float?
+  ingredients String?
+  mealType    String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model RateLimitBucket {
