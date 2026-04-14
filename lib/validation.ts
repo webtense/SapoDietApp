@@ -82,6 +82,7 @@ export const adminUpdatePricingSchema = z.object({
 
 export const profileSchema = z.object({
   name: z.string().min(2).max(80),
+  phone: z.string().max(20).optional(),
   age: z.number().int().min(12).max(100),
   height: z.number().min(120).max(230),
   weight: z.number().min(35).max(250),

@@ -14,6 +14,7 @@ import { defaultV3Preferences, parseV3Preferences, V3_PREFERENCES_KEY, type V3Pr
 
 interface FormData {
   nombre: string
+  telefono: string
   edad: string
   altura: string
   peso: string
@@ -34,6 +35,7 @@ interface FormData {
 
 const initialForm: FormData = {
   nombre: "",
+  telefono: "",
   edad: "",
   altura: "",
   peso: "",
@@ -87,6 +89,7 @@ export default function PerfilPage() {
         if (profile) {
           setFormData({
             nombre: "",
+            telefono: "",
             edad: profile.age ? String(profile.age) : "",
             altura: profile.heightCm ? String(profile.heightCm) : "",
             peso: profile.weightKg ? String(profile.weightKg) : "",
@@ -114,7 +117,11 @@ export default function PerfilPage() {
 
       if (userRes.ok) {
         const u = await userRes.json()
-        setFormData((prev) => ({ ...prev, nombre: u.user?.name || prev.nombre }))
+        setFormData((prev) => ({ 
+          ...prev, 
+          nombre: u.user?.name || prev.nombre,
+          telefono: u.user?.phone || prev.telefono 
+        }))
       }
 
       setLoading(false)
@@ -154,6 +161,7 @@ export default function PerfilPage() {
 
     const payload = {
       name: formData.nombre,
+      phone: formData.telefono,
       age: Number(formData.edad),
       height: Number(formData.altura),
       weight: Number(formData.peso),
@@ -257,6 +265,7 @@ export default function PerfilPage() {
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-3">
               <div><Label>Nombre</Label><Input value={formData.nombre} onChange={(e) => updateField("nombre", e.target.value)} /></div>
+              <div><Label>Teléfono (WhatsApp)</Label><Input type="tel" value={formData.telefono} onChange={(e) => updateField("telefono", e.target.value)} placeholder="+34 612 345 678" /></div>
               <div><Label>Edad</Label><Input type="number" value={formData.edad} onChange={(e) => updateField("edad", e.target.value)} /></div>
               <div><Label>Sexo</Label><Select value={formData.sexo} onValueChange={(v: "hombre" | "mujer") => updateField("sexo", v)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="mujer">Mujer</SelectItem><SelectItem value="hombre">Hombre</SelectItem></SelectContent></Select></div>
               <div><Label>Altura (cm)</Label><Input type="number" value={formData.altura} onChange={(e) => updateField("altura", e.target.value)} /></div>

@@ -16,6 +16,8 @@ model User {
   role            String        @default("USER")
   status          String        @default("INVITED")
   timezone        String?
+  phone           String?
+  phoneVerified   Boolean       @default(false)
   lastLoginAt     DateTime?
   invitedById     String?
   createdAt       DateTime      @default(now())

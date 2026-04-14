@@ -34,7 +34,10 @@ export async function PUT(req: NextRequest) {
   await prisma.$transaction([
     prisma.user.update({
       where: { id: user.id },
-      data: { name: sanitizeText(data.name, 80) },
+      data: { 
+        name: sanitizeText(data.name, 80),
+        phone: data.phone ? sanitizeText(data.phone.replace(/\s/g, ''), 20) : null,
+      },
     }),
     prisma.profile.upsert({
       where: { userId: user.id },
