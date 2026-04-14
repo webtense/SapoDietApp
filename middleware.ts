@@ -6,6 +6,7 @@ const PUBLIC_API_PATHS = [
   "/api/auth/invite/accept",
   "/api/auth/set-password",
   "/api/health",
+  "/api/cron/",
 ]
 
 export function middleware(req: NextRequest) {

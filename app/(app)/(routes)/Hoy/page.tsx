@@ -63,12 +63,21 @@ export default function HoyPage() {
   const [exerciseTracking, setExerciseTracking] = useState<ExerciseTracking[]>([])
   const [checkin, setCheckin] = useState({ water: "", weight: "", energy: 3, mood: 3 })
   const [prefs, setPrefs] = useState(defaultV3Preferences)
+  const [hasLoadedFromApi, setHasLoadedFromApi] = useState(false)
 
   useEffect(() => {
     const load = async () => {
       const stored = window.localStorage.getItem(V3_PREFERENCES_KEY)
       if (stored) {
         setPrefs(parseV3Preferences(JSON.parse(stored)))
+      }
+
+      const lastCheckin = window.localStorage.getItem("sapofit_last_checkin")
+      if (lastCheckin) {
+        try {
+          const parsed = JSON.parse(lastCheckin)
+          setCheckin(parsed)
+        } catch {}
       }
 
       const [planRes, trackingRes] = await Promise.all([fetch("/api/plan"), fetch("/api/tracking")])
@@ -89,16 +98,28 @@ export default function HoyPage() {
         const t = await trackingRes.json()
         setMealTracking((t.mealLogs || []).map((m: any) => ({ mealType: m.mealType, completed: m.completed, followsPlan: m.followsPlan })))
         setExerciseTracking((t.exerciseLogs || []).map((e: any) => ({ exerciseId: e.exerciseId, completed: e.completed })))
+        
         if (t.dailyLog) {
-          setCheckin({
-            water: t.dailyLog.waterLiters ? String(t.dailyLog.waterLiters) : "",
-            weight: t.dailyLog.weightKg ? String(t.dailyLog.weightKg) : "",
-            energy: t.dailyLog.energy || 3,
-            mood: t.dailyLog.mood || 3,
-          })
+          const storedCheckin = window.localStorage.getItem("sapofit_last_checkin")
+          let storedParsed = null
+          if (storedCheckin) {
+            try { storedParsed = JSON.parse(storedCheckin) } catch {}
+          }
+          
+          if (storedParsed) {
+            setCheckin(storedParsed)
+          } else if (t.dailyLog.waterLiters || t.dailyLog.weightKg || t.dailyLog.energy || t.dailyLog.mood) {
+            setCheckin({
+              water: t.dailyLog.waterLiters ? String(t.dailyLog.waterLiters) : "",
+              weight: t.dailyLog.weightKg ? String(t.dailyLog.weightKg) : "",
+              energy: t.dailyLog.energy || 3,
+              mood: t.dailyLog.mood || 3,
+            })
+          }
         }
       }
 
+      setHasLoadedFromApi(true)
       setLoading(false)
     }
 
@@ -106,6 +127,8 @@ export default function HoyPage() {
   }, [])
 
   const guardarCheckin = async () => {
+    window.localStorage.setItem("sapofit_last_checkin", JSON.stringify(checkin))
+    
     await fetch("/api/tracking", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -33,7 +33,9 @@ export async function createInvitationForUser(userId: string, invitedByUserId: s
 
   const invitationLink = buildInvitationLink(rawToken)
   
-  await sendEmail({
+  console.log("[Invitation] Sending email to:", user.email, "link:", invitationLink)
+  
+  const emailResult = await sendEmail({
     to: user.email,
     subject: "¡Bienvenido a SapoFit! 👋",
     text: `Hola ${user.displayName ?? user.name ?? 'Usuario'}, has sido invitado a SapoFit. Usa este enlace para registrarte: ${invitationLink}`,
@@ -54,7 +56,9 @@ export async function createInvitationForUser(userId: string, invitedByUserId: s
         </p>
       </div>
     `,
-  }).catch((err) => console.error("[Invitation Email] Failed to send:", err))
+  })
+  
+  console.log("[Invitation] Email result:", JSON.stringify(emailResult))
 
   return { invitation, token: rawToken }
 }

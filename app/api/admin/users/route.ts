@@ -30,6 +30,12 @@ export async function GET(req: NextRequest) {
       modules: {
         orderBy: { moduleKey: "asc" },
       },
+      profile: true,
+      goal: true,
+      mealPlans: { orderBy: { createdAt: "desc" }, take: 1 },
+      exerciseLogs: { where: { completed: true }, select: { id: true } },
+      mealLogs: { where: { completed: true }, select: { id: true } },
+      dailyLogs: { orderBy: { date: "desc" }, take: 30 },
       invitationsReceived: {
         orderBy: { createdAt: "desc" },
         take: 1,
@@ -40,24 +46,46 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    users: users.map((u) => ({
-      id: u.id,
-      email: u.email,
-      name: u.name,
-      status: u.status,
-      lastLoginAt: u.lastLoginAt,
-      loginCount: u._count.loginEvents,
-      modules: u.modules.map((module) => ({ moduleKey: module.moduleKey, enabled: module.enabled })),
-      pricing: u.pricing ? { label: u.pricing.label, monthlyPrice: u.pricing.monthlyPrice } : null,
-      latestInvitation: u.invitationsReceived[0]
-        ? {
-            id: u.invitationsReceived[0].id,
-            status: u.invitationsReceived[0].status,
-            expiresAt: u.invitationsReceived[0].expiresAt,
-            createdAt: u.invitationsReceived[0].createdAt,
-          }
-        : null,
-    })),
+    users: users.map((u) => {
+      const hasProfile = u.profile?.age && u.profile?.heightCm && u.profile?.weightKg
+      const hasGoal = u.goal?.targetWeightKg
+      const hasMealPlan = u.mealPlans && u.mealPlans.length > 0
+      const profileCompletion = [hasProfile, hasGoal, hasMealPlan].filter(Boolean).length
+
+      const weightEntries = u.dailyLogs?.filter(d => d.weightKg).slice(0, 7) || []
+      const recentWeight = weightEntries[0]?.weightKg
+      const firstWeight = weightEntries[weightEntries.length - 1]?.weightKg
+
+      return {
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        status: u.status,
+        role: u.role,
+        createdAt: u.createdAt,
+        lastLoginAt: u.lastLoginAt,
+        loginCount: u._count.loginEvents,
+        profileCompletion,
+        hasProfile: !!hasProfile,
+        hasGoal: !!hasGoal,
+        hasMealPlan: !!hasMealPlan,
+        recentWeight,
+        weightChange: firstWeight && recentWeight ? Number((recentWeight - firstWeight).toFixed(1)) : null,
+        mealsCompleted: u.mealLogs?.length || 0,
+        workoutsCompleted: u.exerciseLogs?.length || 0,
+        daysActive: u.dailyLogs?.length || 0,
+        modules: u.modules.map((module) => ({ moduleKey: module.moduleKey, enabled: module.enabled })),
+        pricing: u.pricing ? { label: u.pricing.label, monthlyPrice: u.pricing.monthlyPrice } : null,
+        latestInvitation: u.invitationsReceived[0]
+          ? {
+              id: u.invitationsReceived[0].id,
+              status: u.invitationsReceived[0].status,
+              expiresAt: u.invitationsReceived[0].expiresAt,
+              createdAt: u.invitationsReceived[0].createdAt,
+            }
+          : null,
+      }
+    }),
   })
 }
 
