@@ -158,3 +158,23 @@ export const evolutionReceiveSchema = z.object({
   message: z.string().min(1).max(4000),
   raw: z.unknown().optional(),
 })
+
+export const pushSubscribeSchema = z.object({
+  endpoint: z.string().min(10).max(2000),
+  keys: z.object({
+    p256dh: z.string().min(1).max(500),
+    auth: z.string().min(1).max(500),
+  }),
+  userAgent: z.string().max(300).optional(),
+})
+
+export const pushUnsubscribeSchema = z.object({
+  endpoint: z.string().min(10).max(2000),
+})
+
+export const pushNotifySchema = z.object({
+  userId: z.string().min(1).optional(),
+  title: z.string().min(1).max(120),
+  body: z.string().min(1).max(500),
+  url: z.string().max(500).optional(),
+})

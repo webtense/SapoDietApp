@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const stored = await evolutionStoreInbound({
     fromPhone: inbound.fromPhone,
     message: inbound.message,
-    rawJson: body ? JSON.stringify(body) : null,
+    rawJson: body ? JSON.stringify(body) : undefined,
   })
 
   // Optionally verify phone on first trusted inbound message.
