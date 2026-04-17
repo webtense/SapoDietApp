@@ -42,10 +42,28 @@ model User {
   aiTokenLimit       Int         @default(1)
   lastAiTokenReset   DateTime?
   foodAnalyses       FoodAnalysis[]
+  evolutionMsgs      EvolutionMsg[]
 
   @@index([status])
   @@index([role])
   @@index([invitedById])
+}
+
+model EvolutionMsg {
+  id        String   @id @default(cuid())
+  userId    String
+  platform  String   @default("whatsapp")
+  direction String   // 'sent' | 'received'
+  fromPhone String?
+  toPhone   String?
+  content   String
+  rawJson   String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([platform, createdAt])
 }
 
 model Session {

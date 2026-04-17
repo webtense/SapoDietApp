@@ -147,3 +147,14 @@ export const shoppingListSchema = z.object({
     )
     .max(300),
 })
+
+export const evolutionSendSchema = z.object({
+  message: z.string().min(1).max(2000),
+  toPhone: z.string().max(30).optional(),
+})
+
+export const evolutionReceiveSchema = z.object({
+  fromPhone: z.string().min(1).max(30),
+  message: z.string().min(1).max(4000),
+  raw: z.unknown().optional(),
+})
