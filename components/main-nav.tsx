@@ -43,7 +43,7 @@ export function MainNav({ userRole }: MainNavProps) {
               <Flame className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-lg font-semibold text-foreground">SapoFit v3.1</p>
+              <p className="text-lg font-semibold text-foreground">SapoFit</p>
               <p className="text-sm text-muted-foreground">Nutrición, entreno y hábitos</p>
             </div>
           </div>

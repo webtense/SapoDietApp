@@ -24,6 +24,28 @@ export async function GET(req: NextRequest) {
   const type = searchParams.get("type")
   const today = startOfDay(new Date())
 
+  if (type === "weights") {
+    const daysRaw = searchParams.get("days")
+    const days = Math.max(1, Math.min(365, Number(daysRaw || 30) || 30))
+    const from = startOfDay(subDays(today, days - 1))
+
+    const dailyLogs = await prisma.dailyLog.findMany({
+      where: {
+        userId: user.id,
+        date: { gte: from, lte: today },
+        weightKg: { not: null },
+      },
+      orderBy: { date: "asc" },
+      select: { date: true, weightKg: true },
+    })
+
+    return NextResponse.json({
+      items: dailyLogs
+        .filter((d) => d.weightKg != null)
+        .map((d) => ({ date: d.date.toISOString(), weightKg: Number(Number(d.weightKg).toFixed(1)) })),
+    })
+  }
+
   if (type === "weekly") {
     const weekStart = startOfWeek(subDays(today, 1), { weekStartsOn: 1 })
     const weekEnd = endOfWeek(subDays(today, 1), { weekStartsOn: 1 })
