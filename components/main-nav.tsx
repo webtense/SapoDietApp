@@ -74,7 +74,7 @@ export function MainNav({ userRole }: MainNavProps) {
         </div>
 
         <div className="mt-auto rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm">
-          <p className="text-sm font-medium text-foreground">SapoFit v3.1</p>
+          <p className="text-sm font-medium text-foreground">SapoFit v3.2</p>
           <p className="mt-1 text-sm text-muted-foreground">Análisis de comida con IA, control de tokens y más.</p>
         </div>
       </aside>
