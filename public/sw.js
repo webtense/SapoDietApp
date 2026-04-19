@@ -1,5 +1,21 @@
 /* eslint-disable no-restricted-globals */
 
+self.addEventListener("install", () => {
+  // Activate updated SW ASAP to avoid stale PWA state.
+  self.skipWaiting()
+})
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    (async () => {
+      // If an older SW version used caches, drop them.
+      const keys = await caches.keys().catch(() => [])
+      await Promise.all(keys.map((k) => caches.delete(k)))
+      await self.clients.claim()
+    })(),
+  )
+})
+
 self.addEventListener("push", (event) => {
   let data = null
   try {

@@ -7,9 +7,12 @@ export function PwaRegister() {
     if (typeof window === "undefined") return
     if (!("serviceWorker" in navigator)) return
 
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // Optional feature: ignore registration errors in unsupported contexts.
-    })
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((reg) => reg.update().catch(() => null))
+      .catch(() => {
+        // Optional feature: ignore registration errors in unsupported contexts.
+      })
   }, [])
 
   return null
