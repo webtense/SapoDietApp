@@ -3,6 +3,7 @@ import { prisma } from "@/lib/server/prisma"
 import { apiError, requireUser } from "@/lib/server/api"
 import { profileSchema } from "@/lib/validation"
 import { sanitizeText } from "@/lib/server/security"
+import { ensureWorkoutReminder } from "@/lib/server/reminders"
 
 export async function GET() {
   const { user, error } = await requireUser()
@@ -37,6 +38,7 @@ export async function PUT(req: NextRequest) {
       data: { 
         name: sanitizeText(data.name, 80),
         phone: data.phone ? sanitizeText(data.phone.replace(/\s/g, ''), 20) : null,
+        timezone: data.timezone ? sanitizeText(data.timezone, 80) : undefined,
       },
     }),
     prisma.profile.upsert({
@@ -94,6 +96,8 @@ export async function PUT(req: NextRequest) {
       },
     }) : prisma.goal.findUnique({ where: { userId: user.id } }),
   ])
+
+  await ensureWorkoutReminder(user.id, data.frecuenciaEntrenamiento)
 
   return NextResponse.json({ ok: true, viability })
 }

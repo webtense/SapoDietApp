@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/server/prisma"
 import { dispatchReminder, getReminderMoment, parseReminderDays } from "@/lib/server/reminders"
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization")
   const cronSecret = process.env.CRON_SECRET
 
@@ -16,30 +16,41 @@ export async function GET(req: NextRequest) {
 
   const now = new Date()
   const reminders = await prisma.reminder.findMany({
-    where: {
-      enabled: true,
-    },
+    where: { enabled: true },
     include: {
-      user: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          phoneVerified: true,
+          timezone: true,
+        },
+      },
     },
   })
 
-  const remindersToSend = reminders.filter((reminder) => {
+  const due = reminders.filter((reminder) => {
     const local = getReminderMoment(now, reminder.user.timezone)
     return parseReminderDays(reminder.days).includes(local.day) && reminder.time === local.time
   })
 
   const results = await Promise.all(
-    remindersToSend.map(async (reminder) => {
-      const result = await dispatchReminder(reminder)
-      return { id: reminder.id, title: reminder.title, ...result }
-    })
+    due.map(async (reminder) => ({
+      id: reminder.id,
+      title: reminder.title,
+      userId: reminder.user.id,
+      kind: reminder.kind,
+      result: await dispatchReminder(reminder),
+    })),
   )
 
   return NextResponse.json({
+    ok: true,
     executedAt: now.toISOString(),
     remindersFound: reminders.length,
-    remindersSent: remindersToSend.length,
+    remindersDue: due.length,
+    dispatched: results.filter((item) => !item.result.skipped).length,
     results,
   })
 }

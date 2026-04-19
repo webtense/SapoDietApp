@@ -3,6 +3,7 @@ import { apiError, requireUser } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
 import { calcularMacronutrientes, calcularNecesidadesCaloricas, generarPlanComidas } from "@/lib/diet-calculator"
 import { generarPlanEjercicios } from "@/lib/tracking-system"
+import { ensureWorkoutReminder } from "@/lib/server/reminders"
 
 function normalizeMacrosForStorage(macros: ReturnType<typeof calcularMacronutrientes>) {
   return {
@@ -97,6 +98,8 @@ export async function POST(req: NextRequest) {
       lastCalculatedFat: macros.fat,
     },
   })
+
+  await ensureWorkoutReminder(user.id, profile.trainingFrequency)
 
   return NextResponse.json({ plan: created, mealPlan, exercisePlan, macros })
 }

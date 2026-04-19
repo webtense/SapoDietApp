@@ -76,6 +76,9 @@ export async function GET(req: NextRequest) {
         daysActive: u.dailyLogs?.length || 0,
         modules: u.modules.map((module) => ({ moduleKey: module.moduleKey, enabled: module.enabled })),
         pricing: u.pricing ? { label: u.pricing.label, monthlyPrice: u.pricing.monthlyPrice } : null,
+        aiTokensUsed: u.aiTokensUsed,
+        aiTokenLimit: u.aiTokenLimit,
+        lastAiTokenReset: u.lastAiTokenReset,
         latestInvitation: u.invitationsReceived[0]
           ? {
               id: u.invitationsReceived[0].id,

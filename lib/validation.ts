@@ -80,9 +80,16 @@ export const adminUpdatePricingSchema = z.object({
   notes: z.string().max(250).optional(),
 })
 
+export const adminAiQuotaSchema = z.object({
+  userId: z.string().min(1),
+  aiTokenLimit: z.number().int().min(0).max(1000).optional(),
+  resetUsage: z.boolean().optional(),
+})
+
 export const profileSchema = z.object({
   name: z.string().min(2).max(80),
   phone: z.string().max(20).optional(),
+  timezone: z.string().min(3).max(80).optional(),
   age: z.number().int().min(12).max(100),
   height: z.number().min(120).max(230),
   weight: z.number().min(35).max(250),

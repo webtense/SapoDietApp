@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { apiError, requireUser } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
-
-function parseReminderDays(value: string) {
-  try {
-    const parsed = JSON.parse(value)
-    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : []
-  } catch {
-    return []
-  }
-}
+import { parseReminderDays } from "@/lib/server/reminders"
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, error } = await requireUser()
@@ -39,10 +31,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   return NextResponse.json({
     reminder: {
       id: updated.id,
+      kind: updated.kind,
+      system: updated.system,
       title: updated.title,
       time: updated.time,
       days: parseReminderDays(updated.days),
       enabled: updated.enabled,
+      lastError: updated.lastError,
     },
   })
 }
@@ -59,6 +54,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   if (!reminder) {
     return apiError("Recordatorio no encontrado")
+  }
+
+  if (reminder.system) {
+    return apiError("No puedes eliminar un recordatorio automático", 400)
   }
 
   await prisma.reminder.delete({ where: { id } })

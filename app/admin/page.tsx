@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { DEFAULT_MODULE_KEYS, type ModuleKey } from "@/lib/constants/modules"
-import { TrendingUp, TrendingDown, CheckCircle, XCircle, AlertCircle, Scale, Calendar, Dumbbell, Utensils } from "lucide-react"
+import { TrendingUp, TrendingDown, CheckCircle, XCircle, AlertCircle, Scale, Calendar, Dumbbell, Utensils, Activity } from "lucide-react"
 
 interface AdminStats {
   totalUsers: number
@@ -50,6 +50,9 @@ interface AdminUser {
   daysActive: number
   modules: UserModuleState[]
   pricing: { label: string; monthlyPrice: number | null } | null
+  aiTokensUsed: number
+  aiTokenLimit: number
+  lastAiTokenReset: string | null
   latestInvitation: InvitationSummary | null
 }
 
@@ -92,6 +95,7 @@ export default function AdminPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [priceDrafts, setPriceDrafts] = useState<Record<string, { label: string; monthlyPrice: string }>>({})
   const [moduleDrafts, setModuleDrafts] = useState<Record<string, UserModuleState[]>>({})
+  const [aiDrafts, setAiDrafts] = useState<Record<string, string>>({})
   const [activity, setActivity] = useState<Record<string, LoginEvent[]>>({})
   const [activityLoading, setActivityLoading] = useState<Record<string, boolean>>({})
   const [form, setForm] = useState({ email: "", name: "", priceLabel: "", monthlyPrice: "", sendInvitation: true })
@@ -119,6 +123,9 @@ export default function AdminPage() {
           ]
         }),
       ),
+    )
+    setAiDrafts(
+      Object.fromEntries(userList.map((user) => [user.id, String(user.aiTokenLimit ?? 0)])),
     )
   }
 
@@ -220,6 +227,25 @@ export default function AdminPage() {
       return
     }
     setMessage("Módulos actualizados")
+    await loadData()
+  }
+
+  const saveAiQuota = async (userId: string, resetUsage = false) => {
+    const res = await fetch("/api/admin/ai-quota", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId,
+        aiTokenLimit: Number(aiDrafts[userId] || 0),
+        resetUsage,
+      }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      setError(data?.error || "No se pudo guardar la cuota IA")
+      return
+    }
+    setMessage(resetUsage ? "Cuota IA reiniciada" : "Cuota IA actualizada")
     await loadData()
   }
 
@@ -434,7 +460,7 @@ export default function AdminPage() {
               {expandedUser === user.id && (
                 <>
                   <Separator className="my-4" />
-                  <div className="grid gap-4 md:grid-cols-4">
+                  <div className="grid gap-4 md:grid-cols-5">
                     <div className="rounded-lg bg-slate-50 p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <Scale className="h-4 w-4" />
@@ -493,11 +519,20 @@ export default function AdminPage() {
                         </div>
                       </div>
                     </div>
+
+                    <div className="rounded-lg bg-slate-50 p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Activity className="h-4 w-4" />
+                        <span className="font-medium text-sm">IA</span>
+                      </div>
+                      <p className="text-2xl font-bold">{user.aiTokensUsed}/{user.aiTokenLimit}</p>
+                      <p className="text-xs text-muted-foreground">Reset: {formatDate(user.lastAiTokenReset)}</p>
+                    </div>
                   </div>
 
                   <Separator className="my-4" />
 
-                  <div className="grid gap-4 xl:grid-cols-[1fr_1fr_0.8fr]">
+                  <div className="grid gap-4 xl:grid-cols-[1fr_1fr_0.8fr_0.8fr]">
                     <div className="space-y-3">
                       <p className="text-sm font-medium">Módulos</p>
                       <div className="grid grid-cols-2 gap-2">
@@ -543,6 +578,18 @@ export default function AdminPage() {
                           </div>
                         ))}
                         {activity[user.id] && activity[user.id].length === 0 && <p className="text-muted-foreground">Sin actividad registrada.</p>}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium">Gestión IA</p>
+                      <div>
+                        <Label className="text-xs">Límite diario</Label>
+                        <Input value={aiDrafts[user.id] || "0"} onChange={(e) => setAiDrafts((current) => ({ ...current, [user.id]: e.target.value }))} />
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={() => saveAiQuota(user.id)}>Guardar cuota</Button>
+                        <Button variant="outline" size="sm" onClick={() => saveAiQuota(user.id, true)}>Reset uso</Button>
                       </div>
                     </div>
                   </div>

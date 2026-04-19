@@ -162,6 +162,7 @@ export default function PerfilPage() {
     const payload = {
       name: formData.nombre,
       phone: formData.telefono,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       age: Number(formData.edad),
       height: Number(formData.altura),
       weight: Number(formData.peso),

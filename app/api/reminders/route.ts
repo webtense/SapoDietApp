@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { apiError, requireUser } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
-
-function parseReminderDays(value: string) {
-  try {
-    const parsed = JSON.parse(value)
-    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === "string") : []
-  } catch {
-    return []
-  }
-}
+import { parseReminderDays } from "@/lib/server/reminders"
 
 export async function GET() {
   const { user, error } = await requireUser()
@@ -23,10 +15,13 @@ export async function GET() {
   return NextResponse.json({
     reminders: reminders.map(r => ({
       id: r.id,
+      kind: r.kind,
+      system: r.system,
       title: r.title,
       time: r.time,
       days: parseReminderDays(r.days),
       enabled: r.enabled,
+      lastError: r.lastError,
     })),
   })
 }
@@ -48,6 +43,7 @@ export async function POST(req: NextRequest) {
   const reminder = await prisma.reminder.create({
     data: {
       userId: user.id,
+      kind: "CUSTOM",
       title: body.title.slice(0, 100),
       time: body.time,
       days: JSON.stringify(days),
@@ -58,10 +54,13 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     reminder: {
       id: reminder.id,
+      kind: reminder.kind,
+      system: reminder.system,
       title: reminder.title,
       time: reminder.time,
       days: parseReminderDays(reminder.days),
       enabled: reminder.enabled,
+      lastError: reminder.lastError,
     },
   })
 }

@@ -1,6 +1,6 @@
 # SapoFit
 
-Version: **3.2**
+Version: **3.3**
 
 Planificador de nutrición y entrenamiento con autenticación segura, seguimiento diario y panel de administración.
 
@@ -13,6 +13,35 @@ Planificador de nutrición y entrenamiento con autenticación segura, seguimient
 - Seguimiento de comidas, ejercicios y check-in diario.
 - Rate limiting persistente (Prisma).
 - Migración lista a PostgreSQL para producción.
+- Recordatorios v3.3 automáticos de entreno a las 19:00 según frecuencia, con envío Push + WhatsApp.
+- Web Push con VAPID y Service Worker propio.
+- Integración Evolution API para WhatsApp bidireccional.
+- Cron unificado para n8n en un único workflow `sapofit`.
+
+## Qué debe estar funcionando
+
+- App Next.js en producción.
+- PostgreSQL accesible desde Prisma.
+- Evolution API accesible para WhatsApp (`EVOLUTION_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE`).
+- Web Push configurado (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`).
+- SMTP si quieres email real.
+- n8n con un workflow único llamado `sapofit`.
+
+## Flujo n8n `sapofit`
+
+Antes de cambiar producción: hacer backup del workflow `sapofit` y de su BD/volumen.
+
+Nodos mínimos recomendados dentro del workflow `sapofit`:
+
+1. Cron cada minuto -> `POST /api/cron/reminders-dispatch`
+2. Cron diario 00:00 -> `POST /api/cron/ai-quota-reset`
+3. Webhooks/automatizaciones futuras se siguen añadiendo al mismo workflow.
+
+Headers para los cron protegidos:
+
+```text
+Authorization: Bearer <CRON_SECRET>
+```
 
 ## Stack
 
@@ -60,10 +89,13 @@ npm test
 - `DATABASE_URL` — PostgreSQL en producción (`postgresql://...`); SQLite (`file:./dev.db`) en desarrollo local
 - `SESSION_COOKIE_NAME=sapofit_session`
 - `SESSION_DAYS=7`
-- `CRON_SECRET` (obligatoria para ejecutar `/api/cron/reminders`)
+- `CRON_SECRET` (obligatoria para ejecutar `/api/cron/reminders-dispatch` y `/api/cron/ai-quota-reset`)
 - `ADMIN_EMAIL`, `ADMIN_NAME`, `ADMIN_PASSWORD` — seed del administrador
 - `APP_URL` — URL pública usada en los enlaces de invitación
 - `INVITATION_TTL_DAYS=7`
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+- `EVOLUTION_URL`, `EVOLUTION_API_KEY`, `EVOLUTION_INSTANCE`
+- `EVOLUTION_WEBHOOK_SECRET` (opcional, recomendado)
 
 ### Despliegue manual
 

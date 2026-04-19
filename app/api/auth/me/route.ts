@@ -18,6 +18,8 @@ export async function GET() {
       id: user.id,
       email: user.email,
       name: user.name,
+      phone: fullUser?.phone ?? null,
+      timezone: fullUser?.timezone ?? null,
       role: user.role,
       status: user.status,
       modules: fullUser?.modules?.filter((m) => m.enabled).map((m) => m.moduleKey) ?? [],
