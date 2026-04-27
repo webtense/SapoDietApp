@@ -38,6 +38,8 @@ export default function EntrenamientoPage() {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [tracking, setTracking] = useState<ExerciseTracking[]>([])
   const [recommendations, setRecommendations] = useState<Recommendations | null>(null)
+  const [restTimer, setRestTimer] = useState<number | null>(null)
+  const [restExerciseName, setRestExerciseName] = useState("")
 
   const loadOfflineQueue = () => {
     try {
@@ -141,6 +143,8 @@ export default function EntrenamientoPage() {
       return prev.map((item) => item.exerciseId === exerciseId ? next : item)
     })
 
+    if (!current?.completed) startRest(exercise.rest || 30, exercise.name)
+
     if (!navigator.onLine) {
       const queue = loadOfflineQueue().filter((item) => item.exerciseId !== exerciseId)
       saveOfflineQueue([...queue, next])
@@ -160,6 +164,23 @@ export default function EntrenamientoPage() {
         },
       }),
     })
+  }
+
+  useEffect(() => {
+    if (restTimer === null || restTimer <= 0) {
+      if (restTimer === 0) {
+        if ("vibrate" in navigator) navigator.vibrate([200, 100, 200])
+        setRestTimer(null)
+      }
+      return
+    }
+    const id = setTimeout(() => setRestTimer((t) => (t ?? 1) - 1), 1000)
+    return () => clearTimeout(id)
+  }, [restTimer])
+
+  const startRest = (seconds: number, name: string) => {
+    setRestTimer(seconds)
+    setRestExerciseName(name)
   }
 
   const completedCount = useMemo(() => tracking.filter((item) => item.completed).length, [tracking])
@@ -210,7 +231,7 @@ export default function EntrenamientoPage() {
         <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-3">
             {exercises.map((exercise, idx) => {
-              const status = tracking.find((item) => item.exerciseId === String(idx))
+              const status = tracking.find((item) => item.exerciseId === exercise.id)
               const completed = !!status?.completed
 
               return (
@@ -262,6 +283,39 @@ export default function EntrenamientoPage() {
                 <p>Esto cubre la parte esencial del modo offline v3 sin cambiar tu backend actual.</p>
               </CardContent>
             </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Timer de descanso flotante — patrón FitBod/Stronglifts */}
+      {restTimer !== null && (
+        <div className="fixed bottom-20 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 px-4">
+          <div className="flex items-center gap-4 rounded-[1.75rem] bg-gray-900 p-4 shadow-2xl text-white">
+            <div className="relative flex-shrink-0">
+              {(() => {
+                const total = 60
+                const r = 24
+                const circ = 2 * Math.PI * r
+                const pct = Math.min(1, restTimer / total)
+                return (
+                  <svg width="60" height="60" viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r={r} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4" />
+                    <circle cx="30" cy="30" r={r} fill="none" stroke="#34d399" strokeWidth="4"
+                      strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
+                      strokeLinecap="round" transform="rotate(-90 30 30)"
+                      style={{ transition: "stroke-dashoffset 0.9s linear" }} />
+                    <text x="30" y="35" textAnchor="middle" fontSize="14" fontWeight="bold" fill="white">{restTimer}s</text>
+                  </svg>
+                )
+              })()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-white/60">Descanso tras</p>
+              <p className="truncate font-medium">{restExerciseName}</p>
+            </div>
+            <button onClick={() => setRestTimer(null)} className="rounded-full bg-white/10 px-3 py-1 text-xs hover:bg-white/20">
+              Saltar
+            </button>
           </div>
         </div>
       )}

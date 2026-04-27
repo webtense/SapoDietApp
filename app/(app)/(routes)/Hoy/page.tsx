@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { defaultV3Preferences, parseV3Preferences, V3_PREFERENCES_KEY } from "@/lib/v3-preferences"
-import type { NutritionalNeeds } from "@/lib/diet-calculator"
+import { normalizeMacros } from "@/lib/plan-normalizers"
+import type { NormalizedMacros } from "@/lib/plan-normalizers"
 
 interface Ingredient {
   nombre: string
@@ -58,7 +59,7 @@ const mealConfig = [
 export default function HoyPage() {
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
-  const [plan, setPlan] = useState<{ necesidades: NutritionalNeeds; planComidas: MealPlan; planEntreno?: any[] } | null>(null)
+  const [plan, setPlan] = useState<{ necesidades: NormalizedMacros; planComidas: MealPlan; planEntreno?: any[] } | null>(null)
   const [mealTracking, setMealTracking] = useState<MealTracking[]>([])
   const [exerciseTracking, setExerciseTracking] = useState<ExerciseTracking[]>([])
   const [checkin, setCheckin] = useState({ water: "", weight: "", energy: 3, mood: 3 })
@@ -87,7 +88,7 @@ export default function HoyPage() {
         if (p.plan?.planJson) {
           const parsed = JSON.parse(p.plan.planJson)
           setPlan({
-            necesidades: parsed.macros || parsed.necesidades,
+            necesidades: normalizeMacros(parsed.macros || parsed.necesidades),
             planComidas: parsed.mealPlan || parsed.planComidas,
             planEntreno: parsed.exercisePlan || parsed.planEntreno || [],
           })
@@ -177,6 +178,15 @@ export default function HoyPage() {
   const completedExercises = useMemo(() => exerciseTracking.filter((item) => item.completed).length, [exerciseTracking])
   const dailyProgress = Math.round((((completedMeals / mealConfig.length) * 0.6) + ((plan?.planEntreno?.length ? completedExercises / plan.planEntreno.length : 0) * 0.4)) * 100)
 
+  const estimatedCaloriesConsumed = useMemo(() => {
+    if (!plan) return 0
+    return mealConfig.reduce((sum, mealInfo) => {
+      const meal = plan.planComidas[mealInfo.key as keyof MealPlan]
+      const track = mealTracking.find((t) => t.mealType === mealInfo.key)
+      return track?.completed && meal ? sum + (meal.calorias || 0) : sum
+    }, 0)
+  }, [mealTracking, plan])
+
   if (loading) return <div className="p-4 text-center">Cargando...</div>
 
   return (
@@ -190,13 +200,57 @@ export default function HoyPage() {
               {prefs.needsTupperMeals ? "Modo tupper activado" : "Modo cocina en casa"} · {prefs.hasAirfryer ? "recetas con opción Airfryer" : "recetas estándar"} · {prefs.primaryGoal.toLowerCase()}.
             </p>
           </div>
-          <div className="min-w-64 rounded-[1.5rem] bg-white/12 p-4 backdrop-blur">
-            <div className="mb-2 flex items-center justify-between text-sm"><span>Progreso diario</span><span>{dailyProgress}%</span></div>
-            <Progress value={dailyProgress} className="bg-white/20 [&_[data-slot=progress-indicator]]:bg-white" />
-            <div className="mt-3 grid grid-cols-3 gap-3 text-center text-sm">
-              <div><p className="text-lg font-semibold">{completedMeals}/{mealConfig.length}</p><p className="text-white/75">Comidas</p></div>
-              <div><p className="text-lg font-semibold">{completedExercises}</p><p className="text-white/75">Ejercicios</p></div>
-              <div><p className="text-lg font-semibold">{plan?.necesidades.water || 2.5}L</p><p className="text-white/75">Meta agua</p></div>
+          <div className="rounded-[1.5rem] bg-white/12 p-4 backdrop-blur">
+            <div className="flex items-center gap-4">
+              {/* Anillo de calorías estilo MacroFactor */}
+              {(() => {
+                const goal = plan?.necesidades.calories || 2000
+                const consumed = estimatedCaloriesConsumed
+                const r = 36
+                const circ = 2 * Math.PI * r
+                const pct = Math.min(1, consumed / goal)
+                const offset = circ * (1 - pct)
+                const remaining = goal - consumed
+                const over = remaining < 0
+                return (
+                  <div className="relative flex-shrink-0">
+                    <svg width="90" height="90" viewBox="0 0 90 90">
+                      <circle cx="45" cy="45" r={r} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="7" />
+                      <circle cx="45" cy="45" r={r} fill="none"
+                        stroke={over ? "#f87171" : "#34d399"} strokeWidth="7"
+                        strokeDasharray={circ} strokeDashoffset={offset}
+                        strokeLinecap="round" transform="rotate(-90 45 45)"
+                        style={{ transition: "stroke-dashoffset 0.6s ease" }} />
+                      <text x="45" y="41" textAnchor="middle" fontSize="13" fontWeight="bold" fill="white">{consumed}</text>
+                      <text x="45" y="54" textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.7)">kcal</text>
+                    </svg>
+                  </div>
+                )
+              })()}
+              <div className="min-w-0 flex-1">
+                {(() => {
+                  const goal = plan?.necesidades.calories || 2000
+                  const remaining = goal - estimatedCaloriesConsumed
+                  const over = remaining < 0
+                  return (
+                    <div className="mb-2">
+                      <p className={`text-lg font-semibold leading-none ${over ? "text-red-300" : ""}`}>
+                        {over ? `+${Math.abs(remaining)}` : remaining} kcal
+                      </p>
+                      <p className="text-xs text-white/70">{over ? "por encima" : "restantes"} de {goal}</p>
+                    </div>
+                  )
+                })()}
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div><p className="font-semibold">{completedMeals}/{mealConfig.length}</p><p className="text-white/70">Comidas</p></div>
+                  <div><p className="font-semibold">{completedExercises}</p><p className="text-white/70">Ejercicios</p></div>
+                  <div><p className="font-semibold">{plan?.necesidades.water || 2.5}L</p><p className="text-white/70">Agua</p></div>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3">
+              <div className="mb-1 flex items-center justify-between text-xs text-white/70"><span>Progreso diario</span><span>{dailyProgress}%</span></div>
+              <Progress value={dailyProgress} className="bg-white/20 [&_[data-slot=progress-indicator]]:bg-white" />
             </div>
           </div>
         </div>

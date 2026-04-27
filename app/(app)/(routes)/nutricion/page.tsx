@@ -135,7 +135,7 @@ export default function NutricionPage() {
     )
   }
 
-  const mealTypes = ["Desayuno", "Almuerzo", "Comida", "Merienda", "Cena"]
+  const mealTypes = ["Desayuno", "Snack mañana", "Almuerzo", "Merienda", "Cena"]
 
   return (
     <div className="p-4 max-w-4xl mx-auto space-y-4">
@@ -221,8 +221,8 @@ export default function NutricionPage() {
       {mealTypes.map((tipo) => {
         const keyMap: Record<string, string> = {
           "Desayuno": "desayuno",
+          "Snack mañana": "mediaManana",
           "Almuerzo": "almuerzo",
-          "Comida": "almuerzo",
           "Merienda": "merienda",
           "Cena": "cena"
         }
@@ -248,11 +248,33 @@ export default function NutricionPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                <div>
+              <div className="rounded-lg bg-muted/50 p-2 space-y-2">
+                <div className="flex items-center justify-between">
                   <p className="font-medium text-sm">{meal.nombre}</p>
+                  <Badge variant="outline">{meal.calorias} kcal</Badge>
                 </div>
-                <Badge variant="outline">{meal.calorias} kcal</Badge>
+                {/* Barra de distribución de macros — patrón Cronometer */}
+                {(() => {
+                  const totalCals = meal.proteinas * 4 + meal.carbohidratos * 4 + meal.grasas * 9
+                  if (!totalCals) return null
+                  const pPct = Math.round((meal.proteinas * 4 / totalCals) * 100)
+                  const cPct = Math.round((meal.carbohidratos * 4 / totalCals) * 100)
+                  const fPct = 100 - pPct - cPct
+                  return (
+                    <div>
+                      <div className="flex h-2 overflow-hidden rounded-full">
+                        <div className="bg-blue-400" style={{ width: `${pPct}%` }} />
+                        <div className="bg-emerald-400" style={{ width: `${cPct}%` }} />
+                        <div className="bg-yellow-400" style={{ width: `${fPct}%` }} />
+                      </div>
+                      <div className="mt-1.5 flex gap-3 text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-blue-400" />{meal.proteinas}g P</span>
+                        <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />{meal.carbohidratos}g C</span>
+                        <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-yellow-400" />{meal.grasas}g G</span>
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
               
               <div className="space-y-1">

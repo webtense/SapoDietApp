@@ -139,6 +139,7 @@ function consolidarIngredientes(planComidas: MealPlan, diasSemana: number): Ingr
   ]
 
   todasLasComidas.forEach((comida) => {
+    if (!comida) return
     comida.ingredientes.forEach((ingrediente) => {
       const key = ingrediente.nombre.toLowerCase()
       const cantidadSemanal = ingrediente.cantidad * diasSemana

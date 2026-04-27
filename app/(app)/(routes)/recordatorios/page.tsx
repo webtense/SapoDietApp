@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Activity, Clock, MessageSquare, Plus, Trash2, Bell, AlertCircle, CheckCircle2, Smartphone, ShieldCheck } from "lucide-react"
+import { Clock, Plus, Trash2, Bell, CheckCircle2, Smartphone, ShieldCheck } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -40,13 +40,17 @@ export default function RecordatoriosPage() {
     "0": "Dom", "1": "Lun", "2": "Mar", "3": "Mié", "4": "Jue", "5": "Vie", "6": "Sáb"
   }
 
+  const fetchReminders = async () => {
+    const res = await fetch("/api/reminders")
+    if (res.ok) {
+      const data = await res.json()
+      setReminders(data.reminders || [])
+    }
+  }
+
   useEffect(() => {
     const load = async () => {
-      const [remindersRes] = await Promise.all([fetch("/api/reminders")])
-      if (remindersRes.ok) {
-        const data = await remindersRes.json()
-        setReminders(data.reminders || [])
-      }
+      await fetchReminders()
 
       if ("serviceWorker" in navigator) {
         const reg = await navigator.serviceWorker.getRegistration()
@@ -155,7 +159,7 @@ export default function RecordatoriosPage() {
       const data = await res.json()
 
       if (res.ok) {
-        setReminders([...reminders, data.reminder])
+        await fetchReminders()
         setShowForm(false)
         setNewReminder({ title: "", time: "09:00", days: ["1", "2", "3", "4", "5"] })
         toast.success("Recordatorio guardado")
@@ -202,6 +206,21 @@ export default function RecordatoriosPage() {
     }
   }
 
+  const nextReminder = (() => {
+    if (!reminders.length) return null
+    const now = new Date()
+    const todayDay = String(now.getDay())
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+    const todayPending = reminders
+      .filter((r) => r.enabled && r.days.includes(todayDay) && r.time > currentTime)
+      .sort((a, b) => a.time.localeCompare(b.time))[0]
+    if (todayPending) return { ...todayPending, isToday: true }
+    const anyNext = reminders
+      .filter((r) => r.enabled)
+      .sort((a, b) => a.time.localeCompare(b.time))[0]
+    return anyNext ? { ...anyNext, isToday: false } : null
+  })()
+
   if (loading) return <div className="p-4 text-center">Cargando...</div>
 
   return (
@@ -213,6 +232,20 @@ export default function RecordatoriosPage() {
           Nuevo
         </Button>
       </div>
+
+      {/* Próximo recordatorio — patrón MacroFactor */}
+      {nextReminder && (
+        <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <Clock className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">{nextReminder.title}</p>
+            <p className="text-xs text-muted-foreground">
+              {nextReminder.isToday ? "Hoy" : "Próximo"} · {nextReminder.time} · {nextReminder.days.map((d) => daysMap[d]).join(", ")}
+            </p>
+          </div>
+          <Badge variant="secondary" className="flex-shrink-0">{nextReminder.isToday ? "hoy" : "próximo"}</Badge>
+        </div>
+      )}
 
       <Card className="border-emerald-100 bg-emerald-50/50">
         <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
