@@ -164,14 +164,14 @@ export function ShoppingListDisplay({ shoppingList, onItemToggle, onGenerateNew 
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {itemsPasillo.map((item, index) => {
-                    const globalIndex = shoppingList.items.findIndex(
-                      (i) => i.nombre === item.nombre && i.unidad === item.unidad,
+                  {itemsPasillo.map((item) => {
+                    const globalIndex = shoppingList.items.findIndex((i) =>
+                      item.id ? i.id === item.id : i.nombre === item.nombre && i.unidad === item.unidad && i.cantidad === item.cantidad,
                     )
 
                     return (
                       <ShoppingItemCard
-                        key={`${item.nombre}-${item.unidad}`}
+                        key={item.id || `${item.nombre}-${item.unidad}`}
                         item={item}
                         onToggle={() => onItemToggle(globalIndex)}
                       />
@@ -205,14 +205,14 @@ export function ShoppingListDisplay({ shoppingList, onItemToggle, onGenerateNew 
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {items.map((item, index) => {
-                  const globalIndex = shoppingList.items.findIndex(
-                    (i) => i.nombre === item.nombre && i.unidad === item.unidad,
+                {items.map((item) => {
+                  const globalIndex = shoppingList.items.findIndex((i) =>
+                    item.id ? i.id === item.id : i.nombre === item.nombre && i.unidad === item.unidad && i.cantidad === item.cantidad,
                   )
 
                   return (
                     <ShoppingItemCard
-                      key={`${item.nombre}-${item.unidad}`}
+                      key={item.id || `${item.nombre}-${item.unidad}`}
                       item={item}
                       onToggle={() => onItemToggle(globalIndex)}
                     />

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -19,7 +19,15 @@ export function ExerciseTrackingComponent({ exercises, exerciseTracking, onUpdat
   const [ejercicioActivo, setEjercicioActivo] = useState<string | null>(null)
   const [tiempoEntrenamiento, setTiempoEntrenamiento] = useState(0)
   const [entrenandoActivo, setEntrenandoActivo] = useState(false)
-  const [intervalTimer, setIntervalTimer] = useState<NodeJS.Timeout | null>(null)
+  const [intervalTimer, setIntervalTimer] = useState<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (intervalTimer) {
+        clearInterval(intervalTimer)
+      }
+    }
+  }, [intervalTimer])
 
   const obtenerTracking = (ejercicioId: string): ExerciseTracking => {
     return (

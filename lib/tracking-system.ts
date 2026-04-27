@@ -23,7 +23,7 @@ export interface ExerciseTracking {
   ejercicio: string
   sets: ExerciseSet[]
   completado: boolean
-  duracionTotal: number // en minutos
+  duracionTotal: number // en segundos
   observaciones?: string
 }
 
@@ -206,34 +206,167 @@ export function generarPlanEjercicios(
   equipamiento: string[],
   dificultad: "principiante" | "intermedio" | "avanzado" = "principiante",
 ): Exercise[] {
+  const lugaresNormalizados = lugarEntrenamiento.map((lugar) => {
+    const lower = lugar.toLowerCase()
+    if (lower.includes("gim")) return "gimnasio"
+    if (lower.includes("ext") || lower.includes("parque")) return "exterior"
+    return "casa"
+  })
+
   // Filtrar ejercicios según equipamiento y lugar disponible
   const ejerciciosDisponibles = ejerciciosDB.filter((ejercicio) => {
     const tieneEquipamiento = ejercicio.equipamiento.some(
       (equipo) => equipamiento.includes(equipo) || equipo === "Ninguno",
     )
-    const tieneUbicacion = lugarEntrenamiento.some(
-      (lugar) => ejercicio.lugar === lugar.toLowerCase() || ejercicio.lugar === "casa",
-    )
+    const tieneUbicacion = lugaresNormalizados.some((lugar) => ejercicio.lugar === lugar)
     const nivelAdecuado = ejercicio.dificultad === dificultad || ejercicio.dificultad === "principiante"
 
     return tieneEquipamiento && tieneUbicacion && nivelAdecuado
   })
 
+  const sesiones =
+    frecuenciaEntrenamiento === "1-2"
+      ? 3
+      : frecuenciaEntrenamiento === "3-4"
+        ? 5
+        : frecuenciaEntrenamiento === "5-6"
+          ? 7
+          : 8
+
   // Seleccionar ejercicios balanceados por categoría
   const ejerciciosFuerza = ejerciciosDisponibles.filter((e) => e.categoria === "fuerza")
   const ejerciciosCardio = ejerciciosDisponibles.filter((e) => e.categoria === "cardio")
+  const ejerciciosFlexibilidad = ejerciciosDisponibles.filter((e) => e.categoria === "flexibilidad")
 
   const planEjercicios: Exercise[] = []
 
-  // Añadir ejercicios de fuerza (60% del plan)
-  const numFuerza = Math.min(6, ejerciciosFuerza.length)
+  // Añadir ejercicios de fuerza (50% del plan)
+  const numFuerza = Math.min(Math.ceil(sesiones * 0.5), ejerciciosFuerza.length)
   planEjercicios.push(...ejerciciosFuerza.slice(0, numFuerza))
 
-  // Añadir ejercicios de cardio (40% del plan)
-  const numCardio = Math.min(4, ejerciciosCardio.length)
+  // Añadir ejercicios de cardio (30% del plan)
+  const numCardio = Math.min(Math.max(2, Math.ceil(sesiones * 0.3)), ejerciciosCardio.length)
   planEjercicios.push(...ejerciciosCardio.slice(0, numCardio))
 
+  // Añadir ejercicios de flexibilidad (20% del plan)
+  const numFlex = Math.min(Math.max(1, sesiones - numFuerza - numCardio), ejerciciosFlexibilidad.length)
+  planEjercicios.push(...ejerciciosFlexibilidad.slice(0, numFlex))
+
   return planEjercicios
+}
+
+// Calcular nivel de experiencia basado en perfil del usuario
+export function calcularNivelEntrenamiento(params: {
+  age: number
+  sex: string
+  weight: number
+  height: number
+  trainingFrequency?: string
+  experienceLevel?: string
+}): "principiante" | "intermedio" | "avanzado" {
+  const { age, sex, weight, height, trainingFrequency, experienceLevel } = params
+
+  // Si tiene nivel explícito, usarlo
+  if (experienceLevel === "avanzado") return "avanzado"
+  if (experienceLevel === "intermedio") return "intermedio"
+
+  // Calcular BMI
+  const heightM = height / 100
+  const bmi = weight / (heightM * heightM)
+
+  // Calcular edad metabólica aproximada
+  const isYoung = age < 35
+  const isSenior = age > 55
+
+  // Calcular nivel basado en múltiples factores
+  let score = 0
+
+  // Frecuencia de entrenamiento
+  if (trainingFrequency === "5-6" || trainingFrequency === "diario") score += 3
+  else if (trainingFrequency === "3-4") score += 2
+  else if (trainingFrequency === "1-2") score += 1
+
+  // Edad
+  if (isYoung) score += 2
+  else if (age >= 35 && age <= 55) score += 1
+
+  // BMI (no es indicador de condición física pero afecta recomendación)
+  if (bmi >= 18.5 && bmi <= 25) score += 1
+  else if (bmi > 30 || bmi < 18.5) score -= 1
+
+  // Determinar nivel
+  if (score >= 5) return "avanzado"
+  if (score >= 3) return "intermedio"
+  return "principiante"
+}
+
+// Obtener recomendaciones personalizadas de ejercicio
+export function obtenerRecomendacionesEjercicio(params: {
+  age: number
+  sex: string
+  weight: number
+  height: number
+  objetivo: "perder" | "mantener" | "ganar"
+  lugarEntrenamiento: string[]
+  equipamiento: string[]
+  condiciones?: string[]
+}): { recommendation: string; exercises: Exercise[]; precautions: string[] } {
+  const { age, sex, weight, height, objetivo, lugarEntrenamiento, equipamiento, condiciones } = params
+  const nivel = calcularNivelEntrenamiento({ age, sex, weight, height })
+  const plan = generarPlanEjercicios(
+    "3-4",
+    lugarEntrenamiento,
+    equipamiento,
+    nivel,
+  )
+
+  const precautions: string[] = []
+  const recommendation: string[] = []
+
+  // Recomendaciones según objetivo
+  if (objetivo === "perder") {
+    recommendation.push("Enfócate en ejercicios de cardio y HIIT para maximizar la quema de grasa")
+    if (age > 50) precautions.push("Evita ejercicios de alto impacto, opta por caminatas o natación")
+  } else if (objetivo === "ganar") {
+    recommendation.push("Prioriza ejercicios de fuerza con mayor carga y menor reps")
+    if (age > 40) precautions.push("Asegúrate de calentar bien y usar重量 progresivo")
+  } else {
+    recommendation.push("Mantén un equilibrio entre fuerza y cardio para mantener condición física")
+  }
+
+  // Recomendaciones según edad
+  if (age > 60) {
+    precautions.push("Incluye ejercicios de equilibrio y movilidad")
+    precautions.push("Reduce intensidad y aumenta descanso")
+  }
+  if (age < 18) {
+    precautions.push("Evita cargas pesadas, enfócate en peso corporal")
+  }
+
+  // Recomendaciones según sexo
+  if (sex === "mujer" && weight > height - 100) {
+    precautions.push("Integra ejercicios de suelo pélvico en tu rutina")
+  }
+
+  // Recomendaciones según condiciones
+  if (condiciones?.includes("corazon")) {
+    precautions.push("Consulta con cardiólogo antes de comenzar")
+    precautions.push("Mantén intensidad moderada (zona 2-3)")
+  }
+  if (condiciones?.includes("articulaciones")) {
+    precautions.push("Evita impactos, opta por ejercicios de bajo impacto")
+    plan.forEach(e => {
+      if (e.nombre.toLowerCase().includes("salt") || e.nombre.toLowerCase().includes("burpee")) {
+        e.dificultad = "principiante"
+      }
+    })
+  }
+
+  return {
+    recommendation: recommendation.join(" "),
+    exercises: plan,
+    precautions,
+  }
 }
 
 // Analizar foto de comida (simulado)

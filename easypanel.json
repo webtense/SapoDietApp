@@ -1,0 +1,22 @@
+{
+  "name": "SapoFit",
+  "description": "Planificador de nutrición y entrenamiento — PostgreSQL production",
+  "git": null,
+  "build": {
+    "command": "npm run build",
+    "framework": "next"
+  },
+  "run": {
+    "command": "npm run start",
+    "port": 3000
+  },
+  "environment": {
+    "DATABASE_URL": "postgresql://__FILL__",
+    "SESSION_COOKIE_NAME": "sapofit_session",
+    "SESSION_DAYS": "7",
+    "APP_URL": "https://sapofit.semillasdeti.com",
+    "CRON_SECRET": "change-this-secret"
+  },
+  "domains": ["sapofit.semillasdeti.com"],
+  "php": null
+}

@@ -1,0 +1,4 @@
+-- This file helps PostgreSQL determine which migration has been applied
+-- You should not edit this file manually
+
+20260415120000_add_phone_verified

@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sapofit_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sapofit
+      POSTGRES_USER: sapofit
+      POSTGRES_PASSWORD: sapofit_local
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_sapofit:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sapofit -d sapofit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: sapofit_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://sapofit:sapofit_local@postgres:5432/sapofit
+      NODE_ENV: production
+      SESSION_COOKIE_NAME: sapofit_session
+      SESSION_DAYS: "7"
+      APP_URL: http://localhost:3000
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+    ports:
+      - "3000:3000"
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: sapofit_mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  postgres_sapofit:

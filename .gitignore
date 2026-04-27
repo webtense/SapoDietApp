@@ -19,6 +19,10 @@ yarn-error.log*
 # env files
 .env*
 
+# local databases
+/prisma/*.db
+/prisma/*.db-journal
+
 # vercel
 .vercel
 

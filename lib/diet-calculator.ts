@@ -121,12 +121,12 @@ export function calcularMacronutrientes(calorias: number, tipoDieta: string): Nu
   }
 
   return {
-    calories: calorias,
-    protein: (calorias * proteinPercent) / 4, // 4 cal/g proteína
-    carbs: (calorias * carbPercent) / 4, // 4 cal/g carbohidrato
-    fat: (calorias * fatPercent) / 9, // 9 cal/g grasa
-    fiber: Math.max(25, calorias / 100), // Mínimo 25g, idealmente 1g por cada 100 cal
-    water: Math.max(2, calorias / 1000), // Mínimo 2L, idealmente 1L por cada 1000 cal
+    calories: Math.round(calorias),
+    protein: Math.round((calorias * proteinPercent) / 4), // 4 cal/g proteína
+    carbs: Math.round((calorias * carbPercent) / 4), // 4 cal/g carbohidrato
+    fat: Math.round((calorias * fatPercent) / 9), // 9 cal/g grasa
+    fiber: Math.round(Math.max(25, calorias / 100)), // Mínimo 25g, idealmente 1g por cada 100 cal
+    water: Number((Math.max(2, calorias / 1000)).toFixed(1)), // Mínimo 2L, idealmente 1L por cada 1000 cal
   }
 }
 

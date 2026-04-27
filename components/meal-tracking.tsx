@@ -9,6 +9,15 @@ import { Camera, Check, Clock, Zap, AlertCircle } from "lucide-react"
 import type { MealPlan } from "@/lib/diet-calculator"
 import { type MealTracking, analizarFotoComida } from "@/lib/tracking-system"
 
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ""))
+    reader.onerror = () => reject(new Error("No se pudo leer la imagen"))
+    reader.readAsDataURL(file)
+  })
+}
+
 interface MealTrackingProps {
   mealPlan: MealPlan
   mealTracking: MealTracking[]
@@ -23,6 +32,7 @@ export function MealTrackingComponent({ mealPlan, mealTracking, onUpdateTracking
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [comidaSeleccionada, setComidaSeleccionada] = useState<string | null>(null)
+  const [mealUploadTarget, setMealUploadTarget] = useState<string | null>(null)
 
   const meals = [
     { key: "desayuno", meal: mealPlan.desayuno, time: "08:00", icon: "🌅", nombre: "Desayuno" },
@@ -58,8 +68,7 @@ export function MealTrackingComponent({ mealPlan, mealTracking, onUpdateTracking
     setComidaSeleccionada(tipoComida)
     setFotoAnalisis({ analizando: true, resultado: null })
 
-    // Simular subida de foto
-    const fotoUrl = URL.createObjectURL(file)
+    const fotoUrl = await fileToDataUrl(file)
 
     try {
       const resultado = await analizarFotoComida(fotoUrl)
@@ -108,6 +117,20 @@ export function MealTrackingComponent({ mealPlan, mealTracking, onUpdateTracking
       </Card>
 
       <div className="grid gap-4">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file && mealUploadTarget) {
+              manejarSubidaFoto(mealUploadTarget, file)
+            }
+            e.target.value = ""
+          }}
+        />
+
         {meals.map(({ key, meal, time, icon, nombre }) => {
           const tracking = obtenerTracking(key)
 
@@ -202,24 +225,18 @@ export function MealTrackingComponent({ mealPlan, mealTracking, onUpdateTracking
                     {tracking.completado ? "Completado" : "Marcar como consumido"}
                   </Button>
 
-                  <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setMealUploadTarget(key)
+                      fileInputRef.current?.click()
+                    }}
+                  >
                     <Camera className="h-4 w-4 mr-2" />
                     Foto
                   </Button>
                 </div>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) {
-                      manejarSubidaFoto(key, file)
-                    }
-                  }}
-                />
 
                 {tracking.observaciones && (
                   <div className="text-sm text-muted-foreground">
