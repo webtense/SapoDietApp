@@ -224,18 +224,24 @@ export default function RecordatoriosPage() {
   if (loading) return <div className="p-4 text-center">Cargando...</div>
 
   return (
-    <div className="p-4 max-w-4xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Recordatorios</h1>
-        <Button size="sm" onClick={() => setShowForm(!showForm)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Nuevo
-        </Button>
-      </div>
+    <div className="mx-auto max-w-4xl space-y-4 p-4 md:p-6">
+      <section className="rounded-[2rem] bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium">Avisos automáticos</div>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight">Recordatorios</h1>
+            <p className="mt-2 text-sm text-white/80">Push y WhatsApp. El aviso de entreno se crea solo según tu frecuencia.</p>
+          </div>
+          <Button size="sm" className="border-white/30 bg-white/10 text-white hover:bg-white/20" variant="outline" onClick={() => setShowForm(!showForm)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Nuevo
+          </Button>
+        </div>
+      </section>
 
       {/* Próximo recordatorio — patrón MacroFactor */}
       {nextReminder && (
-        <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+        <div className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/85 px-4 py-3 shadow-sm">
           <Clock className="h-4 w-4 flex-shrink-0 text-emerald-600" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">{nextReminder.title}</p>
@@ -247,7 +253,7 @@ export default function RecordatoriosPage() {
         </div>
       )}
 
-      <Card className="border-emerald-100 bg-emerald-50/50">
+      <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
         <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2">

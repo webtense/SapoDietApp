@@ -145,28 +145,28 @@ export default function CompraPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
-      <section className="rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,_rgba(80,200,120,0.16),_rgba(255,255,255,0.95))] p-5 shadow-sm">
+      <section className="rounded-[2rem] bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <div className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-emerald-700">Compra inteligente</div>
+            <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium">Compra inteligente</div>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight">Lista de compra</h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Agrupada por pasillos y ajustada para modo familia. También puedes alternar una vista mensual para anticipar batch cooking y reposiciones.</p>
+            <p className="mt-2 max-w-2xl text-sm text-white/80">Agrupada por pasillos y ajustada para modo familia. También puedes alternar una vista mensual para anticipar batch cooking y reposiciones.</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={exportPdf} disabled={!shoppingListId}><FileText className="mr-1 h-4 w-4" /> PDF</Button>
-            <Button variant="outline" size="sm" onClick={generarNuevaLista}><RotateCw className="mr-1 h-4 w-4" /> Nueva lista</Button>
+            <Button variant="outline" size="sm" className="border-white/30 bg-white/10 text-white hover:bg-white/20" onClick={exportPdf} disabled={!shoppingListId}><FileText className="mr-1 h-4 w-4" /> PDF</Button>
+            <Button variant="outline" size="sm" className="border-white/30 bg-white/10 text-white hover:bg-white/20" onClick={generarNuevaLista}><RotateCw className="mr-1 h-4 w-4" /> Nueva lista</Button>
           </div>
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-4">
-          <div className="rounded-2xl bg-white/85 p-4"><p className="text-xs text-muted-foreground">Supermercado</p><p className="mt-1 font-medium">{supermercado || "Pendiente"}</p></div>
-          <div className="rounded-2xl bg-white/85 p-4"><p className="text-xs text-muted-foreground">Comensales</p><p className="mt-1 flex items-center gap-2 font-medium"><Users className="h-4 w-4 text-emerald-600" /> {householdSize}</p></div>
-          <div className="rounded-2xl bg-white/85 p-4"><p className="text-xs text-muted-foreground">Estado</p><p className="mt-1 font-medium">{purchasedCount}/{shoppingList.length} artículos</p></div>
-          <div className="rounded-2xl bg-white/85 p-4"><p className="text-xs text-muted-foreground">Estimación</p><p className="mt-1 font-medium">{(displayTotal || total * multiplier).toFixed(2)}€</p></div>
+          <div className="rounded-2xl bg-white/12 p-4 backdrop-blur"><p className="text-xs text-white/70">Supermercado</p><p className="mt-1 font-medium">{supermercado || "Pendiente"}</p></div>
+          <div className="rounded-2xl bg-white/12 p-4 backdrop-blur"><p className="text-xs text-white/70">Comensales</p><p className="mt-1 flex items-center gap-2 font-medium"><Users className="h-4 w-4" /> {householdSize}</p></div>
+          <div className="rounded-2xl bg-white/12 p-4 backdrop-blur"><p className="text-xs text-white/70">Estado</p><p className="mt-1 font-medium">{purchasedCount}/{shoppingList.length} artículos</p></div>
+          <div className="rounded-2xl bg-white/12 p-4 backdrop-blur"><p className="text-xs text-white/70">Estimación</p><p className="mt-1 font-medium">{(displayTotal || total * multiplier).toFixed(2)}€</p></div>
         </div>
       </section>
 
-      <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+      <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
         <CardContent className="space-y-4 p-5">
           <div>
             <p className="text-sm font-medium">Compartir compra por WhatsApp</p>
@@ -180,7 +180,7 @@ export default function CompraPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+      <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
         <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-medium">Vista escalable</p>
@@ -194,7 +194,7 @@ export default function CompraPage() {
       </Card>
 
       {shoppingList.length > 0 && (
-        <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+        <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
           <CardContent className="p-5">
             <div className="mb-2 flex items-center justify-between text-sm"><span>Progreso</span><span>{progress}%</span></div>
             <div className="h-2 w-full rounded-full bg-muted"><div className="h-2 rounded-full bg-emerald-500 transition-all" style={{ width: `${progress}%` }} /></div>
@@ -206,7 +206,7 @@ export default function CompraPage() {
         <Card><CardContent className="p-8 text-center"><ShoppingCart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><p className="mb-4 text-muted-foreground">No tienes lista de compra todavía.</p><Button onClick={generarNuevaLista}>Generar lista</Button></CardContent></Card>
       ) : (
         Object.entries(groupedByAisle).map(([aisle, items]) => (
-          <Card key={aisle} className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+          <Card key={aisle} className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center justify-between text-base">
                 <span>{aisle}</span>
@@ -242,7 +242,7 @@ export default function CompraPage() {
         ))
       )}
 
-      <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+      <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
         <CardContent className="flex items-start gap-3 p-5 text-sm text-muted-foreground">
           <Store className="mt-0.5 h-4 w-4 text-emerald-600" />
           <p>La lista ya se genera agregada por supermercado y pasillos. Desde aquí puedes exportarla en PDF y compartirla por WhatsApp con enlace temporal para recoger precios reales.</p>

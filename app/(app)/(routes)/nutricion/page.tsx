@@ -138,27 +138,29 @@ export default function NutricionPage() {
   const mealTypes = ["Desayuno", "Snack mañana", "Almuerzo", "Merienda", "Cena"]
 
   return (
-    <div className="p-4 max-w-4xl mx-auto space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Nutrición</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => openCamera('desayuno')}>
-            <Camera className="h-4 w-4 mr-2" />
-            Analizar comida
-          </Button>
-          <Button variant="outline" size="sm" onClick={adaptarPlan} disabled={adapting}>
-            {adapting ? (
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
-            )}
-            Adaptar plan
-          </Button>
+    <div className="mx-auto max-w-4xl space-y-4 p-4 md:p-6">
+      <section className="rounded-[2rem] bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium">Plan nutricional</div>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight">Nutrición</h1>
+            <p className="mt-2 text-sm text-white/80">Seguimiento de macros, análisis de fotos con IA y adaptación del plan según tus hábitos.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" className="border-white/30 bg-white/10 text-white hover:bg-white/20" onClick={() => openCamera('desayuno')}>
+              <Camera className="h-4 w-4 mr-2" />
+              Analizar comida
+            </Button>
+            <Button variant="outline" size="sm" className="border-white/30 bg-white/10 text-white hover:bg-white/20" onClick={adaptarPlan} disabled={adapting}>
+              {adapting ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Adaptar plan
+            </Button>
+          </div>
         </div>
-      </div>
+      </section>
 
       {adapted && plan.adaptations && plan.adaptations.length > 0 && (
-        <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+        <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-amber-500" />
@@ -178,41 +180,35 @@ export default function NutricionPage() {
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <Card className="bg-orange-50">
+        <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
           <CardContent className="p-3 text-center">
-            <Flame className="h-5 w-5 mx-auto text-orange-500 mb-1" />
+            <Flame className="h-5 w-5 mx-auto text-emerald-500 mb-1" />
             <p className="text-xl font-bold">{plan.necesidades.calories}</p>
             <p className="text-xs text-muted-foreground">kcal</p>
           </CardContent>
         </Card>
-        <Card className="bg-blue-50">
+        <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
           <CardContent className="p-3 text-center">
-            <Droplets className="h-5 w-5 mx-auto text-blue-500 mb-1" />
+            <Droplets className="h-5 w-5 mx-auto text-emerald-500 mb-1" />
             <p className="text-xl font-bold">{plan.necesidades.water.toFixed(1)}L</p>
             <p className="text-xs text-muted-foreground">agua</p>
           </CardContent>
         </Card>
-        <Card className="bg-red-50">
+        <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
           <CardContent className="p-3 text-center">
-            <span className="text-xl font-bold text-red-600">
-              {Math.round(plan.necesidades.protein || (plan.necesidades as any).proteinas || 0)}g
-            </span>
+            <p className="text-xl font-bold">{Math.round(plan.necesidades.protein || (plan.necesidades as any).proteinas || 0)}g</p>
             <p className="text-xs text-muted-foreground">proteína</p>
           </CardContent>
         </Card>
-        <Card className="bg-green-50">
+        <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
           <CardContent className="p-3 text-center">
-            <span className="text-xl font-bold text-green-600">
-              {Math.round(plan.necesidades.carbs || (plan.necesidades as any).carbohidratos || 0)}g
-            </span>
+            <p className="text-xl font-bold">{Math.round(plan.necesidades.carbs || (plan.necesidades as any).carbohidratos || 0)}g</p>
             <p className="text-xs text-muted-foreground">carbs</p>
           </CardContent>
         </Card>
-        <Card className="bg-yellow-50">
+        <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
           <CardContent className="p-3 text-center">
-            <span className="text-xl font-bold text-yellow-600">
-              {Math.round(plan.necesidades.fat || (plan.necesidades as any).grasas || 0)}g
-            </span>
+            <p className="text-xl font-bold">{Math.round(plan.necesidades.fat || (plan.necesidades as any).grasas || 0)}g</p>
             <p className="text-xs text-muted-foreground">grasa</p>
           </CardContent>
         </Card>
@@ -233,7 +229,7 @@ export default function NutricionPage() {
         if (!meal) return null
 
         return (
-          <Card key={tipo}>
+          <Card key={tipo} className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center justify-between">
                 <span className="flex items-center gap-2">
@@ -248,7 +244,7 @@ export default function NutricionPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-lg bg-muted/50 p-2 space-y-2">
+              <div className="rounded-2xl bg-muted/50 p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="font-medium text-sm">{meal.nombre}</p>
                   <Badge variant="outline">{meal.calorias} kcal</Badge>

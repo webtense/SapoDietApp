@@ -191,10 +191,10 @@ export default function EntrenamientoPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
-      <section className="rounded-[2rem] bg-[linear-gradient(135deg,_rgba(10,12,16,0.96),_rgba(32,37,49,0.96))] p-5 text-white shadow-sm">
+      <section className="rounded-[2rem] bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <div className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-medium">Modo inmersivo</div>
+            <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium">Modo inmersivo</div>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight">Entrenamiento</h1>
             <p className="mt-2 max-w-2xl text-sm text-white/75">Vista más enfocada en circuitos, tiempos y progreso. El marcado de ejercicios se conserva incluso sin WiFi.</p>
           </div>
@@ -207,7 +207,7 @@ export default function EntrenamientoPage() {
           </div>
         </div>
 
-        <div className="mt-5 rounded-[1.5rem] bg-white/8 p-4 backdrop-blur">
+        <div className="mt-5 rounded-[1.5rem] bg-white/12 p-4 backdrop-blur">
           <div className="mb-2 flex items-center justify-between text-sm"><span>Completado</span><span>{completion}%</span></div>
           <Progress value={completion} className="bg-white/10 [&_[data-slot=progress-indicator]]:bg-emerald-400" />
         </div>
@@ -235,7 +235,7 @@ export default function EntrenamientoPage() {
               const completed = !!status?.completed
 
               return (
-                <Card key={`${exercise.name}-${idx}`} className={`rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm ${completed ? "ring-1 ring-emerald-300" : ""}`}>
+                <Card key={`${exercise.name}-${idx}`} className={`rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm ${completed ? "ring-1 ring-emerald-300" : ""}`}>
                   <CardContent className="p-5">
                     <div className="flex items-start gap-4">
                       <button onClick={() => toggleExercise(idx)} className="mt-1">
@@ -267,7 +267,7 @@ export default function EntrenamientoPage() {
           </div>
 
           <div className="space-y-4">
-            <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+            <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
               <CardHeader className="pb-2"><CardTitle className="text-base">Resumen de sesión</CardTitle></CardHeader>
               <CardContent className="grid grid-cols-3 gap-3 text-center text-sm">
                 <div className="rounded-2xl bg-muted/50 p-4"><p className="text-2xl font-semibold">{completedCount}</p><p className="text-muted-foreground">Hechos</p></div>
@@ -276,7 +276,7 @@ export default function EntrenamientoPage() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+            <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
               <CardHeader className="pb-2"><CardTitle className="text-base">Offline listo</CardTitle></CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>Si entrenas en un gimnasio sin cobertura, los cambios se guardan localmente y se sincronizan cuando vuelves a tener conexión.</p>
