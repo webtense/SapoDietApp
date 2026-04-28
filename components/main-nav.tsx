@@ -75,7 +75,7 @@ export function MainNav({ userRole }: MainNavProps) {
         </div>
 
         <div className="mt-auto rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm">
-          <p className="text-xs text-muted-foreground">v3.3 · abril 2026</p>
+          <p className="text-xs text-muted-foreground">v3.4 · abril 2026</p>
         </div>
       </aside>
     </>

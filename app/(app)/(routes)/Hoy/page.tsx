@@ -321,12 +321,38 @@ export default function HoyPage() {
           <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
             <CardHeader className="pb-2"><CardTitle className="text-base">Check-in diario</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Droplets className="h-3 w-3" /> Agua</Label><Input type="number" step="0.1" value={checkin.water} onChange={(e) => setCheckin((prev) => ({ ...prev, water: e.target.value }))} /></div>
-                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Scale className="h-3 w-3" /> Peso</Label><Input type="number" step="0.1" value={checkin.weight} onChange={(e) => setCheckin((prev) => ({ ...prev, weight: e.target.value }))} /></div>
-                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Flame className="h-3 w-3" /> Energía</Label><Input type="number" min={1} max={5} value={checkin.energy} onChange={(e) => setCheckin((prev) => ({ ...prev, energy: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))} /></div>
-                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Activity className="h-3 w-3" /> Ánimo</Label><Input type="number" min={1} max={5} value={checkin.mood} onChange={(e) => setCheckin((prev) => ({ ...prev, mood: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))} /></div>
+
+              {/* Peso — widget táctil */}
+              <div className="rounded-2xl bg-muted/50 p-4">
+                <p className="mb-3 flex items-center gap-1 text-xs font-medium text-muted-foreground"><Scale className="h-3 w-3" /> Peso de hoy</p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex gap-1">
+                    <button onClick={() => setCheckin((p) => ({ ...p, weight: String(Math.max(30, Number(p.weight || 70) - 1).toFixed(1)) }))}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-lg font-bold shadow-sm active:scale-95">−1</button>
+                    <button onClick={() => setCheckin((p) => ({ ...p, weight: String(Math.max(30, Number(p.weight || 70) - 0.1).toFixed(1)) }))}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-sm font-bold shadow-sm active:scale-95">−.1</button>
+                  </div>
+                  <input type="number" step="0.1" inputMode="decimal"
+                    value={checkin.weight}
+                    onChange={(e) => setCheckin((p) => ({ ...p, weight: e.target.value }))}
+                    className="w-24 rounded-2xl border-0 bg-white py-2 text-center text-2xl font-bold shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+                  <div className="flex gap-1">
+                    <button onClick={() => setCheckin((p) => ({ ...p, weight: String((Number(p.weight || 70) + 0.1).toFixed(1)) }))}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-sm font-bold shadow-sm active:scale-95">+.1</button>
+                    <button onClick={() => setCheckin((p) => ({ ...p, weight: String((Number(p.weight || 70) + 1).toFixed(1)) }))}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-lg font-bold shadow-sm active:scale-95">+1</button>
+                  </div>
+                </div>
+                <p className="mt-2 text-center text-xs text-muted-foreground">kg</p>
               </div>
+
+              {/* Agua + Energía + Ánimo */}
+              <div className="grid grid-cols-3 gap-3">
+                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Droplets className="h-3 w-3" /> Agua (L)</Label><Input type="number" step="0.1" inputMode="decimal" value={checkin.water} onChange={(e) => setCheckin((prev) => ({ ...prev, water: e.target.value }))} /></div>
+                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Flame className="h-3 w-3" /> Energía 1-5</Label><Input type="number" min={1} max={5} value={checkin.energy} onChange={(e) => setCheckin((prev) => ({ ...prev, energy: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))} /></div>
+                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Activity className="h-3 w-3" /> Ánimo 1-5</Label><Input type="number" min={1} max={5} value={checkin.mood} onChange={(e) => setCheckin((prev) => ({ ...prev, mood: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))} /></div>
+              </div>
+
               <Button className="w-full rounded-2xl" onClick={guardarCheckin}>Guardar check-in</Button>
               {saved && <Badge className="bg-emerald-500 text-white">Check-in guardado</Badge>}
             </CardContent>

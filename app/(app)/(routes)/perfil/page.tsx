@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowRight, CheckCircle2, Dumbbell, HeartHandshake, Save, Sparkles, Target, User, UtensilsCrossed } from "lucide-react"
+import { ArrowRight, CheckCircle2, Dumbbell, Save, Sparkles, Target, User, UtensilsCrossed } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -225,13 +225,13 @@ export default function PerfilPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
-      <section className="rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,_rgba(80,200,120,0.18),_rgba(255,255,255,0.95))] p-5 shadow-sm">
+      <section className="rounded-[2rem] bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <div className="mb-2 inline-flex rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-emerald-700">Onboarding v3</div>
-            <h1 className="text-3xl font-semibold tracking-tight">Perfil y setup inicial</h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Hemos convertido el perfil en un onboarding más completo para ajustar dieta, logística diaria y entrenamiento sin perder compatibilidad con tu plan actual.
+            <div className="mb-2 inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium">Mi perfil</div>
+            <h1 className="text-3xl font-semibold tracking-tight">Perfil</h1>
+            <p className="mt-2 max-w-2xl text-sm text-white/80">
+              Ajusta tu biometría, objetivos, dieta y entrenamiento para personalizar tu plan.
             </p>
           </div>
           <div className="flex items-center gap-2 self-start">
@@ -337,7 +337,7 @@ export default function PerfilPage() {
         </div>
 
         <div className="space-y-4">
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Target className="h-4 w-4" /> Estilo de vida y social</CardTitle>
               <CardDescription>Preferencias que influyen en hábitos y adherencia.</CardDescription>
@@ -377,7 +377,7 @@ export default function PerfilPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
             <CardContent className="space-y-3 p-5">
               <Button className="h-12 w-full rounded-2xl" onClick={saveProfile} disabled={saving}>
                 <Save className="mr-2 h-4 w-4" /> Guardar onboarding
@@ -385,21 +385,6 @@ export default function PerfilPage() {
               <Button variant="outline" className="h-12 w-full rounded-2xl" onClick={generatePlan} disabled={saving}>
                 Generar plan v3 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <div className="rounded-2xl bg-muted/50 p-4 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">Qué se ha activado ya</p>
-                <p className="mt-1">Persistimos el núcleo del perfil en backend y las nuevas preferencias v3 en local para enriquecer la experiencia mientras se amplía el modelo de datos.</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><HeartHandshake className="h-4 w-4" /> Próxima fase v3</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>IA efímera para análisis fotográfico de comidas.</p>
-              <p>Retos sociales con privacidad de tendencia y calendario.</p>
-              <p>Tokens IA y controles operativos desde admin.</p>
             </CardContent>
           </Card>
         </div>
