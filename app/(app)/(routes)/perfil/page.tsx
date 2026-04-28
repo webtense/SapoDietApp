@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowRight, CheckCircle2, Dumbbell, Save, Sparkles, Target, User, UtensilsCrossed } from "lucide-react"
+import { ArrowRight, CheckCircle2, Dumbbell, Pill, Save, Sparkles, Target, User, UtensilsCrossed } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { defaultV3Preferences, parseV3Preferences, V3_PREFERENCES_KEY, type V3Preferences } from "@/lib/v3-preferences"
+import { SUPPLEMENT_BRANDS, SUPPLEMENTS_KEY } from "@/lib/supplements"
 
 interface FormData {
   nombre: string
@@ -70,6 +71,7 @@ export default function PerfilPage() {
   const [planReady, setPlanReady] = useState(false)
   const [formData, setFormData] = useState<FormData>(initialForm)
   const [v3, setV3] = useState<V3Preferences>(defaultV3Preferences)
+  const [supplementBrand, setSupplementBrand] = useState<string>("")
 
   useEffect(() => {
     const load = async () => {
@@ -77,6 +79,8 @@ export default function PerfilPage() {
       if (localPrefs) {
         setV3(parseV3Preferences(JSON.parse(localPrefs)))
       }
+      const savedBrand = typeof window !== "undefined" ? window.localStorage.getItem(SUPPLEMENTS_KEY) : null
+      if (savedBrand) setSupplementBrand(savedBrand)
 
       const [profileRes, planRes, userRes] = await Promise.all([
         fetch("/api/profile"),
@@ -219,6 +223,7 @@ export default function PerfilPage() {
     { title: "Objetivo", done: !!(formData.pesoMeta && v3.primaryGoal) },
     { title: "Nutrición", done: !!(formData.tipoDieta && formData.supermercado) },
     { title: "Entrenamiento", done: formData.lugarEntrenamiento.length > 0 && formData.equipamiento.length > 0 },
+    { title: "Suplementos", done: !!supplementBrand },
   ]
 
   if (loading) return <div className="p-4 text-center">Cargando...</div>
@@ -349,6 +354,42 @@ export default function PerfilPage() {
               <div className="rounded-2xl border p-4">
                 <div className="flex items-start gap-3"><Checkbox checked={v3.coupleMode} onCheckedChange={(checked) => updateV3("coupleMode", !!checked)} /><div><p className="font-medium">Modo pareja / dúo</p><p className="text-sm text-muted-foreground">Deja preparada la experiencia social de retos y seguimiento compartido.</p></div></div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Pill className="h-4 w-4" /> Suplementos (opcional)</CardTitle>
+              <CardDescription>Si usas suplementos, elige tu marca para ver el protocolo diario personalizado.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {SUPPLEMENT_BRANDS.map((brand) => {
+                  const active = supplementBrand === brand.id
+                  return (
+                    <button
+                      key={brand.id}
+                      type="button"
+                      onClick={() => {
+                        const next = active ? "" : brand.id
+                        setSupplementBrand(next)
+                        if (typeof window !== "undefined") {
+                          if (next) window.localStorage.setItem(SUPPLEMENTS_KEY, next)
+                          else window.localStorage.removeItem(SUPPLEMENTS_KEY)
+                        }
+                      }}
+                      className={`rounded-2xl border-2 p-3 text-left transition-all ${active ? "border-emerald-500 bg-emerald-50" : "border-transparent bg-muted/50 hover:bg-muted"}`}
+                    >
+                      <p className={`text-sm font-semibold ${active ? "text-emerald-700" : ""}`}>{brand.name}</p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">{brand.focus}</p>
+                      {active && <Badge className="mt-2 bg-emerald-500 text-white text-[10px]">Seleccionado</Badge>}
+                    </button>
+                  )
+                })}
+              </div>
+              {!supplementBrand && (
+                <p className="mt-3 text-xs text-muted-foreground">Si no usas suplementos deja esto vacío.</p>
+              )}
             </CardContent>
           </Card>
 
