@@ -41,6 +41,7 @@ export async function POST() {
     success_url: `${appUrl}/perfil?upgrade=success`,
     cancel_url: `${appUrl}/perfil?upgrade=cancelled`,
     subscription_data: {
+      trial_period_days: 30,
       metadata: { userId: fullUser.id },
     },
     allow_promotion_codes: true,
