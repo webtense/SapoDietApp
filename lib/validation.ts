@@ -185,3 +185,8 @@ export const pushNotifySchema = z.object({
   body: z.string().min(1).max(500),
   url: z.string().max(500).optional(),
 })
+
+export const shoppingSharePriceUpdateSchema = z.object({
+  itemId: z.string().min(1).max(40),
+  actualPrice: z.number().nonnegative().max(9999),
+})
