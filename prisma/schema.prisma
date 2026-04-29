@@ -181,6 +181,7 @@ model Profile {
   trainingFrequency        String?
   trainingPlaces          String?
   homeEquipment           String?
+  postalCode               String?
   onboardingCompleted      Boolean  @default(false)
   lastCalculatedCalories  Float?
   lastCalculatedProtein   Float?
