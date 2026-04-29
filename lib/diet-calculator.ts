@@ -213,6 +213,7 @@ function generarMealSuplemento(tipo: "desayuno" | "merienda"): Meal {
     proteinas: 24,
     carbohidratos: 30,
     grasas: 4,
+    tiempoPreparacion: 2,
   }
 }
 
