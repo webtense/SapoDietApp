@@ -195,16 +195,38 @@ export const ingredientesDB: Record<string, Omit<Ingredient, "cantidad">> = {
   naranja: { nombre: "Naranja", unidad: "unidad", calorias: 47, proteinas: 0.9, carbohidratos: 12, grasas: 0.1 },
 }
 
+function generarMealSuplemento(tipo: "desayuno" | "merienda"): Meal {
+  return {
+    nombre: "Batido Fórmula 1 Herbalife",
+    ingredientes: [
+      { nombre: "Fórmula 1 Herbalife", cantidad: 52, unidad: "g", calorias: 186 },
+      { nombre: "Leche desnatada", cantidad: 250, unidad: "ml", calorias: 90 },
+    ],
+    instrucciones: [
+      "Mezcla 2 medidas rasas (52 g) de Fórmula 1 con 250 ml de leche desnatada fría.",
+      "Bate o agita bien hasta que no queden grumos.",
+      tipo === "desayuno"
+        ? "Tómalo como sustituto completo del desayuno."
+        : "Sustituto de la merienda. Puedes añadir hielo o fruta fresca.",
+    ],
+    calorias: 276,
+    proteinas: 24,
+    carbohidratos: 30,
+    grasas: 4,
+  }
+}
+
 // Generar plan de comidas personalizado
 export function generarPlanComidas(
   necesidades: NutritionalNeeds,
   tipoDieta: string,
   alimentosNoPermitidos: string[],
   horaAlmorzar: string,
+  supplementBrand = "",
 ): MealPlan {
   const alimentosExcluidos = alimentosNoPermitidos.map((a) => a.toLowerCase())
+  const usaHerbalife = supplementBrand === "herbalife"
 
-  // Distribución calórica por comida
   const distribucionCalorica = {
     desayuno: 0.25,
     mediaManana: 0.1,
@@ -213,13 +235,10 @@ export function generarPlanComidas(
     cena: 0.2,
   }
 
-  const planComidas: MealPlan = {
-    desayuno: generarComida(
-      "desayuno",
-      necesidades.calories * distribucionCalorica.desayuno,
-      tipoDieta,
-      alimentosExcluidos,
-    ),
+  return {
+    desayuno: usaHerbalife
+      ? generarMealSuplemento("desayuno")
+      : generarComida("desayuno", necesidades.calories * distribucionCalorica.desayuno, tipoDieta, alimentosExcluidos),
     mediaManana: generarComida(
       "media mañana",
       necesidades.calories * distribucionCalorica.mediaManana,
@@ -232,16 +251,11 @@ export function generarPlanComidas(
       tipoDieta,
       alimentosExcluidos,
     ),
-    merienda: generarComida(
-      "merienda",
-      necesidades.calories * distribucionCalorica.merienda,
-      tipoDieta,
-      alimentosExcluidos,
-    ),
+    merienda: usaHerbalife
+      ? generarMealSuplemento("merienda")
+      : generarComida("merienda", necesidades.calories * distribucionCalorica.merienda, tipoDieta, alimentosExcluidos),
     cena: generarComida("cena", necesidades.calories * distribucionCalorica.cena, tipoDieta, alimentosExcluidos),
   }
-
-  return planComidas
 }
 
 function generarComida(

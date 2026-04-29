@@ -38,8 +38,12 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null)
   const force = !!body?.force
 
-  const profile = await prisma.profile.findUnique({ where: { userId: user.id } })
-  const goal = await prisma.goal.findUnique({ where: { userId: user.id } })
+  const [profile, goal, fullUser] = await Promise.all([
+    prisma.profile.findUnique({ where: { userId: user.id } }),
+    prisma.goal.findUnique({ where: { userId: user.id } }),
+    prisma.user.findUnique({ where: { id: user.id }, select: { subscriptionStatus: true } }),
+  ])
+
   if (!profile || !goal || !profile.weightKg || !profile.heightCm || !profile.age || !goal.targetWeightKg) {
     return apiError("Completa primero tu perfil", 400)
   }
@@ -48,6 +52,17 @@ export async function POST(req: NextRequest) {
     const existing = await prisma.mealPlan.findFirst({ where: { userId: user.id }, orderBy: { createdAt: "desc" } })
     if (existing) {
       return NextResponse.json({ plan: existing })
+    }
+  }
+
+  if (fullUser?.subscriptionStatus !== "PRO") {
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const plansThisMonth = await prisma.mealPlan.count({
+      where: { userId: user.id, createdAt: { gte: startOfMonth } },
+    })
+    if (plansThisMonth >= 1) {
+      return NextResponse.json({ error: "UPGRADE_REQUIRED" }, { status: 402 })
     }
   }
 

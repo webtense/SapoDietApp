@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Camera, Check, Clock, Zap, AlertCircle } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Camera, Check, Clock, Zap, AlertCircle, Pencil, X, Flame } from "lucide-react"
 import type { MealPlan } from "@/lib/diet-calculator"
 import { type MealTracking, analizarFotoComida } from "@/lib/tracking-system"
 
@@ -33,6 +35,12 @@ export function MealTrackingComponent({ mealPlan, mealTracking, onUpdateTracking
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [comidaSeleccionada, setComidaSeleccionada] = useState<string | null>(null)
   const [mealUploadTarget, setMealUploadTarget] = useState<string | null>(null)
+
+  // Estado para comida alternativa
+  const [altOpen, setAltOpen]         = useState<string | null>(null)
+  const [altDesc, setAltDesc]         = useState("")
+  const [altCal, setAltCal]           = useState("")
+  const [altGuardando, setAltGuardando] = useState(false)
 
   const meals = [
     { key: "desayuno", meal: mealPlan.desayuno, time: "08:00", icon: "🌅", nombre: "Desayuno" },
@@ -87,6 +95,41 @@ export function MealTrackingComponent({ mealPlan, mealTracking, onUpdateTracking
     } catch (error) {
       setFotoAnalisis({ analizando: false, resultado: null })
     }
+  }
+
+  const guardarComidaAlternativa = async (tipoComida: string) => {
+    if (!altDesc.trim()) return
+    setAltGuardando(true)
+
+    await fetch("/api/tracking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        kind: "meal",
+        payload: {
+          dateIso: new Date().toISOString(),
+          mealType: tipoComida,
+          completed: true,
+          caloriesActual: altCal ? Number(altCal) : undefined,
+          notes: altDesc.trim(),
+          followsPlan: false,
+        },
+      }),
+    })
+
+    onUpdateTracking({
+      ...obtenerTracking(tipoComida),
+      completado: true,
+      cumpleConPlan: false,
+      caloriasReales: altCal ? Number(altCal) : undefined,
+      observaciones: altDesc.trim(),
+      horaConsumida: new Date(),
+    })
+
+    setAltDesc("")
+    setAltCal("")
+    setAltOpen(null)
+    setAltGuardando(false)
   }
 
   const comidasCompletadas = mealTracking.filter((t) => t.completado).length
@@ -149,13 +192,18 @@ export function MealTrackingComponent({ mealPlan, mealTracking, onUpdateTracking
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {tracking.completado && (
+                    {tracking.completado && tracking.cumpleConPlan === false ? (
+                      <Badge className="bg-orange-100 text-orange-700 border-orange-200">
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Alternativa
+                      </Badge>
+                    ) : tracking.completado ? (
                       <Badge variant="secondary" className="bg-green-100 text-green-800">
                         <Check className="h-3 w-3 mr-1" />
                         Completado
                       </Badge>
-                    )}
-                    {tracking.fotoPlato && !tracking.cumpleConPlan && (
+                    ) : null}
+                    {tracking.fotoPlato && tracking.cumpleConPlan === false && !tracking.observaciones && (
                       <Badge variant="destructive">
                         <AlertCircle className="h-3 w-3 mr-1" />
                         Revisar
@@ -216,13 +264,13 @@ export function MealTrackingComponent({ mealPlan, mealTracking, onUpdateTracking
 
                 <div className="flex gap-2">
                   <Button
-                    variant={tracking.completado ? "secondary" : "default"}
+                    variant={tracking.completado && tracking.cumpleConPlan !== false ? "secondary" : "default"}
                     size="sm"
                     onClick={() => marcarComidaCompletada(key)}
                     className="flex-1"
                   >
                     <Check className="h-4 w-4 mr-2" />
-                    {tracking.completado ? "Completado" : "Marcar como consumido"}
+                    {tracking.completado && tracking.cumpleConPlan !== false ? "Completado" : "Seguí el plan"}
                   </Button>
 
                   <Button
@@ -236,9 +284,74 @@ export function MealTrackingComponent({ mealPlan, mealTracking, onUpdateTracking
                     <Camera className="h-4 w-4 mr-2" />
                     Foto
                   </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setAltOpen(altOpen === key ? null : key)
+                      setAltDesc(tracking.observaciones ?? "")
+                      setAltCal(tracking.caloriasReales ? String(tracking.caloriasReales) : "")
+                    }}
+                    title="Anotar lo que comí realmente"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                 </div>
 
-                {tracking.observaciones && (
+                {/* Panel: comida alternativa */}
+                {altOpen === key && (
+                  <div className="rounded-xl border border-orange-200 bg-orange-50 p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-orange-700">¿Comiste algo diferente?</span>
+                      <button onClick={() => setAltOpen(null)} className="text-orange-400 hover:text-orange-600">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <Textarea
+                      placeholder="Ej: Bocadillo de jamón y patatas fritas en un bar…"
+                      rows={2}
+                      value={altDesc}
+                      onChange={e => setAltDesc(e.target.value)}
+                      className="resize-none rounded-lg text-sm bg-white border-orange-200 focus:border-orange-400"
+                    />
+                    <div className="flex gap-2 items-center">
+                      <div className="relative flex-1">
+                        <Flame className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-orange-400" />
+                        <Input
+                          type="number"
+                          placeholder="Kcal aprox. (opcional)"
+                          min={0}
+                          max={3000}
+                          value={altCal}
+                          onChange={e => setAltCal(e.target.value)}
+                          className="pl-7 rounded-lg text-sm bg-white border-orange-200"
+                        />
+                      </div>
+                      <Button
+                        size="sm"
+                        disabled={!altDesc.trim() || altGuardando}
+                        onClick={() => guardarComidaAlternativa(key)}
+                        className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg"
+                      >
+                        {altGuardando ? "…" : "Guardar"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Resumen comida alternativa ya guardada */}
+                {tracking.completado && tracking.cumpleConPlan === false && tracking.observaciones && (
+                  <div className="rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
+                    <span className="font-semibold">🍴 Lo que comiste: </span>
+                    {tracking.observaciones}
+                    {tracking.caloriasReales && (
+                      <span className="ml-2 text-xs text-orange-500">({tracking.caloriasReales} kcal)</span>
+                    )}
+                  </div>
+                )}
+
+                {tracking.observaciones && tracking.cumpleConPlan !== false && (
                   <div className="text-sm text-muted-foreground">
                     <strong>Notas:</strong> {tracking.observaciones}
                   </div>
