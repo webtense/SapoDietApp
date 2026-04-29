@@ -40,6 +40,7 @@ export async function POST() {
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${appUrl}/perfil?upgrade=success`,
     cancel_url: `${appUrl}/perfil?upgrade=cancelled`,
+    metadata: { userId: fullUser.id },
     subscription_data: {
       trial_period_days: 30,
       metadata: { userId: fullUser.id },

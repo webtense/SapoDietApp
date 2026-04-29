@@ -190,3 +190,8 @@ export const shoppingSharePriceUpdateSchema = z.object({
   itemId: z.string().min(1).max(40),
   actualPrice: z.number().nonnegative().max(9999),
 })
+
+export const shoppingShareSchema = z.object({
+  shoppingListId: z.string().min(1).max(40),
+  toPhone: z.string().min(7).max(30),
+})

@@ -27,8 +27,7 @@ export async function POST(req: NextRequest) {
       const session = event.data.object as Stripe.Checkout.Session
       if (session.mode !== "subscription") break
 
-      const userId = session.subscription_data?.metadata?.userId
-        ?? (session.metadata?.userId as string | undefined)
+      const userId = session.metadata?.userId as string | undefined
 
       if (!userId) {
         console.error("webhook: checkout.session.completed sin userId en metadata")
