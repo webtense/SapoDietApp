@@ -199,8 +199,8 @@ function generarMealSuplemento(tipo: "desayuno" | "merienda"): Meal {
   return {
     nombre: "Batido Fórmula 1 Herbalife",
     ingredientes: [
-      { nombre: "Fórmula 1 Herbalife", cantidad: 52, unidad: "g", calorias: 186 },
-      { nombre: "Leche desnatada", cantidad: 250, unidad: "ml", calorias: 90 },
+      { nombre: "Fórmula 1 Herbalife", cantidad: 52, unidad: "g", calorias: 186, proteinas: 18, carbohidratos: 22, grasas: 3 },
+      { nombre: "Leche desnatada", cantidad: 250, unidad: "ml", calorias: 90, proteinas: 9, carbohidratos: 12, grasas: 0.5 },
     ],
     instrucciones: [
       "Mezcla 2 medidas rasas (52 g) de Fórmula 1 con 250 ml de leche desnatada fría.",
