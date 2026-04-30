@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null)
   const force = !!body?.force
+  const supplementBrand: string = body?.supplementBrand || ""
 
   const [profile, goal, fullUser] = await Promise.all([
     prisma.profile.findUnique({ where: { userId: user.id } }),
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
     .map((item: string) => item.trim())
     .filter((item: string) => item.length > 0)
 
-  const mealPlan = generarPlanComidas(macros, profile.dietType || "Mediterránea", forbidden, profile.lunchTime || "14:00")
+  const mealPlan = generarPlanComidas(macros, profile.dietType || "Mediterránea", forbidden, profile.lunchTime || "14:00", supplementBrand)
   const exercisePlan = generarPlanEjercicios(
     profile.trainingFrequency || "1-2",
     JSON.parse(profile.trainingPlaces || "[]"),
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
       proteinTarget: macros.protein,
       carbsTarget: macros.carbs,
       fatTarget: macros.fat,
-      planJson: JSON.stringify({ mealPlan, exercisePlan, macros }),
+      planJson: JSON.stringify({ mealPlan, exercisePlan, macros, supplementBrand }),
     },
   })
 

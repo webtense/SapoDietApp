@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { defaultV3Preferences, parseV3Preferences, V3_PREFERENCES_KEY, type V3Preferences } from "@/lib/v3-preferences"
 import { SUPPLEMENT_BRANDS, SUPPLEMENTS_KEY } from "@/lib/supplements"
+import { PaywallDialog } from "@/components/paywall-dialog"
 
 interface FormData {
   nombre: string
@@ -69,6 +70,7 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [planReady, setPlanReady] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
   const [formData, setFormData] = useState<FormData>(initialForm)
   const [v3, setV3] = useState<V3Preferences>(defaultV3Preferences)
   const [supplementBrand, setSupplementBrand] = useState<string>("")
@@ -209,8 +211,13 @@ export default function PerfilPage() {
     const res = await fetch("/api/plan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ force: true }),
+      body: JSON.stringify({ force: true, supplementBrand }),
     })
+
+    if (res.status === 402) {
+      setShowPaywall(true)
+      return
+    }
 
     if (res.ok) {
       setPlanReady(true)
@@ -230,6 +237,7 @@ export default function PerfilPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
+      {showPaywall && <PaywallDialog onClose={() => setShowPaywall(false)} />}
       <section className="rounded-[2rem] bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
