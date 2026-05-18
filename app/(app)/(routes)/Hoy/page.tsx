@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Activity, CheckCircle2, Circle, Droplets, Flame, Scale, SkipForward, Sparkles, Utensils } from "lucide-react"
+import { Activity, CheckCircle2, Circle, Dumbbell, Droplets, Flame, Scale, SkipForward, Sparkles, Utensils } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -65,6 +65,7 @@ export default function HoyPage() {
   const [checkin, setCheckin] = useState({ water: "", weight: "", energy: 3, mood: 3 })
   const [prefs, setPrefs] = useState(defaultV3Preferences)
   const [hasLoadedFromApi, setHasLoadedFromApi] = useState(false)
+  const [planSemana, setPlanSemana] = useState<{ semana: number; completadas: number; total: number } | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -80,6 +81,17 @@ export default function HoyPage() {
           setCheckin(parsed)
         } catch {}
       }
+
+      try {
+        const rawPlan = window.localStorage.getItem("sapofit-plan4s-v1")
+        if (rawPlan) {
+          const ps = JSON.parse(rawPlan) as { semana: number; sesionesCompletadas: Record<string, boolean> }
+          const semana = ps.semana ?? 1
+          const total = 4
+          const completadas = Object.keys(ps.sesionesCompletadas ?? {}).filter(k => k.startsWith(`${semana}-`)).length
+          setPlanSemana({ semana, completadas, total })
+        }
+      } catch {}
 
       const [planRes, trackingRes] = await Promise.all([fetch("/api/plan"), fetch("/api/tracking")])
 
@@ -364,6 +376,40 @@ export default function HoyPage() {
               <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Hidratación</p><p className="mt-1 text-muted-foreground">Meta {plan?.necesidades.water || 2.5}L. Hoy llevas {checkin.water || 0}L.</p></div>
               <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Proteína</p><p className="mt-1 text-muted-foreground">Objetivo de {plan?.necesidades.protein || 0}g para apoyar {prefs.primaryGoal.toLowerCase()}.</p></div>
               <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Constancia</p><p className="mt-1 text-muted-foreground">Marca tus comidas y tu entreno aunque estés offline; el módulo de entrenamiento ya conserva progreso local.</p></div>
+            </CardContent>
+          </Card>
+
+          {/* Plan 4 semanas — acceso rápido */}
+          <Card className="rounded-[1.75rem] shadow-sm border-emerald-200 bg-[linear-gradient(135deg,_rgba(4,47,31,0.03),_rgba(16,185,129,0.06))]">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Dumbbell className="h-4 w-4 text-emerald-600" /> Plan 4 semanas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              {planSemana ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Semana actual</span>
+                    <Badge className="bg-emerald-500 text-white">{planSemana.semana} / 4</Badge>
+                  </div>
+                  <div>
+                    <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Sesiones completadas</span>
+                      <span>{planSemana.completadas} / {planSemana.total}</span>
+                    </div>
+                    <Progress
+                      value={Math.round((planSemana.completadas / planSemana.total) * 100)}
+                      className="[&_[data-slot=progress-indicator]]:bg-emerald-500"
+                    />
+                  </div>
+                </>
+              ) : (
+                <p className="text-muted-foreground">Aún no has iniciado el plan. 4 semanas de progresión sin equipo.</p>
+              )}
+              <a href="/entrenamiento" className="block w-full rounded-xl bg-emerald-50 px-3 py-2 text-center text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
+                Ir a Entrenamiento →
+              </a>
             </CardContent>
           </Card>
         </div>

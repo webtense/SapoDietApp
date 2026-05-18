@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity, BarChart3, Calendar, Flame, Home, ListTodo, MessageSquare, Pill, ShoppingCart, User, Settings, LogOut } from "lucide-react"
+import { Activity, BarChart3, Calendar, Flame, Home, ListTodo, MessageSquare, Pill, ShoppingCart, Target, User, Settings, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
   { href: "/entrenamiento", icon: ListTodo, label: "Entreno" },
   { href: "/compra", icon: ShoppingCart, label: "Compra" },
   { href: "/calendario", icon: Calendar, label: "Calendario" },
+  { href: "/objetivo", icon: Target, label: "Objetivo" },
   { href: "/informes", icon: BarChart3, label: "Informes" },
   { href: "/recordatorios", icon: MessageSquare, label: "Avisos" },
   { href: "/suplementos", icon: Pill, label: "Suplementos" },

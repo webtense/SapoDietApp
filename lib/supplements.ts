@@ -151,6 +151,81 @@ export const SUPPLEMENT_BRANDS: SupplementBrand[] = [
           },
         ],
       },
+      {
+        id: "herbalife-rebuild",
+        name: "Rebuild Strength",
+        benefit: "Proteína de suero + caseína para recuperación muscular post-entreno",
+        doses: [
+          {
+            moment: "despues-entreno",
+            amount: "1 scoop (51 g)",
+            instruction: "Mezcla con 240-300 ml de agua o leche desnatada. Consúmelo en los 30 minutos posteriores al entrenamiento para maximizar la síntesis proteica.",
+          },
+          {
+            moment: "antes-dormir",
+            amount: "½ scoop",
+            instruction: "Dosis nocturna de caseína para recuperación muscular durante el sueño. Mezcla con 150 ml de leche fría.",
+          },
+        ],
+        tip: "Especialmente útil los días de entrenamiento de fuerza intenso. Combínalo con F3 para un mayor aporte proteico diario.",
+      },
+      {
+        id: "herbalife-h3o",
+        name: "H3O Fitness Drink",
+        benefit: "Bebida isotónica con electrolitos para rehidratación y rendimiento durante el entrenamiento",
+        doses: [
+          {
+            moment: "antes-entreno",
+            amount: "1 scoop (12 g)",
+            instruction: "Disuelve 1 scoop en 500 ml de agua fría. Empieza a beber 15 minutos antes del entreno o durante el calentamiento.",
+          },
+          {
+            moment: "despues-entreno",
+            amount: "1 scoop (12 g)",
+            instruction: "Segunda dosis de rehidratación post-entreno si has sudado mucho o el ejercicio ha durado más de 60 minutos.",
+          },
+        ],
+        tip: "En entrenamientos de más de 45 min o en días de mucho calor, usa 2 scoops en 750 ml durante la sesión.",
+      },
+      {
+        id: "herbalife-liftoff",
+        name: "Lift-Off (energía efervescente)",
+        benefit: "Tableta efervescente con cafeína, vitamina C y B12 para energía y foco mental",
+        doses: [
+          {
+            moment: "antes-entreno",
+            amount: "1 tableta",
+            instruction: "Disuelve 1 tableta en 250 ml de agua. Tómalo 20 minutos antes del entrenamiento. No superar 1 tableta por día.",
+          },
+        ],
+        tip: "No combinar con el té concentrado el mismo día para no exceder la ingesta de cafeína. Evitar después de las 17:00 para no afectar el sueño.",
+      },
+      {
+        id: "herbalife-cr7",
+        name: "CR7 Drive",
+        benefit: "Bebida de carbohidratos y electrolitos para entrenamientos de resistencia de larga duración",
+        doses: [
+          {
+            moment: "antes-entreno",
+            amount: "1 scoop (17 g)",
+            instruction: "Mezcla 1 scoop en 500 ml de agua fría. Tómalo 15 minutos antes o durante la primera parte de un entrenamiento de más de 60 minutos de cardio o resistencia.",
+          },
+        ],
+        tip: "Diseñado para actividades de resistencia (running, ciclismo, natación). No recomendado si el objetivo principal es pérdida de grasa por su aporte de carbohidratos.",
+      },
+      {
+        id: "herbalife-cell",
+        name: "Cell Activator",
+        benefit: "Antioxidantes, Aloe Vera y extractos de plantas para energía celular y mejor absorción de nutrientes",
+        doses: [
+          {
+            moment: "con-desayuno",
+            amount: "2 cápsulas",
+            instruction: "Toma 2 cápsulas junto al batido F1 o el desayuno. Potencia la absorción de los micronutrientes del batido y mejora la energía celular.",
+          },
+        ],
+        tip: "Especialmente recomendado si sigues el programa de pérdida de peso o recomposición. Complementa perfectamente el tripack Aloe + Té + F1.",
+      },
     ],
   },
   {
