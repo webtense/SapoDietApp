@@ -28,7 +28,7 @@ export default function LoginPage() {
       if (!res.ok) {
         throw new Error(data.error || "No se pudo iniciar sesión")
       }
-      router.push("/")
+      router.push(data.user?.role === "ADMIN" ? "/admin" : "/")
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado")
