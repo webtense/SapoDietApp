@@ -4,6 +4,7 @@ import { apiError, requireUser } from "@/lib/server/api"
 import { profileSchema } from "@/lib/validation"
 import { sanitizeText } from "@/lib/server/security"
 import { ensureWorkoutReminder } from "@/lib/server/reminders"
+import { assignWorkoutPlansToUser } from "@/lib/training/plan-templates"
 
 export async function GET() {
   const { user, error } = await requireUser()
@@ -60,6 +61,7 @@ export async function PUT(req: NextRequest) {
         trainingPlaces: JSON.stringify(data.lugarEntrenamiento),
         homeEquipment: JSON.stringify(data.equipamiento),
         onboardingCompleted: true,
+        onboardingCompletedAt: new Date(),
       },
       update: {
         age: data.age,
@@ -77,6 +79,7 @@ export async function PUT(req: NextRequest) {
         trainingPlaces: JSON.stringify(data.lugarEntrenamiento),
         homeEquipment: JSON.stringify(data.equipamiento),
         onboardingCompleted: true,
+        onboardingCompletedAt: new Date(),
       },
     }),
     data.pesoMeta ? prisma.goal.upsert({
@@ -98,6 +101,10 @@ export async function PUT(req: NextRequest) {
   ])
 
   await ensureWorkoutReminder(user.id, data.frecuenciaEntrenamiento)
+
+  // Asigna los planes de entrenamiento A/B/C al completar/actualizar el perfil.
+  // Idempotente: no duplica planes si el usuario ya los tiene.
+  await assignWorkoutPlansToUser(user.id).catch(() => null)
 
   return NextResponse.json({ ok: true, viability })
 }
