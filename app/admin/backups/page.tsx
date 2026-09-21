@@ -67,7 +67,7 @@ export default function AdminBackupsPage() {
                 <p className="text-sm text-muted-foreground">
                   {b.triggeredBy} · {formatSize(b.sizeBytes)} · {new Date(b.startedAt).toLocaleString("es-ES")}
                 </p>
-                {b.error && <p className="text-sm text-red-600">{b.error}</p>}
+                {b.error && <p className="text-sm text-danger">{b.error}</p>}
               </div>
               <Badge variant={STATUS_VARIANT[b.status] ?? "secondary"}>{b.status}</Badge>
             </CardContent>

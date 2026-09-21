@@ -89,7 +89,7 @@ export default function ProgresoPage() {
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     )
   }
@@ -101,7 +101,7 @@ export default function ProgresoPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Scale className="h-5 w-5 text-emerald-600" /> Registrar peso
+            <Scale className="h-5 w-5 text-primary" /> Registrar peso
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -126,7 +126,7 @@ export default function ProgresoPage() {
                   <XAxis dataKey="date" fontSize={11} />
                   <YAxis domain={["auto", "auto"]} fontSize={11} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="peso" stroke="#059669" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="peso" stroke="var(--color-primary)" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -137,7 +137,7 @@ export default function ProgresoPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Ruler className="h-5 w-5 text-emerald-600" /> Registrar medidas
+            <Ruler className="h-5 w-5 text-primary" /> Registrar medidas
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -172,7 +172,7 @@ export default function ProgresoPage() {
                   <XAxis dataKey="date" fontSize={11} />
                   <YAxis domain={["auto", "auto"]} fontSize={11} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="cintura" stroke="#2563eb" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="cintura" stroke="var(--color-info)" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
