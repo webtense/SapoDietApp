@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -44,6 +43,7 @@ model User {
   foodAnalyses       FoodAnalysis[]
   evolutionMsgs      EvolutionMsg[]
   pushSubscriptions  PushSubscription[]
+  reviews            Review[]
   subscriptionStatus String      @default("FREE")
   stripeCustomerId   String?     @unique
   stripeSubscriptionId String?   @unique
@@ -381,4 +381,46 @@ model RateLimitBucket {
   updatedAt DateTime @updatedAt
 
   @@index([resetAt])
+}
+
+// Reseñas de testers/usuarios recogidas manualmente o desde la app,
+// mostradas en el dashboard de métricas (/admin/dashboard).
+model Review {
+  id        String   @id @default(cuid())
+  userId    String?
+  name      String
+  rating    Int
+  comment   String?
+  source    String   @default("MANUAL") // MANUAL | APP
+  approved  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([approved, createdAt])
+}
+
+// Publicaciones de Instagram, cargadas vía Graph API (si hay token configurado)
+// o dadas de alta a mano desde el dashboard de métricas.
+model InstagramPost {
+  id        String   @id @default(cuid())
+  externalId String? @unique
+  permalink String?
+  caption   String?
+  imageUrl  String?
+  likes     Int      @default(0)
+  comments  Int      @default(0)
+  postedAt  DateTime
+  source    String   @default("MANUAL") // MANUAL | API
+  createdAt DateTime @default(now())
+
+  @@index([postedAt])
+}
+
+// Parámetros de marketing editables desde el dashboard (p.ej. inversión
+// mensual en ads) usados para calcular KPIs como el CAC.
+model MarketingSetting {
+  key       String   @id
+  value     Float
+  updatedAt DateTime @updatedAt
 }
