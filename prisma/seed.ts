@@ -65,8 +65,68 @@ async function upsertAdminUser() {
   }
 }
 
+async function seedGymCatalog() {
+  const muscleGroupNames = ["Pecho", "Espalda", "Hombro", "Pierna"]
+  const muscleGroups: Record<string, { id: string }> = {}
+
+  for (const name of muscleGroupNames) {
+    muscleGroups[name] = await prisma.muscleGroup.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    })
+  }
+
+  let gym = await prisma.gym.findFirst({ where: { name: "Planet Fitness" } })
+  if (!gym) {
+    gym = await prisma.gym.create({
+      data: { name: "Planet Fitness", address: "", city: "" },
+    })
+  }
+
+  const machineModelsDef = [
+    { name: "Smith Machine", manufacturer: "Genérico", muscleGroup: "Pierna" },
+    { name: "Chest Press", manufacturer: "Matrix", muscleGroup: "Pecho" },
+    { name: "Seated Row", manufacturer: "Matrix", muscleGroup: "Espalda" },
+    { name: "Shoulder Press", manufacturer: "Matrix", muscleGroup: "Hombro" },
+  ]
+
+  for (const def of machineModelsDef) {
+    let machineModel = await prisma.machineModel.findFirst({
+      where: { name: def.name, primaryMuscleGroupId: muscleGroups[def.muscleGroup].id },
+    })
+
+    if (!machineModel) {
+      machineModel = await prisma.machineModel.create({
+        data: {
+          name: def.name,
+          manufacturer: def.manufacturer,
+          primaryMuscleGroupId: muscleGroups[def.muscleGroup].id,
+        },
+      })
+    }
+
+    const existingGymMachine = await prisma.gymMachine.findFirst({
+      where: { gymId: gym.id, machineModelId: machineModel.id },
+    })
+
+    if (!existingGymMachine) {
+      await prisma.gymMachine.create({
+        data: {
+          gymId: gym.id,
+          machineModelId: machineModel.id,
+          active: true,
+        },
+      })
+    }
+  }
+
+  console.log(`Catálogo de gimnasio asegurado: ${gym.name} (${gym.id})`)
+}
+
 async function main() {
   await upsertAdminUser()
+  await seedGymCatalog()
   console.log("Seed inicial completado")
 }
 

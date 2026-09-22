@@ -36,6 +36,7 @@ interface OnboardingData {
   frecuenciaEntrenamiento: string
   lugares: string[]
   equipamiento: string[]
+  gymId: string | null
 }
 
 const defaults: OnboardingData = {
@@ -57,6 +58,12 @@ const defaults: OnboardingData = {
   frecuenciaEntrenamiento: "3-4",
   lugares: ["casa"],
   equipamiento: ["Sin material"],
+  gymId: null,
+}
+
+interface GymOption {
+  id: string
+  name: string
 }
 
 const TOTAL_STEPS = 4
@@ -67,6 +74,8 @@ export function OnboardingFlow({ userName }: { userName: string }) {
   const [data, setData] = useState<OnboardingData>({ ...defaults, nombre: userName })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [gyms, setGyms] = useState<GymOption[]>([])
+  const [loadingGyms, setLoadingGyms] = useState(false)
 
   // Cargar borrador guardado
   useEffect(() => {
@@ -85,12 +94,33 @@ export function OnboardingFlow({ userName }: { userName: string }) {
     setData(prev => ({ ...prev, [field]: value }))
 
   const toggleList = (field: "lugares" | "equipamiento", value: string) =>
-    setData(prev => ({
-      ...prev,
-      [field]: prev[field].includes(value)
+    setData(prev => {
+      const nextList = prev[field].includes(value)
         ? prev[field].filter(v => v !== value)
-        : [...prev[field], value],
-    }))
+        : [...prev[field], value]
+
+      if (field === "lugares" && value === "gimnasio" && prev[field].includes(value)) {
+        // Se está deseleccionando "gimnasio": limpiamos el gimnasio elegido
+        return { ...prev, lugares: nextList, gymId: null }
+      }
+
+      return { ...prev, [field]: nextList }
+    })
+
+  // Cargar gimnasios cuando el usuario selecciona "gimnasio" como lugar de entreno
+  useEffect(() => {
+    if (!data.lugares.includes("gimnasio") || gyms.length > 0 || loadingGyms) return
+    setLoadingGyms(true)
+    fetch("/api/gyms")
+      .then(res => res.json())
+      .then(json => {
+        if (Array.isArray(json?.gyms)) {
+          setGyms(json.gyms.map((g: { id: string; name: string }) => ({ id: g.id, name: g.name })))
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingGyms(false))
+  }, [data.lugares, gyms.length, loadingGyms])
 
   const canNext = (): boolean => {
     if (step === 1) return !!(data.edad && data.altura && data.peso && data.nombre)
@@ -129,6 +159,7 @@ export function OnboardingFlow({ userName }: { userName: string }) {
       frecuenciaEntrenamiento: data.frecuenciaEntrenamiento,
       lugarEntrenamiento: data.lugares,
       equipamiento: data.equipamiento,
+      gymId: data.lugares.includes("gimnasio") ? data.gymId : null,
     }
 
     try {
@@ -511,6 +542,26 @@ export function OnboardingFlow({ userName }: { userName: string }) {
               </button>
             ))}
           </div>
+
+          {data.lugares.includes("gimnasio") && (
+            <div className="mt-3">
+              <Label className="mb-2 block text-sm font-medium">¿Qué gimnasio?</Label>
+              {loadingGyms ? (
+                <p className="text-xs text-gray-400">Cargando gimnasios…</p>
+              ) : gyms.length === 0 ? (
+                <p className="text-xs text-gray-400">No hay gimnasios disponibles todavía.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {gyms.map(g => (
+                    <button key={g.id} className={chip(data.gymId === g.id)}
+                      onClick={() => set("gymId", data.gymId === g.id ? null : g.id)}>
+                      {g.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div>
