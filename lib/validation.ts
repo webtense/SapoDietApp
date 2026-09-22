@@ -107,6 +107,7 @@ export const profileSchema = z.object({
   frecuenciaEntrenamiento: z.string().min(1).max(20),
   lugarEntrenamiento: z.array(z.string()).max(5),
   equipamiento: z.array(z.string()).max(8),
+  gymId: z.string().min(1).max(60).nullable().optional(),
 })
 
 export const mealLogSchema = z.object({

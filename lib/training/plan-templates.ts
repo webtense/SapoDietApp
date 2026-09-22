@@ -68,6 +68,15 @@ async function ensureExercise(name: string, muscleGroupId: string) {
  * Idempotente: puede ejecutarse múltiples veces sin duplicar MuscleGroup,
  * Exercise, WorkoutPlan ni WorkoutExercise para el usuario dado.
  */
+// TODO(gymId): asociar gymMachineId en WorkoutExercise cuando el usuario tenga
+// Profile.gymId asignado. Haría falta: (1) cargar profile.gymId + sus GymMachine
+// (con machineModel.primaryMuscleGroupId) aquí, (2) al crear/actualizar cada
+// WorkoutExercise, buscar si existe una GymMachine de ese gimnasio cuyo
+// machineModel.primaryMuscleGroupId coincida con el muscleGroupId del Exercise
+// (Pecho/Espalda/Hombro/Pierna) y, si la hay, guardar su id en el nuevo campo
+// WorkoutExercise.gymMachineId (aún no existe en el schema). Es un cambio de
+// schema + lógica de matching no trivial, así que se deja fuera de esta tarea
+// para no arriesgar el build; ver ticket parte 5 del encargo de gimnasios.
 export async function assignWorkoutPlansToUser(userId: string) {
   const planTypes = Object.keys(WORKOUT_PLAN_DEF) as PlanType[]
 
