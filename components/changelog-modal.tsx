@@ -12,15 +12,29 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "3.5.0",
-    date: "Septiembre 2026",
+    version: "3.6.0",
+    date: "Septiembre 23, 2026",
     type: "feature",
     items: [
-      "Módulo de Máquinas de Gimnasio — gestión completa en admin",
-      "Selector dinámico de Grupo Muscular en /entrenamiento",
-      "3 series × 12 reps estructura configurable",
-      "Modal de información con detalles de máquinas",
-      "Traefik: sapofit.semillasdeti.com como dominio único",
+      "Módulo de Máquinas de Gimnasio COMPLETO — admin + UI usuario + runtime APIs",
+      "Admin panel (/admin/machines) crear/editar máquinas, asignar a gimnasio",
+      "Selector dinámico de Grupo Muscular (Tren Superior / Tren Inferior)",
+      "Entrada de pesos por serie (3 inputs, 3 series × 12 reps)",
+      "Modal información máquinas (descripción, instrucciones, recomendaciones)",
+      "Rutas runtime: GET /api/user/workout/current, POST exercise/*/set, POST workout/end",
+      "Componente MaquinasSection (reutilizable)",
+      "Migración Prisma 20260923_add_machine_models aplicada",
+    ],
+  },
+  {
+    version: "3.5.0",
+    date: "Septiembre 2026",
+    type: "internal",
+    items: [
+      "⚠️ CORRECCIÓN HISTÓRICA: esta versión claims módulo de máquinas 'completo' pero solo tiene backend CRUD",
+      "Modelos Prisma: Gym, MachineModel, GymMachine",
+      "Rutas admin CRUD: /api/admin/machines",
+      "Módulo completado realmente en v3.6.0",
     ],
   },
   {
@@ -55,7 +69,7 @@ export function ChangelogModal() {
     return (
       <button
         onClick={() => setOpen(true)}
-        title="Ver changelog (v3.5.0)"
+        title="Ver changelog (v3.6.0)"
         className="fixed bottom-4 right-4 text-xs text-gray-500 hover:text-gray-700 cursor-help"
       >
         v3.5.0

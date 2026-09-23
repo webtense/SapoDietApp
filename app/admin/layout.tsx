@@ -26,6 +26,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           <Link href="/admin/dashboard" className="rounded-full border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
             Métricas
           </Link>
+          <Link href="/admin/machines" className="rounded-full border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            Máquinas
+          </Link>
           <Link href="/inicio" className="rounded-full border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
             Volver a la app
           </Link>

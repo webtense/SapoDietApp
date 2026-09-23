@@ -51,18 +51,32 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const model = await prisma.machineModel.create({
-      data: {
-        name: parsed.data.name,
-        group: parsed.data.group,
-        description: parsed.data.description,
-        instructions: parsed.data.instructions,
-        tips: parsed.data.tips,
-        recommendedWeight: parsed.data.recommendedWeight,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      const model = await tx.machineModel.create({
+        data: {
+          name: parsed.data.name,
+          group: parsed.data.group,
+          description: parsed.data.description,
+          instructions: parsed.data.instructions,
+          tips: parsed.data.tips,
+          recommendedWeight: parsed.data.recommendedWeight,
+        },
+      })
+
+      if (parsed.data.gymId) {
+        await tx.gymMachine.create({
+          data: {
+            gymId: parsed.data.gymId,
+            machineModelId: model.id,
+            active: true,
+          },
+        })
+      }
+
+      return model
     })
 
-    return NextResponse.json({ ok: true, model }, { status: 201 })
+    return NextResponse.json({ ok: true, model: result }, { status: 201 })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error creating machine"
     return NextResponse.json({ error: message }, { status: 400 })

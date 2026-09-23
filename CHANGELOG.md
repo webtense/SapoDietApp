@@ -4,29 +4,49 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
-## [3.5.0] — Septiembre 2026
+## [3.6.0] — Septiembre 23, 2026
 
 ### ✨ Características nuevas
-- **Módulo de Máquinas de Gimnasio** — Gestión completa de máquinas:
-  - Admin panel (`/admin/machines`) para crear/editar/eliminar máquinas
-  - Asignar grupo muscular (Tren Superior / Tren Inferior / Custom)
-  - Definir peso recomendado, instructions, tips de uso
-  - Información detallada accesible desde cada máquina
-- **Selector dinámico de Grupo Muscular** en `/entrenamiento`:
-  - Elegir qué grupo muscular entrenar hoy
-  - Cargar automáticamente máquinas del grupo seleccionado
-  - Estructura de 3 series × 12 reps por defecto (editable por máquina)
-- **Entrada de pesos** — Interface para registrar peso de cada serie
-- **Modal de Información** — Doble click o botón info para ver detalles, recomendaciones y técnica de cada máquina
-
-### 🐛 Correcciones
-- Agregada columna `subscriptionStatus` a tabla `User` (faltaba en BD de producción)
-- Traefik: configuración oficial de `sapofit.semillasdeti.com` como dominio único
+- **Módulo de Máquinas de Gimnasio (COMPLETO)** — Gestión y seguimiento completo:
+  - Admin panel (`/admin/machines`) para crear/editar máquinas
+  - Asignar grupo muscular (Tren Superior / Tren Inferior / Full Body)
+  - Definir peso recomendado, instrucciones y recomendaciones
+  - Asignación directa a gimnasio (Planet Fitness) en el formulario de creación
+- **Selector de Grupo Muscular** en `/entrenamiento`:
+  - Pills: Tren Superior / Tren Inferior
+  - Carga automática de máquinas por grupo
+- **Entrada de Pesos por Serie** — 3 inputs para 3 series (12 reps cada una)
+  - Botón "OK" para guardar cada serie (upsert en BD)
+- **Modal de Información** — Botón ℹ️ en cada máquina:
+  - Descripción, instrucciones, recomendaciones y peso sugerido
+- **Terminar Sesión** — Botón para marcar sesión como completada
 
 ### 📝 Cambios internos
-- Restructurado `/entrenamiento/page.tsx` para soportar selector de grupo
-- Creadas rutas admin: `/api/admin/machines/*`
-- Base de datos: nuevas tablas `MachineModel`, `GymMachine`, `MachineGroup`
+- Nuevos modelos Prisma: `Gym`, `MachineModel`, `GymMachine`, `MachineWeightOption`
+- Nuevas rutas API: `GET /api/admin/gyms`, `GET/POST /api/admin/machines`, `GET /api/user/gym/machines`
+- Nuevas rutas runtime: `GET /api/user/workout/current?group=`, `POST /api/user/workout/exercise/[id]/set`, `POST /api/user/workout/end`
+- Nuevo componente: `MaquinasSection` (reutilizable en `/entrenamiento`)
+- Migración Prisma: `20260923_add_machine_models` (4 páginas, aplicada en CT206)
+
+### 🔍 Nota sobre v3.5.0
+La versión 3.5.0 incluía el CHANGELOG del módulo de máquinas pero **no incluía el código ni la UI de usuario** — solo backend CRUD de bajo nivel. Esta versión (3.6.0) completa la implementación con runtime, UI y verificación end-to-end.
+
+---
+
+## [3.5.0] — Septiembre 2026
+
+### ℹ️ Corrección histórica
+Esta versión fue commitada con el CHANGELOG que describía un módulo de máquinas "completo", pero el código real contenía **solo backend CRUD** (`MachineModel`, `GymMachine` en Prisma + rutas admin básicas). Faltaba:
+- Rutas de runtime (`/api/user/workout/current`, `exercise/*/set`, `workout/end`)
+- UI de usuario en `/entrenamiento` (pills de grupo, componente máquinas, modal info)
+- Migración aplicada en BD
+- Tests end-to-end
+
+El módulo se completó en **v3.6.0**.
+
+### 📝 Cambios internos (reales, solo backend)
+- Estructurados modelos Prisma: `Gym`, `MachineModel`, `GymMachine`
+- Creadas rutas admin CRUD: `/api/admin/machines`
 
 ---
 
