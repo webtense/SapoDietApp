@@ -39,6 +39,8 @@
     "node_modules",
     "tests",
     "prisma/seed.ts",
-    "lib/training/progression.ts"
+    "lib/training/progression.ts",
+    "lib/training/plan-templates.ts",
+    "lib/social/service.ts"
   ]
 }
