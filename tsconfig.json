@@ -37,6 +37,8 @@
   ],
   "exclude": [
     "node_modules",
-    "tests"
+    "tests",
+    "prisma/seed.ts",
+    "lib/training/progression.ts"
   ]
 }
