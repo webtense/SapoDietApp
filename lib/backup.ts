@@ -65,7 +65,7 @@ export async function restoreFromBackup(filename: string) {
     throw new Error("DATABASE_URL no configurado")
   }
 
-  const filePath = path.join(backupDir(), filename)
+  const filePath = path.join(/*turbopackIgnore: true*/ backupDir(), filename)
   await fs.access(filePath)
 
   await execFileAsync("pg_restore", [
