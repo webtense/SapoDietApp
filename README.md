@@ -1,8 +1,8 @@
 # SapoFit
 
-Version: **3.4**
+Version: **3.7.0**
 
-Planificador de nutrición y entrenamiento con autenticación segura, seguimiento diario y panel de administración.
+Planificador de nutrición y entrenamiento con autenticación segura, seguimiento diario, panel de administración, módulo de máquinas de gimnasio y planificación nutricional avanzada.
 
 ## Características
 
