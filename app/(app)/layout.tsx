@@ -3,12 +3,17 @@ import { MainNav, MobileNav } from "@/components/main-nav"
 import { getSessionUser } from "@/lib/server/security"
 import { prisma } from "@/lib/server/prisma"
 import { OnboardingGuard } from "@/components/onboarding-guard"
+import { ChangelogModal } from "@/components/changelog-modal"
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser()
 
   if (!user) {
     redirect("/login")
+  }
+
+  if (user.role === "ADMIN") {
+    redirect("/admin")
   }
 
   const userRole = user.role
@@ -27,6 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </div>
       <MobileNav userRole={userRole} />
+      <ChangelogModal />
     </div>
   )
 }

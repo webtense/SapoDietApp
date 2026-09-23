@@ -1,6 +1,6 @@
 # SapoFit
 
-Version: **3.3**
+Version: **3.4**
 
 Planificador de nutrición y entrenamiento con autenticación segura, seguimiento diario y panel de administración.
 
@@ -146,8 +146,8 @@ ssh root@TU_SERVITOR "docker build -t sapofit:latest /opt/sapofit && docker serv
 
 ### Staging y producción
 
-- `develop` despliega a staging cuando el workflow `ci` termina en verde y existe `EASYPANEL_STAGING_WEBHOOK`.
-- `main` despliega a producción cuando el workflow `ci` termina en verde y existe `EASYPANEL_PROD_WEBHOOK`.
+- `develop` despliega a staging cuando el workflow `CI` termina en verde y existe `EASYPANEL_STAGING_WEBHOOK`.
+- `main` despliega a producción cuando el workflow `CI` termina en verde y existe `EASYPANEL_PROD_WEBHOOK`.
 - Mantén las variables reales solo en `.env` local, GitHub Secrets y Easypanel.
 
 ### Backup

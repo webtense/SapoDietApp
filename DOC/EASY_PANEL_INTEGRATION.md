@@ -29,15 +29,17 @@ Para gestionar SapoFit desde la interfaz de EasyPanel:
    - **Puerto**: 3000
 
 4. **Variables de entorno** (en la sección "Environment"):
-   ```
-   DATABASE_URL=file:./dev.db
-   SESSION_COOKIE_NAME=sapofit_session
-   SESSION_DAYS=7
-   ```
+    ```
+    DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/sapofit
+    SESSION_COOKIE_NAME=sapofit_session
+    SESSION_DAYS=7
+    APP_URL=https://sapofit.semillasdeti.com
+    CRON_SECRET=REEMPLAZAR
+    ```
 
-5. **Volumen persistente** (montar para preservar SQLite):
-   - Path: /app/prisma
-   - Tipo: Volume
+5. **Base de datos persistente**:
+    - Usar PostgreSQL gestionado por EasyPanel o un servicio PostgreSQL separado.
+    - No montar SQLite en producción.
 
 6. **Desplegar**
    - EasyPanel detectará automáticamente el servicio existente si el dominio coincide.

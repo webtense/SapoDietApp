@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
           phone: true,
           phoneVerified: true,
           timezone: true,
+          subscriptionStatus: true,
         },
       },
     },

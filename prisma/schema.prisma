@@ -44,9 +44,17 @@ model User {
   foodAnalyses       FoodAnalysis[]
   evolutionMsgs      EvolutionMsg[]
   pushSubscriptions  PushSubscription[]
+  reviews            Review[]
   subscriptionStatus String      @default("FREE")
   stripeCustomerId   String?     @unique
   stripeSubscriptionId String?   @unique
+  workoutPlans       WorkoutPlan[] @relation("WorkoutPlan")
+  workoutSessions    WorkoutSession[] @relation("WorkoutSession")
+  weightEntries      WeightEntry[] @relation("WeightEntry")
+  bodyMeasurements   BodyMeasurement[] @relation("BodyMeasurement")
+  bodyPhotos         BodyPhoto[] @relation("BodyPhoto")
+  userChallenges     UserChallenge[] @relation("UserChallenge")
+  achievements       Achievement[] @relation("Achievement")
 
   @@index([status])
   @@index([role])
@@ -381,4 +389,263 @@ model RateLimitBucket {
   updatedAt DateTime @updatedAt
 
   @@index([resetAt])
+}
+
+// Reseñas de testers/usuarios recogidas manualmente o desde la app,
+// mostradas en el dashboard de métricas (/admin/dashboard).
+model Review {
+  id        String   @id @default(cuid())
+  userId    String?
+  name      String
+  rating    Int
+  comment   String?
+  source    String   @default("MANUAL") // MANUAL | APP
+  approved  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([approved, createdAt])
+}
+
+// Publicaciones de Instagram, cargadas vía Graph API (si hay token configurado)
+// o dadas de alta a mano desde el dashboard de métricas.
+model InstagramPost {
+  id        String   @id @default(cuid())
+  externalId String? @unique
+  permalink String?
+  caption   String?
+  imageUrl  String?
+  likes     Int      @default(0)
+  comments  Int      @default(0)
+  postedAt  DateTime
+  source    String   @default("MANUAL") // MANUAL | API
+  createdAt DateTime @default(now())
+
+  @@index([postedAt])
+}
+
+// Parámetros de marketing editables desde el dashboard (p.ej. inversión
+// mensual en ads) usados para calcular KPIs como el CAC.
+model MarketingSetting {
+  key       String   @id
+  value     Float
+  updatedAt DateTime @updatedAt
+}
+
+// ==== GIMNASIO Y ENTRENAMIENTO ====
+
+model Gym {
+  id          String        @id @default(cuid())
+  name        String
+  location    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  machines    GymMachine[]
+}
+
+model MachineModel {
+  id                 String        @id @default(cuid())
+  name               String
+  group              String        @default("FULL") // UPPER | LOWER | FULL
+  description        String?
+  instructions       String?
+  tips               String?
+  recommendedWeight  Float?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  gymMachines        GymMachine[]
+  exercises          Exercise[]
+}
+
+model GymMachine {
+  id              String        @id @default(cuid())
+  gymId           String
+  machineModelId  String
+  active          Boolean       @default(true)
+  assetNumber     String?
+  notes           String?
+  internalQRCode  String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  gym             Gym           @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  machineModel    MachineModel  @relation(fields: [machineModelId], references: [id], onDelete: Cascade)
+  weightOptions   MachineWeightOption[]
+  workoutExercises WorkoutExercise[]
+
+  @@unique([gymId, machineModelId])
+}
+
+model MachineWeightOption {
+  id            String        @id @default(cuid())
+  gymMachineId  String
+  weight        Float
+  createdAt     DateTime      @default(now())
+  gymMachine    GymMachine    @relation(fields: [gymMachineId], references: [id], onDelete: Cascade)
+
+  @@unique([gymMachineId, weight])
+}
+
+model Exercise {
+  id              String        @id @default(cuid())
+  name            String
+  machineModelId  String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  machineModel    MachineModel  @relation(fields: [machineModelId], references: [id], onDelete: Cascade)
+  workoutExercises WorkoutExercise[]
+
+  @@unique([machineModelId, name])
+}
+
+model WorkoutPlan {
+  id              String        @id @default(cuid())
+  userId          String
+  planType        String        // A | B | C
+  exercises       WorkoutExercise[]
+  sessions        WorkoutSession[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  user            User          @relation("WorkoutPlan", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, planType])
+}
+
+model WorkoutSession {
+  id              String        @id @default(cuid())
+  userId          String
+  workoutPlanId   String
+  completedAt     DateTime?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  sets            WorkoutSet[]
+  workoutPlan     WorkoutPlan   @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
+  user            User          @relation("WorkoutSession", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model WorkoutExercise {
+  id              String        @id @default(cuid())
+  workoutPlanId   String
+  order           Int
+  exerciseId      String
+  gymMachineId    String?
+  plannedSets     Int           @default(3)
+  plannedReps     Int           @default(12)
+  plannedWeight   Float?
+  estimatedDuration Int?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  workoutPlan     WorkoutPlan   @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
+  exercise        Exercise      @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  gymMachine      GymMachine?   @relation(fields: [gymMachineId], references: [id], onDelete: SetNull)
+  sets            WorkoutSet[]
+
+  @@unique([workoutPlanId, order])
+}
+
+model WorkoutSet {
+  id                  String        @id @default(cuid())
+  workoutSessionId    String
+  workoutExerciseId   String
+  setNumber           Int
+  weight              Float
+  reps                Int
+  rir                 Int?          // Reps in Reserve
+  rpe                 Int?          // Rate of Perceived Exertion
+  completed           Boolean       @default(true)
+  skipped             Boolean       @default(false)
+  durationSeconds     Int?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  workoutSession      WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  workoutExercise     WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutSessionId, workoutExerciseId, setNumber])
+}
+
+model WeightEntry {
+  id              String        @id @default(cuid())
+  userId          String
+  weight          Float
+  date            DateTime      @default(now())
+  notes           String?
+  createdAt       DateTime      @default(now())
+  user            User          @relation("WeightEntry", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+}
+
+model BodyMeasurement {
+  id              String        @id @default(cuid())
+  userId          String
+  bodyPart        String        // chest, arms, waist, legs, etc.
+  measurement     Float         // cm
+  date            DateTime      @default(now())
+  notes           String?
+  createdAt       DateTime      @default(now())
+  user            User          @relation("BodyMeasurement", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bodyPart, date])
+}
+
+model BodyPhoto {
+  id              String        @id @default(cuid())
+  userId          String
+  pose            String        // front, back, side, etc.
+  imagePath       String
+  date            DateTime      @default(now())
+  notes           String?
+  createdAt       DateTime      @default(now())
+  user            User          @relation("BodyPhoto", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+}
+
+model UserChallenge {
+  id              String        @id @default(cuid())
+  userId          String
+  challengeId     String
+  progress        Int           @default(0)
+  completed       Boolean       @default(false)
+  completedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  challenge       Challenge     @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user            User          @relation("UserChallenge", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+}
+
+model Challenge {
+  id              String        @id @default(cuid())
+  name            String
+  description     String?
+  icon            String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  userChallenges  UserChallenge[]
+}
+
+model Achievement {
+  id              String        @id @default(cuid())
+  userId          String
+  type            String
+  description     String?
+  unlockedAt      DateTime      @default(now())
+  user            User          @relation("Achievement", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+}
+
+model BackupLog {
+  id              String        @id @default(cuid())
+  trigger         String        // MANUAL | SCHEDULED | AUTO
+  status          String        // SUCCESS | FAILED
+  backupPath      String?
+  errorMessage    String?
+  createdAt       DateTime      @default(now())
+  completedAt     DateTime?
 }

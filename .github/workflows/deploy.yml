@@ -1,0 +1,28 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+      - develop
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy staging
+        if: github.event.workflow_run.head_branch == 'develop' && secrets.EASYPANEL_STAGING_WEBHOOK != ''
+        run: curl -fsS -X POST "$EASYPANEL_STAGING_WEBHOOK"
+        env:
+          EASYPANEL_STAGING_WEBHOOK: ${{ secrets.EASYPANEL_STAGING_WEBHOOK }}
+
+      - name: Deploy production
+        if: github.event.workflow_run.head_branch == 'main' && secrets.EASYPANEL_PROD_WEBHOOK != ''
+        run: curl -fsS -X POST "$EASYPANEL_PROD_WEBHOOK"
+        env:
+          EASYPANEL_PROD_WEBHOOK: ${{ secrets.EASYPANEL_PROD_WEBHOOK }}

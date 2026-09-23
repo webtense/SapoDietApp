@@ -22,6 +22,7 @@ export async function GET() {
       timezone: fullUser?.timezone ?? null,
       role: user.role,
       status: user.status,
+      subscriptionStatus: fullUser?.subscriptionStatus ?? "FREE",
       modules: fullUser?.modules?.filter((m) => m.enabled).map((m) => m.moduleKey) ?? [],
       pricing: fullUser?.pricing
         ? {

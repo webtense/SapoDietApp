@@ -33,5 +33,5 @@
 
 ## Evolucion futura
 
-- Mantener una única historia de migraciones PostgreSQL en `prisma/migrations-postgresql`.
+- Mantener una única historia de migraciones PostgreSQL en `prisma/migrations`.
 - Separar snapshots de plan en tablas normalizadas si se requiere analitica avanzada.

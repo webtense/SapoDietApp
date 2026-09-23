@@ -10,7 +10,7 @@
 ## Estado actual del repo
 
 - `prisma.config.ts` usa `prisma/schema.prisma`.
-- Las migraciones activas de producción viven en `prisma/migrations-postgresql`.
+- Las migraciones activas de producción viven en `prisma/migrations`.
 - `prisma/schema.prisma` se conserva solo para leer y exportar datos desde SQLite legado.
 
 ## Paso 0 — Backup

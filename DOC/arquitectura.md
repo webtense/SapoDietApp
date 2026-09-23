@@ -3,7 +3,7 @@
 ## Stack
 
 - Frontend y backend: Next.js (App Router).
-- Persistencia: SQLite (`prisma/dev.db`).
+- Persistencia: PostgreSQL en producción y desarrollo recomendado.
 - ORM: Prisma.
 - Validacion: Zod.
 - Seguridad de contrasena: bcrypt.
@@ -29,4 +29,4 @@
 
 - Evitar secretos embebidos en codigo.
 - Validar entradas del cliente en API.
-- Diseñar para evolucionar de SQLite a Postgres sin reescritura profunda.
+- Mantener PostgreSQL como motor principal y SQLite solo como legado de migración.

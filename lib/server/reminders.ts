@@ -115,7 +115,7 @@ export async function dispatchReminder(reminder: {
   title: string
   kind: string
   lastSentAt: Date | null
-  user: { id: string; name: string | null; phone: string | null; phoneVerified: boolean; timezone: string | null }
+  user: { id: string; name: string | null; phone: string | null; phoneVerified: boolean; timezone: string | null; subscriptionStatus?: string }
 }) {
   const now = new Date()
   if (reminder.lastSentAt && now.getTime() - reminder.lastSentAt.getTime() < 60_000) {
@@ -130,7 +130,7 @@ export async function dispatchReminder(reminder: {
   })
 
   let whatsappResult: any = null
-  if (reminder.user.phone && reminder.user.phoneVerified) {
+  if (reminder.user.phone && reminder.user.phoneVerified && reminder.user.subscriptionStatus === "PRO") {
     const bucketDay = now.toISOString().slice(0, 10)
     const rate = await checkRateLimit(`wa:reminders:${reminder.user.id}:${bucketDay}`, 5, 86_400_000)
     if (rate.allowed) {
