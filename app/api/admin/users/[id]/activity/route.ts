@@ -2,12 +2,13 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/server/prisma"
 import { requireAdmin } from "@/lib/server/api"
 
-export async function GET(_: Request, { params }: any) {
+export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { user, error } = await requireAdmin()
   if (error || !user) return error
 
+  const { id } = await params
   const found = await prisma.user.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: {
       id: true,
       email: true,
