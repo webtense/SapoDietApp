@@ -68,3 +68,68 @@ export async function getWeightMovingAverage(userId: string, days: number) {
 
   return result
 }
+
+export interface ExerciseProgressionSetPoint {
+  setNumber: number
+  weight: number | null
+  reps: number | null
+}
+
+export interface ExerciseProgressionSession {
+  date: Date
+  sessionId: string
+  sets: ExerciseProgressionSetPoint[]
+  best1RM: number | null
+}
+
+export async function getExerciseProgression(
+  userId: string,
+  exerciseId: string,
+  limit = 20,
+): Promise<ExerciseProgressionSession[]> {
+  const sessions = await prisma.workoutSession.findMany({
+    where: {
+      userId,
+      sets: {
+        some: {
+          completed: true,
+          workoutExercise: { exerciseId },
+        },
+      },
+    },
+    orderBy: { startTime: "asc" },
+    take: limit,
+    include: {
+      sets: {
+        where: {
+          completed: true,
+          workoutExercise: { exerciseId },
+        },
+        orderBy: { setNumber: "asc" },
+      },
+    },
+  })
+
+  return sessions.map((session) => {
+    const sets = session.sets.map((s) => ({
+      setNumber: s.setNumber,
+      weight: s.weight,
+      reps: s.reps,
+    }))
+
+    let best1RM: number | null = null
+    for (const s of sets) {
+      if (s.weight != null && s.reps != null) {
+        const oneRm = epley1RM(s.weight, s.reps)
+        if (best1RM == null || oneRm > best1RM) best1RM = oneRm
+      }
+    }
+
+    return {
+      date: session.startTime ?? session.createdAt,
+      sessionId: session.id,
+      sets,
+      best1RM,
+    }
+  })
+}
