@@ -1,17 +1,17 @@
-FROM node:20-slim AS base
+FROM node:24-slim AS base
 RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci --legacy-peer-deps --verbose
 
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate --schema=prisma/schema.prisma
-RUN npm run build
+RUN npm run build 2>&1 || (echo "Build failed" && npm run build)
 
 FROM base AS runner
 WORKDIR /app
