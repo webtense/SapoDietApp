@@ -4,6 +4,26 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.7.0] — Septiembre 23, 2026
+
+### ✨ Características nuevas
+- **Módulo de Planificación Nutricional** — Integración completa:
+  - Importación de planes PDF de nutricionista (estructura de datos JSON)
+  - Gestión de miembros del hogar (escalado de raciones por comensal)
+  - Catálogo de recetas con ingredientes, macros, alérgenos y métodos de cocción
+  - Grupos de sustituciones (proteínas, hidratos, verduras intercambiables)
+  - Modo despensa: registrar alimentos disponibles, priorizar por caducidad
+  - Modo restaurante: registrar comidas fuera de casa con estimaciones
+  - Rutas API: `/api/nutrition/plan/{import,current}`, `/api/nutrition/recipes`, `/api/nutrition/pantry`
+- **Backend lógico puro** (`lib/nutrition/service.ts`) — sin dependencias de Next.js, reutilizable en tests
+
+### 📝 Cambios internos
+- Nuevos modelos Prisma: `NutritionistPlan`, `HouseholdMember`, `Recipe`, `RecipeIngredient`, `RecipeVariant`, `SubstitutionGroup`, `SubstitutionItem`, `PantryItem`, `EatingOutLog`
+- Migración Prisma: `20260923_add_nutrition_models` (9 tablas nuevas, indexes, foreign keys)
+- Actualización User: relaciones a planes nutricional, pantry, eating-out logs
+
+---
+
 ## [3.6.0] — Septiembre 23, 2026
 
 ### ✨ Características nuevas

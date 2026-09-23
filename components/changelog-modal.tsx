@@ -12,6 +12,21 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "3.7.0",
+    date: "Septiembre 23, 2026",
+    type: "feature",
+    items: [
+      "Módulo de Planificación Nutricional — plan de nutricionista, recetas, miembros hogar",
+      "Importación PDF de planes (estructura JSON de comidas y equivalencias)",
+      "Catálogo de recetas: ingredientes, macros, alérgenos, métodos de cocción",
+      "Grupos de sustituciones (proteínas, hidratos, verduras intercambiables)",
+      "Modo despensa: registrar alimentos, priorizar por caducidad",
+      "Modo restaurante: registrar comidas fuera con estimaciones",
+      "Backend puro en lib/nutrition/service.ts (reutilizable en tests)",
+      "9 nuevas tablas Prisma + migraciones",
+    ],
+  },
+  {
     version: "3.6.0",
     date: "Septiembre 23, 2026",
     type: "feature",
@@ -69,7 +84,7 @@ export function ChangelogModal() {
     return (
       <button
         onClick={() => setOpen(true)}
-        title="Ver changelog (v3.6.0)"
+        title="Ver changelog (v3.7.0)"
         className="fixed bottom-4 right-4 text-xs text-gray-500 hover:text-gray-700 cursor-help"
       >
         v3.5.0

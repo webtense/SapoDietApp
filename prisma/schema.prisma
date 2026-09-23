@@ -55,6 +55,9 @@ model User {
   bodyPhotos         BodyPhoto[] @relation("BodyPhoto")
   userChallenges     UserChallenge[] @relation("UserChallenge")
   achievements       Achievement[] @relation("Achievement")
+  nutritionistPlan   NutritionistPlan? @relation("NutritionistPlan")
+  pantryItems        PantryItem[] @relation("PantryItem")
+  eatingOutLogs      EatingOutLog[] @relation("EatingOutLog")
 
   @@index([status])
   @@index([role])
@@ -648,4 +651,142 @@ model BackupLog {
   errorMessage    String?
   createdAt       DateTime      @default(now())
   completedAt     DateTime?
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// NUTRICIÓN: Plan de nutricionista (fuente de verdad) + Recetas + Comida familiar
+// ───────────────────────────────────────────────────────────────────────────────
+
+model NutritionistPlan {
+  id                  String        @id @default(cuid())
+  userId              String        @unique
+  user                User          @relation("NutritionistPlan", fields: [userId], references: [id], onDelete: Cascade)
+  pdfOriginal         String?       // URL o path del PDF original
+  extractedText       String?       // Texto extraído del PDF
+  mealsJson           String?       // JSON estructurado: {desayuno: {...}, mediaMañana: {...}, ...}
+  equivalencesJson    String?       // JSON de grupos de sustitución
+  status              String        @default("ACTIVE") // ACTIVE | ARCHIVED
+  version             Int           @default(1)
+  needsReview         Boolean       @default(false) // si hay reglas no legibles con seguridad
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  households          HouseholdMember[]
+
+  @@index([userId, status])
+}
+
+model HouseholdMember {
+  id                  String        @id @default(cuid())
+  nutritionistPlanId  String
+  plan                NutritionistPlan @relation(fields: [nutritionistPlanId], references: [id], onDelete: Cascade)
+  name                String        // Ej: "Zoraida", "Andrés", "hijo1"
+  age                 Int?
+  portionFactor       Float         @default(1.0) // 1.0 = ración normal, 0.5 = media ración
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([nutritionistPlanId])
+}
+
+model Recipe {
+  id                  String        @id @default(cuid())
+  name                String
+  description         String?
+  mealType            String        // DESAYUNO | MEDIA_MAÑANA | COMIDA | MERIENDA | CENA
+  servings            Int           @default(1)
+  preparationTime     Int?          // minutos
+  cookingTime         Int?          // minutos
+  difficulty          String        @default("NORMAL") // FACIL | NORMAL | DIFICIL
+  method              String        @default("PLANCHA") // PLANCHA | HORNO | CAZUELA | FREIDORA_AIRE | COCIDO
+  canFreeze           Boolean       @default(false)
+  nutritionPerServing String?       // JSON: {calories, protein, carbs, fat, fiber}
+  allergens           String?       // JSON: ["gluten", "marisco", ...]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  ingredients         RecipeIngredient[]
+  variants            RecipeVariant[]
+
+  @@index([mealType])
+}
+
+model RecipeIngredient {
+  id                  String        @id @default(cuid())
+  recipeId            String
+  recipe              Recipe        @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient          String        // Ej: "Pechuga de pollo"
+  rawWeight           Float?        // en gramos
+  cookedWeight        Float?        // en gramos
+  drainedWeight       Float?        // en gramos (para conservas)
+  frozenWeight        Float?        // en gramos
+  substitutionGroup   String?       // Ej: "PROTEINA_BLANCA" para poder intercambiar por otro
+  createdAt           DateTime      @default(now())
+
+  @@index([recipeId, substitutionGroup])
+}
+
+model RecipeVariant {
+  id                  String        @id @default(cuid())
+  recipeId            String
+  recipe              Recipe        @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  name                String        // "Versión rápida", "Casera", "Elaborada"
+  description         String?
+  createdAt           DateTime      @default(now())
+
+  @@index([recipeId])
+}
+
+model SubstitutionGroup {
+  id                  String        @id @default(cuid())
+  name                String        @unique // "PROTEINA_BLANCA", "HIDRATOS", "VERDURAS_VERDES"
+  category            String        // PROTEINA | HIDRATOS | VERDURAS | FRUTAS
+  createdAt           DateTime      @default(now())
+
+  items               SubstitutionItem[]
+
+  @@index([category])
+}
+
+model SubstitutionItem {
+  id                  String        @id @default(cuid())
+  groupId             String
+  group               SubstitutionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name                String        // "Pollo", "Pavo", "Merluza", "Arroz blanco"
+  standardWeight      Float         // peso en gramos (referencia para intercambiar)
+  caloriesPer100g     Float?
+  proteinPer100g      Float?
+  createdAt           DateTime      @default(now())
+
+  @@unique([groupId, name])
+  @@index([groupId])
+}
+
+model PantryItem {
+  id                  String        @id @default(cuid())
+  userId              String
+  user                User          @relation("PantryItem", fields: [userId], references: [id], onDelete: Cascade)
+  name                String
+  quantity            Float
+  unit                String        // g | kg | ml | l | unidad
+  expiresAt           DateTime?
+  recognizedAt        DateTime      @default(now())
+  createdAt           DateTime      @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model EatingOutLog {
+  id                  String        @id @default(cuid())
+  userId              String
+  user                User          @relation("EatingOutLog", fields: [userId], references: [id], onDelete: Cascade)
+  restaurant          String?
+  mealType            String        // COMIDA | CENA
+  selectedOption      String?       // Descripción de lo que comió
+  estimatedCalories   Float?
+  estimatedProtein    Float?
+  notes               String?
+  createdAt           DateTime      @default(now())
+
+  @@index([userId, createdAt])
 }
