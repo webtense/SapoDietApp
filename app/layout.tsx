@@ -4,6 +4,7 @@ import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { PwaRegister } from '@/components/pwa-register'
+import { VersionChecker } from '@/components/version-checker'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -41,6 +42,7 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         {children}
         <PwaRegister />
+        <VersionChecker />
         <Toaster richColors position="top-right" />
         <Analytics />
       </body>
