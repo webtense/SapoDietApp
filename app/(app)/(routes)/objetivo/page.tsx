@@ -336,16 +336,17 @@ export default function ObjetivoPage() {
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis
                   domain={[
-                    (d: number[]) => Math.floor(Math.min(...d) - 1),
-                    (d: number[]) => Math.ceil(Math.max(...d) + 1),
+                    (d: number) => Math.floor(d - 1),
+                    (d: number) => Math.ceil(d + 1),
                   ]}
                   tick={{ fontSize: 11 }} tickLine={false} axisLine={false}
                 />
                 <Tooltip
                   contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
-                  formatter={(v: unknown, name: string) => {
+                  formatter={(v, name) => {
                     const labels: Record<string, string> = { peso: "Peso", meta: "Meta", proyectado: "Proyectado" }
-                    return [`${v} kg`, labels[name] ?? name]
+                    const key = String(name ?? "")
+                    return [`${v} kg`, labels[key] ?? key]
                   }}
                 />
                 {targetW && <ReferenceLine y={targetW} stroke="#10b981" strokeDasharray="4 4" strokeWidth={1.5} label={{ value: `Meta ${targetW}`, position: "right", fontSize: 10, fill: "#10b981" }} />}

@@ -4,11 +4,11 @@ import { requireAdmin } from "@/lib/server/api"
 import { refreshInvitation, buildInvitationLink } from "@/lib/server/invitations"
 import { sendEmail } from "@/lib/server/email"
 
-export async function POST(_: NextRequest, { params }: any) {
+export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, error } = await requireAdmin()
   if (error || !user) return error
 
-  const invitation = await prisma.invitation.findUnique({ where: { id: params.id } })
+  const invitation = await prisma.invitation.findUnique({ where: { id: (await params).id } })
   if (!invitation) {
     return NextResponse.json({ error: "Invitación no encontrada" }, { status: 404 })
   }

@@ -107,6 +107,7 @@ export const profileSchema = z.object({
   frecuenciaEntrenamiento: z.string().min(1).max(20),
   lugarEntrenamiento: z.array(z.string()).max(5),
   equipamiento: z.array(z.string()).max(8),
+  gymId: z.string().min(1).max(60).nullable().optional(),
 })
 
 export const mealLogSchema = z.object({
@@ -194,4 +195,60 @@ export const shoppingSharePriceUpdateSchema = z.object({
 export const shoppingShareSchema = z.object({
   shoppingListId: z.string().min(1).max(40),
   toPhone: z.string().min(7).max(30),
+})
+
+// ─── Entrenamiento / gimnasio (Fase 4 fusión SAPOGYM) ────────────────────────
+
+export const startWorkoutSessionSchema = z.object({
+  mode: z.enum(["skip", "free", "planned"]),
+  workoutPlanId: z.string().min(1).max(60).optional(),
+})
+
+export const endWorkoutSessionSchema = z.object({
+  workoutSessionId: z.string().min(1).max(60),
+  completionStatus: z.enum(["COMPLETED", "PARTIAL"]),
+})
+
+export const recordWorkoutSetSchema = z.object({
+  workoutSessionId: z.string().min(1).max(60),
+  workoutExerciseId: z.string().min(1).max(60),
+  setNumber: z.number().int().min(1).max(50),
+  weight: z.number().min(0).max(1000).optional(),
+  reps: z.number().int().min(0).max(200).optional(),
+  rir: z.number().int().min(0).max(20).optional(),
+  rpe: z.number().min(0).max(10).optional(),
+  completed: z.boolean().optional(),
+  skipped: z.boolean().optional(),
+})
+
+export const adminCreateGymSchema = z.object({
+  name: z.string().min(2).max(120),
+  address: z.string().min(2).max(200),
+  city: z.string().min(2).max(120),
+  phone: z.string().max(30).optional(),
+})
+
+export const adminCreateMachineModelSchema = z.object({
+  name: z.string().min(2).max(120),
+  manufacturer: z.string().max(120).optional(),
+  fabricantPhoto: z.string().max(500).optional(),
+  primaryMuscleGroupId: z.string().min(1).max(60),
+  secondaryMuscleGroupIds: z.array(z.string().min(1).max(60)).max(10).optional(),
+  movementType: z.string().max(60).optional(),
+  instructions: z.string().max(2000).optional(),
+})
+
+export const adminCreateMachineSchema = z.object({
+  gymId: z.string().min(1).max(60),
+  machineModelId: z.string().min(1).max(60),
+  active: z.boolean().optional(),
+  assetNumber: z.string().max(60).optional(),
+  notes: z.string().max(500).optional(),
+})
+
+export const adminCreateExerciseSchema = z.object({
+  name: z.string().min(2).max(120),
+  muscleGroupId: z.string().min(1).max(60),
+  description: z.string().max(1000).optional(),
+  instructions: z.string().max(2000).optional(),
 })

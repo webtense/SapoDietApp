@@ -3,12 +3,13 @@ import { prisma } from "@/lib/server/prisma"
 import { requireAdmin } from "@/lib/server/api"
 import { adminUpdateUserSchema } from "@/lib/validation"
 
-export async function PATCH(req: NextRequest, { params }: any) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user, error } = await requireAdmin()
   if (error || !user) return error
 
+  const { id } = await params
   const body = await req.json().catch(() => null)
-  const parsed = adminUpdateUserSchema.safeParse({ ...(body || {}), userId: params.id })
+  const parsed = adminUpdateUserSchema.safeParse({ ...(body || {}), userId: id })
   if (!parsed.success) {
     return NextResponse.json({ error: "Datos inválidos" }, { status: 400 })
   }
@@ -25,15 +26,16 @@ export async function PATCH(req: NextRequest, { params }: any) {
     return NextResponse.json({ ok: true })
   }
 
-  await prisma.user.update({ where: { id: params.id }, data: updates })
+  await prisma.user.update({ where: { id }, data: updates })
   return NextResponse.json({ ok: true })
 }
 
-export async function DELETE(_: NextRequest, { params }: any) {
+export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { user: admin, error } = await requireAdmin()
   if (error || !admin) return error
 
-  const targetUser = await prisma.user.findUnique({ where: { id: params.id } })
+  const { id } = await params
+  const targetUser = await prisma.user.findUnique({ where: { id } })
   if (!targetUser) {
     return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
   }
@@ -42,6 +44,6 @@ export async function DELETE(_: NextRequest, { params }: any) {
     return NextResponse.json({ error: "No puedes eliminar un administrador" }, { status: 400 })
   }
 
-  await prisma.user.delete({ where: { id: params.id } })
+  await prisma.user.delete({ where: { id } })
   return NextResponse.json({ ok: true, message: "Usuario eliminado" })
 }
