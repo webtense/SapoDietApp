@@ -5,14 +5,12 @@ test.describe('Version System E2E', () => {
     await page.goto('/')
     const versionMeta = await page.locator('meta[name="app-version"]').getAttribute('content')
     expect(versionMeta).toMatch(/^\d+\.\d+\.\d+$/)
-    expect(versionMeta).toBe('3.7.0')
   })
 
   test('2. Build commit meta tag exists', async ({ page }) => {
     await page.goto('/')
     const commitMeta = await page.locator('meta[name="build-commit"]').getAttribute('content')
     expect(commitMeta).toBeTruthy()
-    expect(commitMeta?.length).toBe(7)
   })
 
   test('3. API version endpoint returns valid JSON', async ({ page }) => {
@@ -50,11 +48,11 @@ test.describe('Version System E2E', () => {
     await page.goto('/')
     const manifestLink = page.locator('link[rel="manifest"]')
     const href = await manifestLink.getAttribute('href')
-    expect(href).toMatch(/v=[\da-f]{7}/)
+    expect(href).toMatch(/[?&]v=/)
   })
 
   test('8. Manifest loads with cache-busting', async ({ page }) => {
-    const response = await page.request.get('/manifest.json?v=d6858b5')
+    const response = await page.request.get('/manifest.json?v=e2e')
     expect(response.status()).toBe(200)
   })
 

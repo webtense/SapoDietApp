@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { X, ChevronDown, ChevronUp } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { trackVersionEvent } from "@/lib/analytics/version-tracker"
 
 interface ChangelogEntry {
   version: string
@@ -26,7 +27,8 @@ export function ChangelogModal({ isOpen, onClose, currentVersion }: ChangelogMod
 
   useEffect(() => {
     if (!isOpen) return
-    
+    trackVersionEvent("CHANGELOG_VIEWED", { version: currentVersion })
+
     const fetchChangelog = async () => {
       try {
         const res = await fetch("/api/changelog", {
@@ -45,7 +47,7 @@ export function ChangelogModal({ isOpen, onClose, currentVersion }: ChangelogMod
     }
 
     fetchChangelog()
-  }, [isOpen])
+  }, [isOpen, currentVersion])
 
   if (!isOpen) return null
 

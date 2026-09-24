@@ -789,3 +789,50 @@ model EatingOutLog {
 
   @@index([userId, createdAt])
 }
+
+// ───────────────────────────────────────────────────────────────────────────────
+// VERSIONADO: analytics de actualización, historial de despliegues, flags
+// ───────────────────────────────────────────────────────────────────────────────
+
+model VersionAnalytics {
+  id         String   @id @default(cuid())
+  event      String
+  version    String?
+  oldVersion String?
+  userId     String?
+  metadata   String?
+  createdAt  DateTime @default(now())
+
+  @@index([event])
+  @@index([version])
+  @@index([createdAt])
+}
+
+model VersionHistory {
+  id         String   @id @default(cuid())
+  version    String   @unique
+  commit     String?
+  deployedAt DateTime @default(now())
+  status     String   @default("ACTIVE")
+  createdAt  DateTime @default(now())
+}
+
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  enabled     Boolean  @default(false)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ScheduledUpdate {
+  id           String   @id @default(cuid())
+  version      String
+  scheduledFor DateTime
+  status       String   @default("PENDING")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([status, scheduledFor])
+}

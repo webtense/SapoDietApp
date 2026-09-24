@@ -1,21 +1,12 @@
 {
-  "version": "3.7.0",
-  "buildDate": "2026-09-24T13:00:00Z",
-  "commit": "d6858b5",
+  "version": "3.7.5",
+  "buildDate": "2026-09-24T18:00:00Z",
+  "buildId": "3.7.5-20260924",
   "type": "production",
-  "features": {
-    "entrenamiento-gym": "✅ UPPER/LOWER selector + máquinas",
-    "nutricion": "✅ Plan diario 2680 kcal + macros",
-    "onboarding": "✅ Wizard v2 4-pasos"
-  },
   "changes": [
-    "feat: página /entrenamiento-gym con MaquinasSection UPPER/LOWER",
-    "fix: actualizar versión footer a v3.7.0",
-    "feat: sistema completo de cachés y actualizaciones"
-  ],
-  "cacheBusters": {
-    "js": "d6858b5",
-    "css": "d6858b5",
-    "manifest": "d6858b5"
-  }
+    "feat: PWA installer + cache-busting de manifest/iconos",
+    "feat: panel /admin/version (forzar update, programar, feature flags)",
+    "feat: analytics de versión (/api/analytics/version)",
+    "test: e2e Playwright del sistema de versiones"
+  ]
 }

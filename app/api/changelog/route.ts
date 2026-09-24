@@ -3,6 +3,24 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.7.5",
+      date: "24/09/2026",
+      features: [
+        "Aviso para instalar SapoFit como app (PWA) en móvil y escritorio",
+        "Cache-busting de manifest e iconos por build",
+        "Panel de administración de versiones en /admin/version",
+        "Forzar actualización en todos los dispositivos conectados",
+        "Actualizaciones programadas a una hora concreta",
+        "Feature flags activables desde el panel admin",
+        "Métricas de adopción de versión y uso del changelog",
+        "Tests E2E del sistema de versiones (Playwright)"
+      ],
+      fixes: [
+        "La versión mostrada en el footer y en /api/version sale de una única fuente",
+        "Service Worker limpia caches de versiones anteriores al activarse"
+      ]
+    },
+    {
       version: "3.7.0",
       date: "24/09/2026",
       features: [

@@ -1,91 +1,60 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from "next/server"
+import { apiError, requireAdmin } from "@/lib/server/api"
+import {
+  cancelScheduledUpdate,
+  forceUpdateAll,
+  getDeploymentStatus,
+  scheduleUpdate,
+  toggleFlag,
+} from "@/lib/admin/deployment-service"
 
-// Middleware: Solo ADMIN
-async function checkAdmin(req: NextRequest) {
-  const userId = req.headers.get('x-user-id')
-  const role = req.headers.get('x-user-role')
+export const dynamic = "force-dynamic"
 
-  if (role !== 'ADMIN') {
-    return { authorized: false }
-  }
-  return { authorized: true, userId }
+const FLAG_NAME = /^[a-z0-9_]{2,40}$/
+
+export async function GET() {
+  const { error } = await requireAdmin()
+  if (error) return error
+  return NextResponse.json(await getDeploymentStatus())
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await checkAdmin(req)
-  if (!auth.authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+  const { error, user } = await requireAdmin()
+  if (error || !user) return error
+
+  let body: { action?: string; scheduledFor?: string; id?: string; flagName?: string; enabled?: boolean }
+  try {
+    body = await req.json()
+  } catch {
+    return apiError("JSON inválido")
   }
 
-  try {
-    const { action, version, scheduledTime } = await req.json()
-
-    if (action === 'FORCE_UPDATE') {
-      // Broadcast message a todos los clientes (simulado en version-manager)
-      await prisma.versionAnalytics.create({
-        data: {
-          event: 'FORCE_UPDATE_INITIATED',
-          version,
-          metadata: JSON.stringify({ triggeredBy: auth.userId }),
-        },
-      })
-      return NextResponse.json({ ok: true, message: 'Force update sent to all clients' })
+  switch (body.action) {
+    case "FORCE_UPDATE": {
+      const at = await forceUpdateAll(user.id)
+      return NextResponse.json({ ok: true, forceUpdateAt: at })
     }
-
-    if (action === 'SCHEDULE_UPDATE') {
-      await prisma.scheduledUpdate.create({
-        data: {
-          version,
-          scheduledFor: new Date(scheduledTime),
-          status: 'PENDING',
-        },
-      })
-      return NextResponse.json({ ok: true, message: 'Update scheduled' })
+    case "SCHEDULE_UPDATE": {
+      const when = body.scheduledFor ? new Date(body.scheduledFor) : null
+      if (!when || Number.isNaN(when.getTime())) return apiError("Fecha no válida")
+      if (when.getTime() < Date.now() + 60_000) return apiError("La fecha debe ser al menos 1 minuto en el futuro")
+      const scheduled = await scheduleUpdate(when)
+      return NextResponse.json({ ok: true, scheduled })
     }
-
-    if (action === 'ROLLBACK') {
-      await prisma.versionAnalytics.create({
-        data: {
-          event: 'ROLLBACK_INITIATED',
-          version,
-          metadata: JSON.stringify({ triggeredBy: auth.userId }),
-        },
-      })
-      return NextResponse.json({ ok: true, message: `Rollback to ${version} initiated` })
+    case "CANCEL_SCHEDULED": {
+      if (!body.id) return apiError("Falta id")
+      await cancelScheduledUpdate(body.id)
+      return NextResponse.json({ ok: true })
     }
-
-    if (action === 'TOGGLE_FLAG') {
-      const { flagName, enabled } = await req.json()
-      const flag = await prisma.featureFlag.upsert({
-        where: { name: flagName },
-        create: { name: flagName, enabled, description: `Feature flag: ${flagName}` },
-        update: { enabled },
-      })
+    case "TOGGLE_FLAG": {
+      if (!body.flagName || !FLAG_NAME.test(body.flagName) || typeof body.enabled !== "boolean") {
+        return apiError("Flag no válido")
+      }
+      if (body.flagName === "force_update") return apiError("Usa la acción FORCE_UPDATE")
+      const flag = await toggleFlag(body.flagName, body.enabled)
       return NextResponse.json({ ok: true, flag })
     }
-
-    return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
-  } catch (error) {
-    console.error('Admin control error:', error)
-    return NextResponse.json({ error: 'Failed to execute action' }, { status: 500 })
-  }
-}
-
-export async function GET(req: NextRequest) {
-  const auth = await checkAdmin(req)
-  if (!auth.authorized) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-  }
-
-  try {
-    const flags = await prisma.featureFlag.findMany()
-    const versionHistory = await prisma.versionHistory.findMany({ orderBy: { deployedAt: 'desc' }, take: 10 })
-    const scheduledUpdates = await prisma.scheduledUpdate.findMany({ where: { status: 'PENDING' } })
-
-    return NextResponse.json({ flags, versionHistory, scheduledUpdates })
-  } catch (error) {
-    console.error('Get admin data error:', error)
-    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 })
+    default:
+      return apiError("Acción desconocida")
   }
 }

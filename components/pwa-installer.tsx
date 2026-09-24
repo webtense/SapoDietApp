@@ -1,68 +1,79 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef } from "react"
 import { toast } from "sonner"
-import { Download } from "lucide-react"
+import { trackVersionEvent } from "@/lib/analytics/version-tracker"
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>
 }
 
+const DISMISS_KEY = "sapofit-pwa-dismissed-at"
+const DISMISS_DAYS = 7
+
 export function PWAInstaller() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [isInstallable, setIsInstallable] = useState(false)
+  const deferredRef = useRef<BeforeInstallPromptEvent | null>(null)
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
+    if (typeof window === "undefined") return
+
+    const install = async () => {
+      const prompt = deferredRef.current
+      if (!prompt) return
+      await prompt.prompt()
+      const { outcome } = await prompt.userChoice
+      if (outcome === "accepted") {
+        toast.success("SapoFit instalado en tu dispositivo")
+      } else {
+        try {
+          localStorage.setItem(DISMISS_KEY, String(Date.now()))
+        } catch {
+          // sin storage: se volverá a ofrecer
+        }
+      }
+      deferredRef.current = null
+    }
+
+    const onBeforeInstallPrompt = (e: Event) => {
       e.preventDefault()
-      setDeferredPrompt(e as BeforeInstallPromptEvent)
-      setIsInstallable(true)
+      deferredRef.current = e as BeforeInstallPromptEvent
 
-      // Mostrar toast con opción de instalar
-      toast.info("SapoFit disponible para instalar", {
-        description: "Agrégalo a tu pantalla de inicio para acceso rápido",
-        action: {
-          label: "Instalar",
-          onClick: () => handleInstall(),
+      try {
+        const dismissed = Number(localStorage.getItem(DISMISS_KEY) || 0)
+        if (dismissed && Date.now() - dismissed < DISMISS_DAYS * 24 * 60 * 60 * 1000) return
+      } catch {
+        // ignorar
+      }
+
+      trackVersionEvent("PWA_PROMPT_SHOWN")
+      toast.info("Instala SapoFit como app", {
+        description: "Acceso directo en tu pantalla de inicio y modo offline",
+        duration: 12_000,
+        action: { label: "Instalar", onClick: () => void install() },
+        onDismiss: () => {
+          try {
+            localStorage.setItem(DISMISS_KEY, String(Date.now()))
+          } catch {
+            // ignorar
+          }
         },
-        duration: 10000,
       })
     }
 
-    const handleAppInstalled = () => {
-      setDeferredPrompt(null)
-      setIsInstallable(false)
-      toast.success("SapoFit instalado correctamente", {
-        description: "Ya puedes acceder desde tu pantalla de inicio",
-        duration: 5000,
-      })
+    const onAppInstalled = () => {
+      deferredRef.current = null
+      trackVersionEvent("PWA_INSTALLED")
+      toast.success("SapoFit instalado", { description: "Ya puedes abrirlo desde tu pantalla de inicio" })
     }
 
-    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
-    window.addEventListener("appinstalled", handleAppInstalled)
-
+    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt)
+    window.addEventListener("appinstalled", onAppInstalled)
     return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
-      window.removeEventListener("appinstalled", handleAppInstalled)
+      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt)
+      window.removeEventListener("appinstalled", onAppInstalled)
     }
   }, [])
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return
-
-    deferredPrompt.prompt()
-    const { outcome } = await deferredPrompt.userChoice
-
-    if (outcome === "accepted") {
-      toast.success("🎉 SapoFit instalado en tu dispositivo")
-    } else {
-      toast.info("Instalación cancelada")
-    }
-
-    setDeferredPrompt(null)
-    setIsInstallable(false)
-  }
 
   return null
 }

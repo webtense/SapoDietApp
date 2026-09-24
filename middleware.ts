@@ -10,6 +10,7 @@ const PUBLIC_API_PATHS = [
   "/api/payments/webhook",
   "/api/qr/",
   "/api/version", // Cache-busting: debe ser público para VersionManager
+  "/api/analytics/version", // El POST anota userId solo si hay sesión; el GET exige ADMIN
 ]
 
 export function middleware(req: NextRequest) {

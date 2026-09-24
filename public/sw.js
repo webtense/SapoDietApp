@@ -1,8 +1,7 @@
 /* eslint-disable no-restricted-globals */
 
-// CACHE_NAME con versión + commit para cache-busting automático
-// Cambiar en cada deploy: npm run build (actualiza automáticamente)
-const CACHE_NAME = "sapofit-v3.7.0-d6858b5"
+// Debe cambiar en cada release (ver lib/version.ts) para invalidar caches antiguas
+const CACHE_NAME = "sapofit-v3.7.5-20260924"
 const STATIC_ASSETS = [
   "/",
   "/manifest.json",

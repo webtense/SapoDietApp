@@ -4,16 +4,17 @@ import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { PwaRegister } from '@/components/pwa-register'
-import { PwaInstaller } from '@/components/pwa-installer'
+import { PWAInstaller } from '@/components/pwa-installer'
 import { VersionManager } from '@/components/version-manager'
 import { VersionFooter } from '@/components/version-footer'
+import { APP_VERSION, BUILD_ID } from '@/lib/version'
 import './globals.css'
 
 export const metadata: Metadata = {
   title: 'SapoFit',
   description: 'Planificador de nutrición, entrenamiento y seguimiento diario',
   generator: 'SapoFit',
-  manifest: '/manifest.json',
+  manifest: `/manifest.json?v=${BUILD_ID}`,
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -21,8 +22,8 @@ export const metadata: Metadata = {
   },
   icons: {
     apple: [
-      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { url: `/icon-192.png?v=${BUILD_ID}`, sizes: '192x192', type: 'image/png' },
+      { url: `/icon-512.png?v=${BUILD_ID}`, sizes: '512x512', type: 'image/png' },
     ],
   },
 }
@@ -39,49 +40,25 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const cacheBuster = "d6858b5" // git commit hash para cache-busting
-
   return (
     <html lang="es">
       <head>
-        {/* Meta tags de versión para cache-busting y detección de updates */}
-        <meta name="app-version" content="3.7.0" />
-        <meta name="build-time" content={new Date().toISOString()} />
-        <meta name="build-commit" content={cacheBuster} />
-
-        {/* Cache-busting en URLs críticas */}
-        <link rel="manifest" href={`/manifest.json?v=${cacheBuster}`} />
+        <meta name="app-version" content={APP_VERSION} />
+        <meta name="build-commit" content={BUILD_ID} />
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} flex flex-col min-h-screen`}>
         <div className="flex-1">{children}</div>
 
-        {/* Footer con versión clickeable */}
         <footer className="border-t bg-gray-50 p-4 text-center">
           <VersionFooter />
         </footer>
 
-        {/* Service Worker + Version Manager + PWA Installer */}
         <PwaRegister />
-        <PwaInstaller />
+        <PWAInstaller />
         <VersionManager />
 
         <Toaster richColors position="top-right" />
         <Analytics />
-
-        {/* Script para registrar Service Worker mejorado */}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(reg => {
-                console.log('✅ Service Worker registered');
-                // Check for updates cada 1 hora
-                setInterval(() => reg.update().catch(console.error), 3600000);
-              }).catch(err => {
-                console.error('❌ Service Worker registration failed:', err);
-              });
-            }
-          `
-        }} />
       </body>
     </html>
   )

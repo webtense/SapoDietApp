@@ -1,151 +1,112 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { toast } from "sonner"
+import { trackVersionEvent } from "@/lib/analytics/version-tracker"
 
-export function VersionManager({
-  onChangelogOpen,
-}: {
-  onChangelogOpen?: () => void
-} = {}) {
+const CHECK_INTERVAL_MS = 30_000
+
+async function clearCachesAndReload() {
+  try {
+    if ("caches" in window) {
+      const names = await caches.keys()
+      await Promise.all(names.map((name) => caches.delete(name)))
+    }
+  } finally {
+    window.location.reload()
+  }
+}
+
+export function VersionManager() {
   const broadcastRef = useRef<BroadcastChannel | null>(null)
-  const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const appVersionRef = useRef<string | null>(null)
-  const [, setIsOpen] = useState(false)
+  const localVersionRef = useRef<string>("")
+  const loadedAtRef = useRef<number>(0)
+  const notifiedVersionRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (typeof window === "undefined") return
 
-    const versionMeta = document.querySelector('meta[name="app-version"]')
-    appVersionRef.current = versionMeta?.getAttribute("content") || "3.7.0"
+    localVersionRef.current = document.querySelector('meta[name="app-version"]')?.getAttribute("content") || ""
+    loadedAtRef.current = Date.now()
+    trackVersionEvent("VERSION_DETECTED", { version: localVersionRef.current })
+
+    const showUpdateNotification = (newVersion: string) => {
+      if (notifiedVersionRef.current === newVersion) return
+      notifiedVersionRef.current = newVersion
+
+      toast.warning(`Versión ${newVersion} disponible`, {
+        description: "Recarga para actualizar",
+        duration: Infinity,
+        action: {
+          label: "Actualizar",
+          onClick: () => {
+            trackVersionEvent("UPDATE_CLICKED", { version: newVersion, oldVersion: localVersionRef.current })
+            void clearCachesAndReload()
+          },
+        },
+      })
+
+      if ("serviceWorker" in navigator && "Notification" in window && Notification.permission === "granted") {
+        navigator.serviceWorker.ready
+          .then((reg) =>
+            reg.showNotification("SapoFit actualización", {
+              body: `Nueva versión ${newVersion} disponible. Toca para actualizar.`,
+              icon: "/icon-192.png",
+              badge: "/icon-192.png",
+              tag: "sapofit-update",
+              data: { url: "/" },
+            }),
+          )
+          .catch(() => undefined)
+      }
+    }
 
     try {
       broadcastRef.current = new BroadcastChannel("sapofit-version")
       broadcastRef.current.onmessage = (event) => {
-        const { type, newVersion } = event.data
-
-        if (type === "UPDATE_AVAILABLE") {
-          showUpdateNotification(newVersion)
-        }
+        if (event.data?.type === "UPDATE_AVAILABLE" && event.data.newVersion) showUpdateNotification(event.data.newVersion)
+        if (event.data?.type === "FORCE_UPDATE") void clearCachesAndReload()
       }
-    } catch (e) {
-      console.warn("BroadcastChannel not available:", e)
+    } catch {
+      broadcastRef.current = null
     }
 
     const checkVersion = async () => {
       try {
-        const response = await fetch("/api/version", {
-          cache: "no-store",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-          },
-        })
+        const res = await fetch("/api/version", { cache: "no-store" })
+        if (!res.ok) return
+        const data: { version?: string; forceUpdateAt?: string | null } = await res.json()
 
-        if (!response.ok) return
-
-        const data = await response.json()
-        const serverVersion = data.version
-        const localVersion = appVersionRef.current
-
-        if (serverVersion && localVersion && serverVersion !== localVersion) {
-          console.log(`🔄 Nueva versión disponible: ${serverVersion} (local: ${localVersion})`)
-
-          if (broadcastRef.current) {
-            broadcastRef.current.postMessage({
-              type: "UPDATE_AVAILABLE",
-              oldVersion: localVersion,
-              newVersion: serverVersion,
-            })
-          }
-
-          showUpdateNotification(serverVersion)
-
-          if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.ready.then((reg) => {
-              const newWorker = reg.installing || reg.waiting
-              if (newWorker) {
-                newWorker.postMessage({ type: "SKIP_WAITING" })
-              }
-            })
+        if (data.forceUpdateAt) {
+          const forcedAt = Date.parse(data.forceUpdateAt)
+          if (!Number.isNaN(forcedAt) && forcedAt > loadedAtRef.current) {
+            trackVersionEvent("FORCE_UPDATE_APPLIED", { version: data.version, oldVersion: localVersionRef.current })
+            broadcastRef.current?.postMessage({ type: "FORCE_UPDATE" })
+            void clearCachesAndReload()
+            return
           }
         }
-      } catch (err) {
-        console.error("Error checking version:", err)
+
+        if (data.version && localVersionRef.current && data.version !== localVersionRef.current) {
+          trackVersionEvent("UPDATE_AVAILABLE", { version: data.version, oldVersion: localVersionRef.current })
+          broadcastRef.current?.postMessage({ type: "UPDATE_AVAILABLE", newVersion: data.version })
+          showUpdateNotification(data.version)
+          navigator.serviceWorker?.getRegistration().then((reg) => reg?.update().catch(() => undefined))
+        }
+      } catch {
+        // sin red: se reintenta en el siguiente ciclo
       }
     }
 
-    const showUpdateNotification = (newVersion: string) => {
-      // Toast
-      toast.warning(`Versión ${newVersion} disponible`, {
-        description: "Recarga para actualizar",
-        action: {
-          label: "Actualizar",
-          onClick: () => {
-            const doReload = () => {
-              if (typeof window !== "undefined") {
-                window.location.reload()
-              }
-            }
-
-            if ("caches" in window) {
-              caches.keys().then((names) => {
-                Promise.all(names.map((name) => caches.delete(name))).then(() => {
-                  doReload()
-                })
-              })
-            } else {
-              doReload()
-            }
-          },
-        },
-        duration: 0,
-      })
-
-      // Push Notification
-      if ("serviceWorker" in navigator && "Notification" in window) {
-        navigator.serviceWorker.ready.then((reg) => {
-          // Pedir permiso si es necesario
-          if (Notification.permission === "granted") {
-            reg.showNotification("SapoFit Actualización", {
-              body: `Nueva versión ${newVersion} disponible. Click para actualizar.`,
-              icon: "/icon-192.png",
-              badge: "/icon-192.png",
-              tag: "sapofit-update",
-              requireInteraction: true,
-              data: { url: "/" },
-            })
-          } else if (Notification.permission !== "denied") {
-            Notification.requestPermission().then((permission) => {
-              if (permission === "granted") {
-                reg.showNotification("SapoFit Actualización", {
-                  body: `Nueva versión ${newVersion} disponible. Click para actualizar.`,
-                  icon: "/icon-192.png",
-                  badge: "/icon-192.png",
-                  tag: "sapofit-update",
-                  requireInteraction: true,
-                  data: { url: "/" },
-                })
-              }
-            })
-          }
-        })
-      }
-    }
-
-    checkVersion()
-    checkTimeoutRef.current = setInterval(checkVersion, 30000)
-
-    const handleFocus = () => {
-      console.log("🔍 Tab en foco, chequeando versión...")
-      checkVersion()
-    }
-
-    window.addEventListener("focus", handleFocus)
+    void checkVersion()
+    const interval = window.setInterval(checkVersion, CHECK_INTERVAL_MS)
+    const onFocus = () => void checkVersion()
+    window.addEventListener("focus", onFocus)
 
     return () => {
-      if (checkTimeoutRef.current) clearInterval(checkTimeoutRef.current)
-      window.removeEventListener("focus", handleFocus)
-      if (broadcastRef.current) broadcastRef.current.close()
+      window.clearInterval(interval)
+      window.removeEventListener("focus", onFocus)
+      broadcastRef.current?.close()
     }
   }, [])
 
