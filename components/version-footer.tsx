@@ -5,7 +5,7 @@ import { ChangelogModal } from "./changelog-modal"
 
 export function VersionFooter() {
   const [isOpen, setIsOpen] = useState(false)
-  const [currentVersion, setCurrentVersion] = useState("3.7.0")
+  const [currentVersion, setCurrentVersion] = useState("3.7.5")
 
   useEffect(() => {
     const versionMeta = document.querySelector('meta[name="app-version"]')
