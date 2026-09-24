@@ -4,6 +4,7 @@ import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { PwaRegister } from '@/components/pwa-register'
+import { PwaInstaller } from '@/components/pwa-installer'
 import { VersionManager } from '@/components/version-manager'
 import { VersionFooter } from '@/components/version-footer'
 import './globals.css'
@@ -59,8 +60,9 @@ export default function RootLayout({
           <VersionFooter />
         </footer>
 
-        {/* Service Worker + Version Manager */}
+        {/* Service Worker + Version Manager + PWA Installer */}
         <PwaRegister />
+        <PwaInstaller />
         <VersionManager />
 
         <Toaster richColors position="top-right" />
