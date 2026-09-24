@@ -81,14 +81,20 @@ export function VersionManager({
         action: {
           label: "Actualizar",
           onClick: () => {
+            const doReload = () => {
+              if (typeof window !== "undefined") {
+                window.location.reload()
+              }
+            }
+
             if ("caches" in window) {
               caches.keys().then((names) => {
                 Promise.all(names.map((name) => caches.delete(name))).then(() => {
-                  window.location.reload()
+                  doReload()
                 })
               })
             } else {
-              window.location.reload()
+              doReload()
             }
           },
         },
