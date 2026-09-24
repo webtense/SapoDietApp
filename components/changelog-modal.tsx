@@ -25,27 +25,27 @@ export function ChangelogModal({ isOpen, onClose, currentVersion }: ChangelogMod
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (isOpen) {
-      fetchChangelog()
-    }
-  }, [isOpen])
-
-  const fetchChangelog = async () => {
-    try {
-      const res = await fetch("/api/changelog", {
-        cache: "no-store",
-        headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setChangelog(data.entries || [])
+    if (!isOpen) return
+    
+    const fetchChangelog = async () => {
+      try {
+        const res = await fetch("/api/changelog", {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setChangelog(data.entries || [])
+        }
+      } catch (err) {
+        console.error("Error fetching changelog:", err)
+      } finally {
+        setLoading(false)
       }
-    } catch (err) {
-      console.error("Error fetching changelog:", err)
-    } finally {
-      setLoading(false)
     }
-  }
+
+    fetchChangelog()
+  }, [isOpen])
 
   if (!isOpen) return null
 
