@@ -65,6 +65,7 @@ type ViewTab = "entrenar" | "progresion"
 
 export default function EntrenamientoPage() {
   const [tab, setTab] = useState<ViewTab>("entrenar")
+  const [group, setGroup] = useState<"UPPER" | "LOWER">("UPPER")
   const [loading, setLoading] = useState(true)
   const [current, setCurrent] = useState<CurrentWorkoutResponse | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -82,7 +83,7 @@ export default function EntrenamientoPage() {
   const loadCurrent = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch("/api/user/workout/current")
+      const res = await fetch(`/api/user/workout/current?group=${group}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo cargar el entrenamiento")
       setCurrent(data)
@@ -297,6 +298,28 @@ export default function EntrenamientoPage() {
 
       {tab === "entrenar" && (
         <>
+          <div className="flex gap-2 mb-4">
+            <button
+              type="button"
+              onClick={() => setGroup("UPPER")}
+              className={cn(
+                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                group === "UPPER" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+              )}
+            >
+              Tren Superior
+            </button>
+            <button
+              type="button"
+              onClick={() => setGroup("LOWER")}
+              className={cn(
+                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                group === "LOWER" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+              )}
+            >
+              Tren Inferior
+            </button>
+          </div>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-semibold">{plan.name}</h1>
