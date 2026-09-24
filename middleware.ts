@@ -9,6 +9,7 @@ const PUBLIC_API_PATHS = [
   "/api/cron/",
   "/api/payments/webhook",
   "/api/qr/",
+  "/api/version", // Cache-busting: debe ser público para VersionManager
 ]
 
 export function middleware(req: NextRequest) {
