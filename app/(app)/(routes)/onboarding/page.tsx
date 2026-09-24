@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { getSessionUser } from "@/lib/server/security"
 import { prisma } from "@/lib/server/prisma"
-import { OnboardingFlow } from "@/components/onboarding-flow"
+import { OnboardingFlowV2 } from "@/components/onboarding-flow-v2"
 
 export default async function OnboardingPage() {
   const user = await getSessionUser()
@@ -16,8 +16,8 @@ export default async function OnboardingPage() {
   if (profile?.onboardingCompleted) redirect("/Hoy")
 
   return (
-    <div className="min-h-screen">
-      <OnboardingFlow userName={user.name ?? ""} />
+    <div>
+      <OnboardingFlowV2 userName={user.name ?? "Usuario"} />
     </div>
   )
 }
