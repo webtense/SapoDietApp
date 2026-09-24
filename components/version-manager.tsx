@@ -1,53 +1,37 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
-export function VersionManager() {
+export function VersionManager({
+  onChangelogOpen,
+}: {
+  onChangelogOpen?: () => void
+} = {}) {
   const broadcastRef = useRef<BroadcastChannel | null>(null)
   const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const appVersionRef = useRef<string | null>(null)
+  const [, setIsOpen] = useState(false)
 
   useEffect(() => {
     if (typeof window === "undefined") return
 
-    // Obtener versión actual del meta tag
     const versionMeta = document.querySelector('meta[name="app-version"]')
     appVersionRef.current = versionMeta?.getAttribute("content") || "3.7.0"
 
-    // Setup BroadcastChannel para comunicación entre tabs
     try {
       broadcastRef.current = new BroadcastChannel("sapofit-version")
       broadcastRef.current.onmessage = (event) => {
         const { type, newVersion } = event.data
 
         if (type === "UPDATE_AVAILABLE") {
-          toast.warning(`Versión ${newVersion} disponible`, {
-            description: "Recarga para actualizar a la última versión",
-            action: {
-              label: "Recargar ahora",
-              onClick: () => {
-                // Limpiar caches antes de recargar
-                if ("caches" in window) {
-                  caches.keys().then((names) => {
-                    Promise.all(names.map((name) => caches.delete(name))).then(() => {
-                      window.location.reload()
-                    })
-                  })
-                } else {
-                  window.location.reload()
-                }
-              },
-            },
-            duration: 0, // No auto-close
-          })
+          showUpdateNotification(newVersion)
         }
       }
     } catch (e) {
       console.warn("BroadcastChannel not available:", e)
     }
 
-    // Función para chequear nueva versión
     const checkVersion = async () => {
       try {
         const response = await fetch("/api/version", {
@@ -66,7 +50,6 @@ export function VersionManager() {
         if (serverVersion && localVersion && serverVersion !== localVersion) {
           console.log(`🔄 Nueva versión disponible: ${serverVersion} (local: ${localVersion})`)
 
-          // Notificar a otros tabs
           if (broadcastRef.current) {
             broadcastRef.current.postMessage({
               type: "UPDATE_AVAILABLE",
@@ -75,27 +58,8 @@ export function VersionManager() {
             })
           }
 
-          // Mostrar toast en este tab
-          toast.warning(`Versión ${serverVersion} disponible`, {
-            description: "Recarga para actualizar",
-            action: {
-              label: "Actualizar",
-              onClick: () => {
-                if ("caches" in window) {
-                  caches.keys().then((names) => {
-                    Promise.all(names.map((name) => caches.delete(name))).then(() => {
-                      window.location.reload()
-                    })
-                  })
-                } else {
-                  window.location.reload()
-                }
-              },
-            },
-            duration: 0,
-          })
+          showUpdateNotification(serverVersion)
 
-          // Service Worker: forzar skip waiting
           if ("serviceWorker" in navigator) {
             navigator.serviceWorker.ready.then((reg) => {
               const newWorker = reg.installing || reg.waiting
@@ -110,13 +74,61 @@ export function VersionManager() {
       }
     }
 
-    // Check inmediatamente
-    checkVersion()
+    const showUpdateNotification = (newVersion: string) => {
+      // Toast
+      toast.warning(`Versión ${newVersion} disponible`, {
+        description: "Recarga para actualizar",
+        action: {
+          label: "Actualizar",
+          onClick: () => {
+            if ("caches" in window) {
+              caches.keys().then((names) => {
+                Promise.all(names.map((name) => caches.delete(name))).then(() => {
+                  window.location.reload()
+                })
+              })
+            } else {
+              window.location.reload()
+            }
+          },
+        },
+        duration: 0,
+      })
 
-    // Check cada 30 segundos
+      // Push Notification
+      if ("serviceWorker" in navigator && "Notification" in window) {
+        navigator.serviceWorker.ready.then((reg) => {
+          // Pedir permiso si es necesario
+          if (Notification.permission === "granted") {
+            reg.showNotification("SapoFit Actualización", {
+              body: `Nueva versión ${newVersion} disponible. Click para actualizar.`,
+              icon: "/icon-192.png",
+              badge: "/icon-192.png",
+              tag: "sapofit-update",
+              requireInteraction: true,
+              data: { url: "/" },
+            })
+          } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then((permission) => {
+              if (permission === "granted") {
+                reg.showNotification("SapoFit Actualización", {
+                  body: `Nueva versión ${newVersion} disponible. Click para actualizar.`,
+                  icon: "/icon-192.png",
+                  badge: "/icon-192.png",
+                  tag: "sapofit-update",
+                  requireInteraction: true,
+                  data: { url: "/" },
+                })
+              }
+            })
+          }
+        })
+      }
+    }
+
+    checkVersion()
     checkTimeoutRef.current = setInterval(checkVersion, 30000)
 
-    // También chequear cuando la ventana entra en foco
     const handleFocus = () => {
       console.log("🔍 Tab en foco, chequeando versión...")
       checkVersion()
@@ -124,7 +136,6 @@ export function VersionManager() {
 
     window.addEventListener("focus", handleFocus)
 
-    // Cleanup
     return () => {
       if (checkTimeoutRef.current) clearInterval(checkTimeoutRef.current)
       window.removeEventListener("focus", handleFocus)
@@ -132,5 +143,5 @@ export function VersionManager() {
     }
   }, [])
 
-  return null // Sin UI visual, solo notificaciones
+  return null
 }

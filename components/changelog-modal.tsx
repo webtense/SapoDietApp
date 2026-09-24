@@ -1,156 +1,160 @@
 "use client"
 
-import { useState } from "react"
-import { X } from "lucide-react"
+import { useState, useEffect } from "react"
+import { X, ChevronDown, ChevronUp } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 
 interface ChangelogEntry {
   version: string
   date: string
-  type: "feature" | "bugfix" | "internal"
-  items: string[]
+  features: string[]
+  fixes: string[]
+  breaking?: string[]
 }
 
-const CHANGELOG: ChangelogEntry[] = [
-  {
-    version: "3.7.0",
-    date: "Septiembre 23, 2026",
-    type: "feature",
-    items: [
-      "Módulo de Planificación Nutricional — plan de nutricionista, recetas, miembros hogar",
-      "Importación PDF de planes (estructura JSON de comidas y equivalencias)",
-      "Catálogo de recetas: ingredientes, macros, alérgenos, métodos de cocción",
-      "Grupos de sustituciones (proteínas, hidratos, verduras intercambiables)",
-      "Modo despensa: registrar alimentos, priorizar por caducidad",
-      "Modo restaurante: registrar comidas fuera con estimaciones",
-      "Backend puro en lib/nutrition/service.ts (reutilizable en tests)",
-      "9 nuevas tablas Prisma + migraciones",
-    ],
-  },
-  {
-    version: "3.6.0",
-    date: "Septiembre 23, 2026",
-    type: "feature",
-    items: [
-      "Módulo de Máquinas de Gimnasio COMPLETO — admin + UI usuario + runtime APIs",
-      "Admin panel (/admin/machines) crear/editar máquinas, asignar a gimnasio",
-      "Selector dinámico de Grupo Muscular (Tren Superior / Tren Inferior)",
-      "Entrada de pesos por serie (3 inputs, 3 series × 12 reps)",
-      "Modal información máquinas (descripción, instrucciones, recomendaciones)",
-      "Rutas runtime: GET /api/user/workout/current, POST exercise/*/set, POST workout/end",
-      "Componente MaquinasSection (reutilizable)",
-      "Migración Prisma 20260923_add_machine_models aplicada",
-    ],
-  },
-  {
-    version: "3.5.0",
-    date: "Septiembre 2026",
-    type: "internal",
-    items: [
-      "⚠️ CORRECCIÓN HISTÓRICA: esta versión claims módulo de máquinas 'completo' pero solo tiene backend CRUD",
-      "Modelos Prisma: Gym, MachineModel, GymMachine",
-      "Rutas admin CRUD: /api/admin/machines",
-      "Módulo completado realmente en v3.6.0",
-    ],
-  },
-  {
-    version: "3.4.1",
-    date: "Septiembre 23, 2026",
-    type: "bugfix",
-    items: [
-      "Admin logout roto — botón logout en /admin/layout",
-      "DELETE usuario HTTP 500 — arreglado params async en Route Handlers",
-      "Redireccionamiento admin sin bucle",
-    ],
-  },
-  {
-    version: "3.4.0",
-    date: "Abril 2026",
-    type: "feature",
-    items: [
-      "Edición de series registradas mediante upsert",
-      "Progresión de ejercicios con gráfica Recharts (1RM Epley)",
-      "Selector dinámico de gimnasio en onboarding",
-      "Catálogo Planet Fitness con máquinas reales",
-      "Sistema de Planes A/B/C con rotación automática",
-      "Next.js 16 + Prisma 7.10 + @prisma/adapter-pg",
-    ],
-  },
-]
+interface ChangelogModalProps {
+  isOpen: boolean
+  onClose: () => void
+  currentVersion: string
+}
 
-export function ChangelogModal() {
-  const [open, setOpen] = useState(false)
+export function ChangelogModal({ isOpen, onClose, currentVersion }: ChangelogModalProps) {
+  const [expandedVersion, setExpandedVersion] = useState<string>(currentVersion)
+  const [changelog, setChangelog] = useState<ChangelogEntry[]>([])
+  const [loading, setLoading] = useState(true)
 
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        title="Ver changelog (v3.7.0)"
-        className="fixed bottom-4 right-4 text-xs text-gray-500 hover:text-gray-700 cursor-help"
-      >
-        v3.5.0
-      </button>
-    )
+  useEffect(() => {
+    if (isOpen) {
+      fetchChangelog()
+    }
+  }, [isOpen])
+
+  const fetchChangelog = async () => {
+    try {
+      const res = await fetch("/api/changelog", {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache, no-store, must-revalidate" },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setChangelog(data.entries || [])
+      }
+    } catch (err) {
+      console.error("Error fetching changelog:", err)
+    } finally {
+      setLoading(false)
+    }
   }
+
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+      <Card className="w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col bg-white">
+        <div className="flex items-center justify-between border-b p-4 bg-gradient-to-r from-emerald-50 to-teal-50">
           <div>
-            <h2 className="text-xl font-bold">Changelog — SapoFit</h2>
-            <p className="text-sm text-gray-600">Historial de versiones y cambios</p>
+            <h2 className="text-2xl font-bold text-gray-900">Changelog</h2>
+            <p className="text-sm text-gray-600 mt-1">Historial de actualizaciones</p>
           </div>
-          <button
-            onClick={() => setOpen(false)}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            <X size={20} />
+          <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-lg transition">
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-8">
-          {CHANGELOG.map((entry) => (
-            <div key={entry.version} className="border-l-4 border-green-500 pl-4">
-              <div className="flex items-baseline gap-3 mb-2">
-                <h3 className="font-bold text-lg">{entry.version}</h3>
-                <span className="text-sm text-gray-500">{entry.date}</span>
-                <span
-                  className={`text-xs px-2 py-1 rounded font-semibold ${
-                    entry.type === "feature"
-                      ? "bg-green-100 text-green-800"
-                      : entry.type === "bugfix"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-gray-100 text-gray-800"
-                  }`}
-                >
-                  {entry.type === "feature"
-                    ? "✨ Features"
-                    : entry.type === "bugfix"
-                      ? "🐛 Fixes"
-                      : "📝 Internal"}
-                </span>
-              </div>
-              <ul className="space-y-1 text-sm">
-                {entry.items.map((item, idx) => (
-                  <li key={idx} className="text-gray-700 flex items-start gap-2">
-                    <span className="text-green-600 font-bold mt-0.5">•</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
+        <div className="overflow-y-auto flex-1 p-4 space-y-2">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-gray-500">Cargando changelog...</p>
             </div>
-          ))}
+          ) : changelog.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-gray-500">No hay changelog disponible</p>
+            </div>
+          ) : (
+            changelog.map((entry) => (
+              <div key={entry.version}>
+                <button
+                  onClick={() =>
+                    setExpandedVersion(
+                      expandedVersion === entry.version ? "" : entry.version
+                    )
+                  }
+                  className="w-full flex items-center justify-between p-3 hover:bg-gray-100 rounded-lg transition text-left"
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      entry.version === currentVersion
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-gray-100 text-gray-700"
+                    }`}>
+                      v{entry.version}
+                    </div>
+                    <span className="text-sm text-gray-600">{entry.date}</span>
+                  </div>
+                  {expandedVersion === entry.version ? (
+                    <ChevronUp className="h-5 w-5" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5" />
+                  )}
+                </button>
+
+                {expandedVersion === entry.version && (
+                  <div className="pl-6 pr-3 pb-3 space-y-3 border-l-2 border-emerald-200">
+                    {entry.features.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-emerald-700 mb-2">✨ Nuevas características</h4>
+                        <ul className="space-y-1">
+                          {entry.features.map((feature, i) => (
+                            <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                              <span className="text-emerald-500 mt-1">•</span>
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {entry.fixes.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-blue-700 mb-2">🔧 Correcciones</h4>
+                        <ul className="space-y-1">
+                          {entry.fixes.map((fix, i) => (
+                            <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                              <span className="text-blue-500 mt-1">•</span>
+                              <span>{fix}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {entry.breaking && entry.breaking.length > 0 && (
+                      <div className="bg-red-50 p-3 rounded-lg border border-red-200">
+                        <h4 className="text-sm font-semibold text-red-700 mb-2">⚠️ Cambios incompatibles</h4>
+                        <ul className="space-y-1">
+                          {entry.breaking.map((breaking, i) => (
+                            <li key={i} className="text-sm text-red-700 flex items-start gap-2">
+                              <span className="text-red-500 mt-1">•</span>
+                              <span>{breaking}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="sticky bottom-0 bg-gray-50 border-t p-4 text-sm text-gray-600">
-          <p>
-            Versión actual: <strong>3.5.0</strong> — Doble-click en el logo o haz clic en la versión para volver a abrir
-          </p>
+        <div className="border-t p-4 flex justify-end bg-gray-50">
+          <Button onClick={onClose} variant="outline">
+            Cerrar
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { PwaRegister } from '@/components/pwa-register'
 import { VersionManager } from '@/components/version-manager'
+import { VersionFooter } from '@/components/version-footer'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -50,12 +51,16 @@ export default function RootLayout({
         {/* Cache-busting en URLs críticas */}
         <link rel="manifest" href={`/manifest.json?v=${cacheBuster}`} />
       </head>
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        {children}
+      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} flex flex-col min-h-screen`}>
+        <div className="flex-1">{children}</div>
+
+        {/* Footer con versión clickeable */}
+        <footer className="border-t bg-gray-50 p-4 text-center">
+          <VersionFooter />
+        </footer>
 
         {/* Service Worker + Version Manager */}
         <PwaRegister />
-        <VersionChecker />
         <VersionManager />
 
         <Toaster richColors position="top-right" />
