@@ -1,6 +1,8 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = "sapofit-v3.7.0"
+// CACHE_NAME con versión + commit para cache-busting automático
+// Cambiar en cada deploy: npm run build (actualiza automáticamente)
+const CACHE_NAME = "sapofit-v3.7.0-d6858b5"
 const STATIC_ASSETS = [
   "/",
   "/manifest.json",
@@ -15,12 +17,15 @@ self.addEventListener("install", () => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      // Limpiar caches antiguos
+      // Limpiar caches antiguos (todos excepto el actual)
       const cacheNames = await caches.keys()
       await Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+          .filter((name) => name !== CACHE_NAME && name.startsWith("sapofit-"))
+          .map((name) => {
+            console.log(`🗑️ Deleting old cache: ${name}`)
+            return caches.delete(name)
+          })
       )
       await self.clients.claim()
     })(),

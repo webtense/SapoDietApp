@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { PwaRegister } from '@/components/pwa-register'
 import { VersionChecker } from '@/components/version-checker'
+import { VersionManager } from '@/components/version-manager'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -37,14 +38,44 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const cacheBuster = "d6858b5" // git commit hash para cache-busting
+
   return (
     <html lang="es">
+      <head>
+        {/* Meta tags de versión para cache-busting y detección de updates */}
+        <meta name="app-version" content="3.7.0" />
+        <meta name="build-time" content={new Date().toISOString()} />
+        <meta name="build-commit" content={cacheBuster} />
+
+        {/* Cache-busting en URLs críticas */}
+        <link rel="manifest" href={`/manifest.json?v=${cacheBuster}`} />
+      </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         {children}
+
+        {/* Service Worker + Version Manager */}
         <PwaRegister />
         <VersionChecker />
+        <VersionManager />
+
         <Toaster richColors position="top-right" />
         <Analytics />
+
+        {/* Script para registrar Service Worker mejorado */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(reg => {
+                console.log('✅ Service Worker registered');
+                // Check for updates cada 1 hora
+                setInterval(() => reg.update().catch(console.error), 3600000);
+              }).catch(err => {
+                console.error('❌ Service Worker registration failed:', err);
+              });
+            }
+          `
+        }} />
       </body>
     </html>
   )
