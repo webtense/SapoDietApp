@@ -4,7 +4,6 @@ import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { PwaRegister } from '@/components/pwa-register'
-import { VersionChecker } from '@/components/version-checker'
 import { VersionManager } from '@/components/version-manager'
 import './globals.css'
 
