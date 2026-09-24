@@ -1,35 +1,33 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { MaquinasSection } from "@/components/gym/maquinas-section"
 import { Card } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 
 export default function EntrenamientoGymPage() {
-  const { data: session } = useSession()
-  const router = useRouter()
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!session?.user?.id) {
-      router.push("/login")
-      return
-    }
-
     const initSession = async () => {
       try {
-        const res = await fetch("/api/user/workout/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: session.user.id }),
-        })
+        // Obtener user desde API (sin next-auth)
+        const userRes = await fetch("/api/auth/me")
+        if (userRes.ok) {
+          const userData = await userRes.json()
 
-        if (res.ok) {
-          const data = await res.json()
-          setSessionId(data.sessionId || data.id)
+          // Crear sesión de entrenamiento
+          const res = await fetch("/api/user/workout/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: userData.id }),
+          })
+
+          if (res.ok) {
+            const data = await res.json()
+            setSessionId(data.sessionId || data.id)
+          }
         }
       } catch (err) {
         console.error("Error initializing session:", err)
@@ -39,17 +37,7 @@ export default function EntrenamientoGymPage() {
     }
 
     initSession()
-  }, [session, router])
-
-  if (!session) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Card className="p-6">
-          <p>Accediendo...</p>
-        </Card>
-      </div>
-    )
-  }
+  }, [])
 
   if (loading) {
     return (
