@@ -15,7 +15,8 @@ const CHANGELOG = {
         "CI en rojo desde abril por migraciones duplicadas de postalCode: ahora son idempotentes",
         "Eliminadas tablas de base de datos duplicadas (fusión SAPOGYM) que dejaban el listado de máquinas vacío",
         "Seed de gimnasio roto contra el esquema actual",
-        "La gráfica de evolución por máquina devolvía error 500"
+        "La gráfica de evolución por máquina devolvía error 500",
+        "La pantalla de entrenamiento se quedaba en blanco (\"This page couldn't load\")"
       ]
     },
     {

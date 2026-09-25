@@ -9,44 +9,47 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { Pencil } from "lucide-react"
+import { Info, Pencil } from "lucide-react"
 
-interface ExerciseInfo {
+type Group = "UPPER" | "LOWER"
+
+interface MachineModelInfo {
   id: string
   name: string
+  description: string | null
+  instructions: string | null
+  tips: string | null
+  recommendedWeight: number | null
 }
-interface GymMachineInfo {
+
+interface WorkoutSetItem {
   id: string
-  assetNumber: string | null
+  setNumber: number
+  weight: number
+  reps: number
 }
+
 interface WorkoutExerciseItem {
   id: string
   order: number
   plannedSets: number
   plannedReps: number
   plannedWeight: number | null
-  exercise: ExerciseInfo
-  gymMachine: GymMachineInfo | null
+  exercise: { id: string; name: string }
+  gymMachine: { id: string; machineModel: MachineModelInfo } | null
+  workoutSets: WorkoutSetItem[]
 }
-interface WorkoutPlanData {
-  id: string
-  name: string
-  planType: "A" | "B" | "C"
-  exercises: WorkoutExerciseItem[]
-}
+
 interface CurrentWorkoutResponse {
   ok: boolean
-  planType: "A" | "B" | "C"
-  plan: WorkoutPlanData | null
+  session: { id: string; completedAt: string | null }
+  plan: { id: string; planType: Group }
+  exercises: WorkoutExerciseItem[]
 }
-interface LastSetInfo {
-  weight: number | null
-  reps: number | null
-}
+
 interface SetDraft {
   weight: string
   reps: string
-  rir: string
 }
 
 interface ExerciseProgressionSetPoint {
@@ -54,6 +57,7 @@ interface ExerciseProgressionSetPoint {
   weight: number | null
   reps: number | null
 }
+
 interface ExerciseProgressionSession {
   date: string
   sessionId: string
@@ -63,18 +67,19 @@ interface ExerciseProgressionSession {
 
 type ViewTab = "entrenar" | "progresion"
 
+const GROUP_LABEL: Record<Group, string> = { UPPER: "Tren Superior", LOWER: "Tren Inferior" }
+
 export default function EntrenamientoPage() {
   const [tab, setTab] = useState<ViewTab>("entrenar")
-  const [group, setGroup] = useState<"UPPER" | "LOWER">("UPPER")
+  const [group, setGroup] = useState<Group>("UPPER")
   const [loading, setLoading] = useState(true)
   const [current, setCurrent] = useState<CurrentWorkoutResponse | null>(null)
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [lastByExercise, setLastByExercise] = useState<Record<string, LastSetInfo | null>>({})
   const [drafts, setDrafts] = useState<Record<string, SetDraft[]>>({})
   const [savedSets, setSavedSets] = useState<Record<string, boolean>>({})
   const [editingSets, setEditingSets] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState<string | null>(null)
   const [ending, setEnding] = useState(false)
+  const [infoMachine, setInfoMachine] = useState<string | null>(null)
 
   const [selectedProgressionExercise, setSelectedProgressionExercise] = useState<string | null>(null)
   const [progression, setProgression] = useState<ExerciseProgressionSession[]>([])
@@ -86,38 +91,32 @@ export default function EntrenamientoPage() {
       const res = await fetch(`/api/user/workout/current?group=${group}`)
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo cargar el entrenamiento")
-      setCurrent(data)
+      const payload = data as CurrentWorkoutResponse
+      setCurrent(payload)
 
-      if (data.plan) {
-        const nextDrafts: Record<string, SetDraft[]> = {}
-        for (const we of data.plan.exercises as WorkoutExerciseItem[]) {
-          nextDrafts[we.id] = Array.from({ length: we.plannedSets }, () => ({
-            weight: "",
-            reps: "",
-            rir: "",
-          }))
-
-          fetch(`/api/user/workout/last/${we.exercise.id}`)
-            .then((r) => r.json())
-            .then((d) => {
-              setLastByExercise((prev) => ({ ...prev, [we.exercise.id]: d.last }))
-            })
-            .catch(() => null)
-        }
-        setDrafts(nextDrafts)
-        setSavedSets({})
-        setEditingSets({})
-
-        if (!selectedProgressionExercise && data.plan.exercises.length > 0) {
-          setSelectedProgressionExercise(data.plan.exercises[0].exercise.id)
-        }
+      const nextDrafts: Record<string, SetDraft[]> = {}
+      const nextSaved: Record<string, boolean> = {}
+      for (const we of payload.exercises) {
+        nextDrafts[we.id] = Array.from({ length: we.plannedSets }, (_, idx) => {
+          const existing = we.workoutSets.find((s) => s.setNumber === idx + 1)
+          if (existing) nextSaved[`${we.id}-${idx}`] = true
+          return { weight: existing ? String(existing.weight) : "", reps: existing ? String(existing.reps) : "" }
+        })
       }
+      setDrafts(nextDrafts)
+      setSavedSets(nextSaved)
+      setEditingSets({})
+
+      setSelectedProgressionExercise((prev) => {
+        if (prev && payload.exercises.some((we) => we.exercise.id === prev)) return prev
+        return payload.exercises[0]?.exercise.id ?? null
+      })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error cargando entrenamiento")
     } finally {
       setLoading(false)
     }
-  }, [selectedProgressionExercise])
+  }, [group])
 
   useEffect(() => {
     loadCurrent()
@@ -144,29 +143,6 @@ export default function EntrenamientoPage() {
     }
   }, [tab, selectedProgressionExercise, loadProgression])
 
-  async function handleStart(mode: "planned" | "free" | "skip") {
-    try {
-      const res = await fetch("/api/user/workout/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, workoutPlanId: current?.plan?.id }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "No se pudo iniciar la sesión")
-
-      if (mode === "skip") {
-        toast.success("Entrenamiento saltado")
-        loadCurrent()
-        return
-      }
-
-      setSessionId(data.session.id)
-      toast.success("Sesión iniciada")
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error iniciando sesión")
-    }
-  }
-
   function updateDraft(workoutExerciseId: string, setIndex: number, field: keyof SetDraft, value: string) {
     setDrafts((prev) => {
       const list = [...(prev[workoutExerciseId] ?? [])]
@@ -176,37 +152,41 @@ export default function EntrenamientoPage() {
   }
 
   function handleEditSet(workoutExerciseId: string, setIndex: number) {
-    const key = `${workoutExerciseId}-${setIndex}`
-    setEditingSets((prev) => ({ ...prev, [key]: true }))
+    setEditingSets((prev) => ({ ...prev, [`${workoutExerciseId}-${setIndex}`]: true }))
   }
 
-  async function handleSaveSet(workoutExerciseId: string, setIndex: number) {
-    if (!sessionId) {
-      toast.error("Primero inicia la sesión")
+  async function handleSaveSet(we: WorkoutExerciseItem, setIndex: number) {
+    if (!current) return
+    const draft = drafts[we.id]?.[setIndex]
+    if (!draft) return
+    const weight = Number(draft.weight)
+    if (!draft.weight || !(weight > 0)) {
+      toast.error("Indica el peso en kg")
       return
     }
-    const draft = drafts[workoutExerciseId]?.[setIndex]
-    if (!draft) return
+    const reps = draft.reps ? Number(draft.reps) : we.plannedReps
 
-    const key = `${workoutExerciseId}-${setIndex}`
+    const key = `${we.id}-${setIndex}`
     setSaving(key)
     try {
-      const res = await fetch(`/api/user/workout/exercise/${workoutExerciseId}/set`, {
+      const res = await fetch(`/api/user/workout/exercise/${we.id}/set`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          workoutSessionId: sessionId,
-          workoutExerciseId,
+          workoutSessionId: current.session.id,
           setNumber: setIndex + 1,
-          weight: draft.weight ? Number(draft.weight) : undefined,
-          reps: draft.reps ? Number(draft.reps) : undefined,
-          rir: draft.rir ? Number(draft.rir) : undefined,
-          completed: true,
+          weight,
+          reps,
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo guardar la serie")
       toast.success(`Serie ${setIndex + 1} guardada`)
+      setDrafts((prev) => {
+        const list = [...(prev[we.id] ?? [])]
+        list[setIndex] = { weight: String(weight), reps: String(reps) }
+        return { ...prev, [we.id]: list }
+      })
       setSavedSets((prev) => ({ ...prev, [key]: true }))
       setEditingSets((prev) => ({ ...prev, [key]: false }))
     } catch (err) {
@@ -216,19 +196,18 @@ export default function EntrenamientoPage() {
     }
   }
 
-  async function handleEndSession(completionStatus: "COMPLETED" | "PARTIAL") {
-    if (!sessionId) return
+  async function handleEndSession() {
+    if (!current) return
     setEnding(true)
     try {
       const res = await fetch("/api/user/workout/end", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workoutSessionId: sessionId, completionStatus }),
+        body: JSON.stringify({ sessionId: current.session.id }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo finalizar la sesión")
       toast.success("Sesión finalizada")
-      setSessionId(null)
       loadCurrent()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error finalizando sesión")
@@ -237,33 +216,8 @@ export default function EntrenamientoPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-        Cargando entrenamiento…
-      </div>
-    )
-  }
-
-  if (!current?.plan) {
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Sin plan de entrenamiento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Todavía no tienes un plan de entrenamiento asignado (toca {current?.planType}). Contacta con tu
-              entrenador o administrador.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  const plan = current.plan
+  const exercises = current?.exercises ?? []
+  const savedCount = Object.values(savedSets).filter(Boolean).length
 
   const progressionChartData = progression.map((s) => ({
     date: new Date(s.date).toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit" }),
@@ -274,98 +228,95 @@ export default function EntrenamientoPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 space-y-4">
       <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => setTab("entrenar")}
-          className={cn(
-            "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-            tab === "entrenar" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
-          )}
-        >
-          Entrenar
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("progresion")}
-          className={cn(
-            "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-            tab === "progresion" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
-          )}
-        >
-          Progresión
-        </button>
+        {(["entrenar", "progresion"] as ViewTab[]).map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => setTab(t)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+              tab === t ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+            )}
+          >
+            {t === "entrenar" ? "Entrenar" : "Progresión"}
+          </button>
+        ))}
       </div>
 
-      {tab === "entrenar" && (
+      <div className="flex gap-2">
+        {(["UPPER", "LOWER"] as Group[]).map((g) => (
+          <button
+            key={g}
+            type="button"
+            onClick={() => setGroup(g)}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+              group === g ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+            )}
+          >
+            {GROUP_LABEL[g]}
+          </button>
+        ))}
+      </div>
+
+      {loading && <p className="py-8 text-center text-sm text-muted-foreground">Cargando entrenamiento…</p>}
+
+      {!loading && tab === "entrenar" && (
         <>
-          <div className="flex gap-2 mb-4">
-            <button
-              type="button"
-              onClick={() => setGroup("UPPER")}
-              className={cn(
-                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                group === "UPPER" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
-              )}
-            >
-              Tren Superior
-            </button>
-            <button
-              type="button"
-              onClick={() => setGroup("LOWER")}
-              className={cn(
-                "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                group === "LOWER" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
-              )}
-            >
-              Tren Inferior
-            </button>
-          </div>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-semibold">{plan.name}</h1>
-              <Badge variant="secondary">Plan {plan.planType}</Badge>
+              <h1 className="text-lg font-semibold">{GROUP_LABEL[group]}</h1>
+              <Badge variant="secondary">
+                {exercises.length} máquinas · {savedCount} series hoy
+              </Badge>
             </div>
-            {!sessionId ? (
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => handleStart("planned")}>
-                  Iniciar
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => handleStart("free")}>
-                  Libre
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => handleStart("skip")}>
-                  Saltar
-                </Button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <Button size="sm" onClick={() => handleEndSession("COMPLETED")} disabled={ending}>
-                  Finalizar
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => handleEndSession("PARTIAL")} disabled={ending}>
-                  Finalizar parcial
-                </Button>
-              </div>
+            {exercises.length > 0 && (
+              <Button size="sm" onClick={handleEndSession} disabled={ending || savedCount === 0}>
+                Finalizar sesión
+              </Button>
             )}
           </div>
 
+          {exercises.length === 0 && (
+            <Card>
+              <CardContent className="py-6 text-sm text-muted-foreground">
+                No hay máquinas activas para {GROUP_LABEL[group].toLowerCase()}. Un administrador puede añadirlas en
+                Admin → Máquinas.
+              </CardContent>
+            </Card>
+          )}
+
           <div className="space-y-3">
-            {plan.exercises.map((we) => {
-              const last = lastByExercise[we.exercise.id]
+            {exercises.map((we) => {
+              const model = we.gymMachine?.machineModel
+              const name = model?.name ?? we.exercise.name
+              const showInfo = model && infoMachine === model.id
               return (
                 <Card key={we.id}>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between text-base">
-                      <span>{we.exercise.name}</span>
-                      <span className="text-xs font-normal text-muted-foreground">
+                      <span>{name}</span>
+                      <span className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
                         {we.plannedSets}x{we.plannedReps}
-                        {we.plannedWeight ? ` · ${we.plannedWeight}kg` : ""}
+                        {model?.recommendedWeight ? ` · ${model.recommendedWeight}kg` : ""}
+                        {model && (model.description || model.instructions || model.tips) && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            aria-label="Información de la máquina"
+                            onClick={() => setInfoMachine(showInfo ? null : model.id)}
+                          >
+                            <Info className="h-4 w-4" />
+                          </Button>
+                        )}
                       </span>
                     </CardTitle>
-                    {last && (last.weight != null || last.reps != null) && (
-                      <p className="text-xs text-muted-foreground">
-                        Última vez: {last.weight ?? "-"} kg × {last.reps ?? "-"} reps
-                      </p>
+                    {showInfo && model && (
+                      <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm space-y-1">
+                        {model.description && <p><strong>Qué es:</strong> {model.description}</p>}
+                        {model.instructions && <p><strong>Cómo usar:</strong> {model.instructions}</p>}
+                        {model.tips && <p><strong>Recomendaciones:</strong> {model.tips}</p>}
+                      </div>
                     )}
                   </CardHeader>
                   <CardContent className="space-y-2">
@@ -376,20 +327,12 @@ export default function EntrenamientoPage() {
 
                       if (isSaved && !isEditing) {
                         return (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
-                          >
+                          <div key={idx} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
                             <span className="text-muted-foreground">Serie {idx + 1}</span>
                             <span className="font-medium">
                               {draft.weight || "-"} kg × {draft.reps || "-"} reps
-                              {draft.rir ? ` · RIR ${draft.rir}` : ""}
                             </span>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleEditSet(we.id, idx)}
-                            >
+                            <Button size="sm" variant="ghost" onClick={() => handleEditSet(we.id, idx)}>
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
                           </div>
@@ -402,6 +345,7 @@ export default function EntrenamientoPage() {
                             <Label className="text-xs">Serie {idx + 1} — kg</Label>
                             <Input
                               type="number"
+                              inputMode="decimal"
                               value={draft.weight}
                               onChange={(e) => updateDraft(we.id, idx, "weight", e.target.value)}
                             />
@@ -410,25 +354,14 @@ export default function EntrenamientoPage() {
                             <Label className="text-xs">Reps</Label>
                             <Input
                               type="number"
+                              inputMode="numeric"
+                              placeholder={String(we.plannedReps)}
                               value={draft.reps}
                               onChange={(e) => updateDraft(we.id, idx, "reps", e.target.value)}
                             />
                           </div>
-                          <div className="flex-1">
-                            <Label className="text-xs">RIR</Label>
-                            <Input
-                              type="number"
-                              value={draft.rir}
-                              onChange={(e) => updateDraft(we.id, idx, "rir", e.target.value)}
-                            />
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={!sessionId || saving === key}
-                            onClick={() => handleSaveSet(we.id, idx)}
-                          >
-                            Guardar
+                          <Button size="sm" variant="outline" disabled={saving === key} onClick={() => handleSaveSet(we, idx)}>
+                            {saving === key ? "…" : "Guardar"}
                           </Button>
                         </div>
                       )
@@ -441,10 +374,10 @@ export default function EntrenamientoPage() {
         </>
       )}
 
-      {tab === "progresion" && (
+      {!loading && tab === "progresion" && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            {plan.exercises.map((we) => (
+            {exercises.map((we) => (
               <button
                 key={we.id}
                 type="button"
@@ -456,7 +389,7 @@ export default function EntrenamientoPage() {
                     : "bg-muted text-muted-foreground",
                 )}
               >
-                {we.exercise.name}
+                {we.gymMachine?.machineModel.name ?? we.exercise.name}
               </button>
             ))}
           </div>
@@ -464,17 +397,15 @@ export default function EntrenamientoPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                {plan.exercises.find((we) => we.exercise.id === selectedProgressionExercise)?.exercise.name ??
-                  "Selecciona un ejercicio"}
+                {exercises.find((we) => we.exercise.id === selectedProgressionExercise)?.gymMachine?.machineModel.name ??
+                  "Selecciona una máquina"}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {progressionLoading && (
-                <p className="text-sm text-muted-foreground">Cargando progresión…</p>
-              )}
+              {progressionLoading && <p className="text-sm text-muted-foreground">Cargando progresión…</p>}
               {!progressionLoading && progressionChartData.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                  Todavía no hay series completadas registradas para este ejercicio.
+                  Todavía no hay series completadas registradas para esta máquina.
                 </p>
               )}
               {!progressionLoading && progressionChartData.length > 0 && (
@@ -484,22 +415,8 @@ export default function EntrenamientoPage() {
                       <XAxis dataKey="date" fontSize={11} />
                       <YAxis domain={["auto", "auto"]} fontSize={11} />
                       <Tooltip />
-                      <Line
-                        type="monotone"
-                        dataKey="oneRM"
-                        name="1RM estimado (kg)"
-                        stroke="var(--color-primary)"
-                        strokeWidth={2}
-                        dot
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="pesoMax"
-                        name="Peso máx. serie (kg)"
-                        stroke="var(--color-info)"
-                        strokeWidth={2}
-                        dot
-                      />
+                      <Line type="monotone" dataKey="oneRM" name="1RM estimado (kg)" stroke="var(--color-primary)" strokeWidth={2} dot />
+                      <Line type="monotone" dataKey="pesoMax" name="Peso máx. serie (kg)" stroke="var(--color-info)" strokeWidth={2} dot />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

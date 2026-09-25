@@ -18,6 +18,8 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 - `prisma/seed.ts` reescrito contra el esquema real y vuelto a incluir en el type-check.
 - `lib/training/progression.ts` (evolución por máquina y media móvil de peso) usaba campos del esquema antiguo y devolvía error 500; adaptado y reincorporado al type-check.
 - `lib/training/plan-templates.ts` (planes A/B/C del esquema antiguo) fallaba en silencio en cada guardado de perfil; eliminado.
+- `/entrenamiento` rompía en cliente (`Cannot read properties of undefined (reading 'map')`): la página esperaba la respuesta antigua del API (`plan.exercises`, planes A/B/C, `/start`, `/last`) que ya no existe. Reescrita contra el API real: sesión automática del día, Tren Superior/Inferior, series kg×reps, info de máquina y pestaña Progresión.
+- Eliminado `<Analytics />` de Vercel (404 en `/_vercel/insights/script.js` fuera de Vercel).
 - Eliminado `components/version-checker.tsx` (código muerto).
 
 ### 📝 Nota

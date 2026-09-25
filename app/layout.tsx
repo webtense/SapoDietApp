@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
-import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { PwaRegister } from '@/components/pwa-register'
 import { PWAInstaller } from '@/components/pwa-installer'
@@ -58,7 +57,6 @@ export default function RootLayout({
         <VersionManager />
 
         <Toaster richColors position="top-right" />
-        <Analytics />
       </body>
     </html>
   )
