@@ -66,62 +66,37 @@ async function upsertAdminUser() {
 }
 
 async function seedGymCatalog() {
-  const muscleGroupNames = ["Pecho", "Espalda", "Hombro", "Pierna"]
-  const muscleGroups: Record<string, { id: string }> = {}
-
-  for (const name of muscleGroupNames) {
-    muscleGroups[name] = await prisma.muscleGroup.upsert({
-      where: { name },
-      update: {},
-      create: { name },
-    })
-  }
-
   let gym = await prisma.gym.findFirst({ where: { name: "Planet Fitness" } })
   if (!gym) {
-    gym = await prisma.gym.create({
-      data: { name: "Planet Fitness", address: "", city: "" },
-    })
+    gym = await prisma.gym.create({ data: { name: "Planet Fitness" } })
   }
 
-  const machineModelsDef = [
-    { name: "Smith Machine", manufacturer: "Genérico", muscleGroup: "Pierna" },
-    { name: "Chest Press", manufacturer: "Matrix", muscleGroup: "Pecho" },
-    { name: "Seated Row", manufacturer: "Matrix", muscleGroup: "Espalda" },
-    { name: "Shoulder Press", manufacturer: "Matrix", muscleGroup: "Hombro" },
+  const machineModelsDef: { name: string; group: "UPPER" | "LOWER"; description?: string }[] = [
+    { name: "Smith Machine", group: "LOWER", description: "Genérico" },
+    { name: "Chest Press", group: "UPPER", description: "Matrix" },
+    { name: "Seated Row", group: "UPPER", description: "Matrix" },
+    { name: "Shoulder Press", group: "UPPER", description: "Matrix" },
+    { name: "Prensa de Piernas (Leg Press)", group: "LOWER", description: "Matrix" },
+    { name: "Curl de Piernas Sentado (Seated Leg Curl)", group: "LOWER", description: "Matrix" },
+    { name: "Extensión de Piernas (Leg Extension)", group: "LOWER", description: "Matrix" },
   ]
 
   for (const def of machineModelsDef) {
-    let machineModel = await prisma.machineModel.findFirst({
-      where: { name: def.name, primaryMuscleGroupId: muscleGroups[def.muscleGroup].id },
-    })
-
+    let machineModel = await prisma.machineModel.findFirst({ where: { name: def.name } })
     if (!machineModel) {
       machineModel = await prisma.machineModel.create({
-        data: {
-          name: def.name,
-          manufacturer: def.manufacturer,
-          primaryMuscleGroupId: muscleGroups[def.muscleGroup].id,
-        },
+        data: { name: def.name, group: def.group, description: def.description },
       })
     }
 
-    const existingGymMachine = await prisma.gymMachine.findFirst({
-      where: { gymId: gym.id, machineModelId: machineModel.id },
+    await prisma.gymMachine.upsert({
+      where: { gymId_machineModelId: { gymId: gym.id, machineModelId: machineModel.id } },
+      update: {},
+      create: { gymId: gym.id, machineModelId: machineModel.id, active: true },
     })
-
-    if (!existingGymMachine) {
-      await prisma.gymMachine.create({
-        data: {
-          gymId: gym.id,
-          machineModelId: machineModel.id,
-          active: true,
-        },
-      })
-    }
   }
 
-  console.log(`Catálogo de gimnasio asegurado: ${gym.name} (${gym.id})`)
+  console.log(`Catálogo de gimnasio asegurado: ${gym.name} (${gym.id}), ${machineModelsDef.length} máquinas`)
 }
 
 async function main() {

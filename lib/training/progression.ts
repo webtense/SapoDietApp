@@ -29,8 +29,7 @@ export async function getConsistencyPercent(
   const completedSessions = await prisma.workoutSession.count({
     where: {
       userId,
-      sessionType: "PLANNED",
-      completionStatus: "COMPLETED",
+      completedAt: { not: null },
       createdAt: { gte: since },
     },
   })
@@ -52,7 +51,7 @@ export async function getWeightMovingAverage(userId: string, days: number) {
       date: { gte: since },
     },
     orderBy: { date: "asc" },
-    select: { date: true, weightKg: true },
+    select: { date: true, weight: true },
   })
 
   // Media móvil de ventana completa (días con datos hasta la fecha),
@@ -61,7 +60,7 @@ export async function getWeightMovingAverage(userId: string, days: number) {
   let runningSum = 0
 
   for (let i = 0; i < entries.length; i++) {
-    runningSum += entries[i].weightKg
+    runningSum += entries[i].weight
     const average = runningSum / (i + 1)
     result.push({ date: entries[i].date, average: Number(average.toFixed(2)) })
   }
@@ -97,7 +96,7 @@ export async function getExerciseProgression(
         },
       },
     },
-    orderBy: { startTime: "asc" },
+    orderBy: { createdAt: "asc" },
     take: limit,
     include: {
       sets: {
@@ -126,7 +125,7 @@ export async function getExerciseProgression(
     }
 
     return {
-      date: session.startTime ?? session.createdAt,
+      date: session.completedAt ?? session.createdAt,
       sessionId: session.id,
       sets,
       best1RM,

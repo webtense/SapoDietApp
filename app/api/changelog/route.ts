@@ -3,6 +3,22 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.7.6",
+      date: "25/09/2026",
+      features: [
+        "Catálogo de máquinas de Planet Fitness (7 máquinas reales) visible en /entrenamiento y /admin/machines",
+        "Historial de series del 23/09 recuperado (prensa, curl y extensión de piernas)",
+        "Despliegue automático a producción desde GitHub Actions tras CI verde"
+      ],
+      fixes: [
+        "El menú lateral mostraba siempre v3.7.0: ahora lee la versión real",
+        "CI en rojo desde abril por migraciones duplicadas de postalCode: ahora son idempotentes",
+        "Eliminadas tablas de base de datos duplicadas (fusión SAPOGYM) que dejaban el listado de máquinas vacío",
+        "Seed de gimnasio roto contra el esquema actual",
+        "La gráfica de evolución por máquina devolvía error 500"
+      ]
+    },
+    {
       version: "3.7.5",
       date: "24/09/2026",
       features: [

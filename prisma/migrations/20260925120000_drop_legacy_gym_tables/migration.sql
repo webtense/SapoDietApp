@@ -1,0 +1,30 @@
+-- Elimina las tablas snake_case de la fusión SAPOGYM (21/09/2026): la app usa
+-- los modelos PascalCase y los datos reales ya se migraron (backup previo en /opt/sapofit/backups).
+DROP TABLE IF EXISTS "workout_sets" CASCADE;
+DROP TABLE IF EXISTS "workout_exercises" CASCADE;
+DROP TABLE IF EXISTS "workout_sessions" CASCADE;
+DROP TABLE IF EXISTS "workout_plans" CASCADE;
+DROP TABLE IF EXISTS "exercise_alternatives" CASCADE;
+DROP TABLE IF EXISTS "exercises" CASCADE;
+DROP TABLE IF EXISTS "machine_weight_options" CASCADE;
+DROP TABLE IF EXISTS "gym_machines" CASCADE;
+DROP TABLE IF EXISTS "machine_models" CASCADE;
+DROP TABLE IF EXISTS "muscle_groups" CASCADE;
+DROP TABLE IF EXISTS "gyms" CASCADE;
+DROP TABLE IF EXISTS "user_challenges" CASCADE;
+DROP TABLE IF EXISTS "challenges" CASCADE;
+DROP TABLE IF EXISTS "achievements" CASCADE;
+DROP TABLE IF EXISTS "backup_logs" CASCADE;
+DROP TABLE IF EXISTS "body_photos" CASCADE;
+DROP TABLE IF EXISTS "body_measurements" CASCADE;
+DROP TABLE IF EXISTS "weight_entries" CASCADE;
+DROP TYPE IF EXISTS "AchievementType";
+DROP TYPE IF EXISTS "BackupStatus";
+DROP TYPE IF EXISTS "BackupTrigger";
+DROP TYPE IF EXISTS "BodyPhotoPose";
+DROP TYPE IF EXISTS "ChallengeStatus";
+DROP TYPE IF EXISTS "ChallengeType";
+DROP TYPE IF EXISTS "CompletionStatus";
+DROP TYPE IF EXISTS "PlanType";
+DROP TYPE IF EXISTS "SessionType";
+DROP TYPE IF EXISTS "WeightUnit";

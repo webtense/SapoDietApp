@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Activity, BarChart3, Calendar, Flame, Home, ListTodo, MessageSquare, Pill, ShoppingCart, Target, User, Settings, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { APP_VERSION } from "@/lib/version"
 
 const navItems = [
   { href: "/inicio", icon: Home, label: "Inicio" },
@@ -76,7 +77,7 @@ export function MainNav({ userRole }: MainNavProps) {
         </div>
 
         <div className="mt-auto rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm">
-          <p className="text-xs text-muted-foreground">v3.7.0 · septiembre 2026</p>
+          <p className="text-xs text-muted-foreground">v{APP_VERSION} · septiembre 2026</p>
         </div>
       </aside>
     </>

@@ -4,6 +4,27 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.7.6] — Septiembre 25, 2026
+
+### ✨ Características nuevas
+- **Catálogo Planet Fitness operativo** — 7 máquinas reales (Smith, Chest Press, Seated Row, Shoulder Press, Leg Press, Seated Leg Curl, Leg Extension) visibles en `/entrenamiento` (UPPER/LOWER) y gestionables en `/admin/machines`.
+- **Historial recuperado** — series del 23/09 (prensa 54/63/72 kg, curl 48 kg, extensión 36 kg) migradas al modelo actual.
+- **Deploy automático** — `deploy.yml` hace rsync + `docker build` + `service update` en el VPS tras CI verde y verifica `/api/version`.
+
+### 🐛 Correcciones
+- Menú lateral con versión fija `v3.7.0` (`components/main-nav.tsx`): ahora usa `APP_VERSION`.
+- CI en rojo desde abril: `20260429120000_add_postal_code` y `20260429130000_shopping_share_and_price_obs` duplicaban `20260419195000`; ahora son idempotentes.
+- Tablas snake_case huérfanas de la fusión SAPOGYM (21/09) eliminadas (`20260925120000_drop_legacy_gym_tables`); los datos reales vivían ahí y la app leía las PascalCase vacías.
+- `prisma/seed.ts` reescrito contra el esquema real y vuelto a incluir en el type-check.
+- `lib/training/progression.ts` (evolución por máquina y media móvil de peso) usaba campos del esquema antiguo y devolvía error 500; adaptado y reincorporado al type-check.
+- `lib/training/plan-templates.ts` (planes A/B/C del esquema antiguo) fallaba en silencio en cada guardado de perfil; eliminado.
+- Eliminado `components/version-checker.tsx` (código muerto).
+
+### 📝 Nota
+Ninguna versión anterior se desplegó nunca vía GitHub: el workflow antiguo apuntaba a webhooks de EasyPanel inexistentes.
+
+---
+
 ## [3.7.0] — Septiembre 23, 2026
 
 ### ✨ Características nuevas

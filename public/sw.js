@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-globals */
 
 // Debe cambiar en cada release (ver lib/version.ts) para invalidar caches antiguas
-const CACHE_NAME = "sapofit-v3.7.5-20260924"
+const CACHE_NAME = "sapofit-v3.7.6-20260925"
 const STATIC_ASSETS = [
   "/",
   "/manifest.json",
