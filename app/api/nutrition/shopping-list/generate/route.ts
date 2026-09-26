@@ -3,28 +3,25 @@ import { apiError, requireUser } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
 import { getActivePlan } from "@/lib/nutrition/service"
 
-interface PlanIngredient {
-  nombre: string
-  cantidad: number
-  unidad?: string
+const CATEGORY_LABEL: Record<string, { category: string; aisle: string }> = {
+  carnesPescadosHuevos: { category: "Carnes, pescados y huevos", aisle: "Carnicería y pescadería" },
+  verdurasHortalizas: { category: "Verduras y hortalizas", aisle: "Frutas y verduras" },
+  carbohidratosLegumbre: { category: "Carbohidratos y legumbre", aisle: "Cereales y conservas" },
+  frutaYDespensa: { category: "Fruta y despensa", aisle: "Varios" },
+  despensaYCondimentos: { category: "Despensa y condimentos", aisle: "Varios" },
+  compraPersonalSemanalZoraida: { category: "Desayuno, tentempiés y lácteos", aisle: "Refrigerados" },
 }
 
-interface PlanMeal {
-  ingredientes?: PlanIngredient[]
+type ListaCompraEntry = string | { producto: string; cantidad: string }
+
+function entryToName(entry: ListaCompraEntry) {
+  return typeof entry === "string" ? entry : `${entry.producto} — ${entry.cantidad}`
 }
 
-const AISLE_MAP: Record<string, { category: string; aisle: string; estimatedPrice: number }> = {
-  "pan pita": { category: "Panadería", aisle: "Panadería", estimatedPrice: 1.2 },
-  "leche desnatada": { category: "Lácteos", aisle: "Refrigerados", estimatedPrice: 0.9 },
-  "pechuga de pollo": { category: "Carnes", aisle: "Carnicería", estimatedPrice: 1.2 },
-  huevos: { category: "Lácteos y Huevos", aisle: "Refrigerados", estimatedPrice: 0.3 },
-  avena: { category: "Cereales", aisle: "Cereales", estimatedPrice: 0.4 },
-  tomate: { category: "Verduras", aisle: "Frutas y Verduras", estimatedPrice: 0.3 },
-  "aceite de oliva": { category: "Aceites", aisle: "Condimentos", estimatedPrice: 0.8 },
-}
-
-// Genera una lista de la compra a partir del plan activo del usuario (mealsJson).
-// Reutiliza ShoppingList/ShoppingItem, igual que /api/shopping.
+// Genera la lista de la compra a partir de la sección de lista de compra ya
+// agregada del plan activo (mealsJson.listaCompra4pax / listaCompraBase4pax),
+// no de los ingredientes sueltos por comida: esa sección ya viene calculada
+// por el propio plan (4 o 6 personas, categorizada), es la fuente fiable.
 export async function POST() {
   const { user, error } = await requireUser()
   if (error || !user) return error
@@ -33,35 +30,42 @@ export async function POST() {
   if (!plan) return apiError("No tienes un plan nutricional activo", 404)
   if (!plan.mealsJson) return apiError("El plan no tiene comidas estructuradas todavía", 400)
 
-  let meals: Record<string, PlanMeal>
+  let meals: Record<string, unknown>
   try {
     meals = JSON.parse(plan.mealsJson)
   } catch {
     return apiError("El plan tiene un formato de comidas inválido", 400)
   }
 
-  const seen = new Set<string>()
+  // listaCompra4pax (plan de Zoraida) / listaCompraBase4pax (plan genérico) viven
+  // siempre en la raíz del mealsJson, aunque el resto del plan de Zoraida esté
+  // anidado bajo estructuraDiaria.
+  const listaCompra =
+    (meals.listaCompra4pax as Record<string, ListaCompraEntry[]> | undefined) ??
+    (meals.listaCompraBase4pax as Record<string, ListaCompraEntry[]> | undefined)
+
+  if (!listaCompra) {
+    return apiError("Este plan todavía no tiene una lista de la compra calculada", 400)
+  }
+
   const items: Array<{ name: string; amount: number; unit: string; category: string; aisle: string; purchased: boolean; estimatedPrice: number }> = []
 
-  for (const meal of Object.values(meals)) {
-    for (const ing of meal.ingredientes || []) {
-      const key = ing.nombre.toLowerCase()
-      if (seen.has(key)) continue
-      seen.add(key)
-      const info = AISLE_MAP[key] || { category: "General", aisle: "Varios", estimatedPrice: 1.0 }
+  for (const [section, entries] of Object.entries(listaCompra)) {
+    const meta = CATEGORY_LABEL[section] ?? { category: section, aisle: "Varios" }
+    for (const entry of entries) {
       items.push({
-        name: ing.nombre,
-        amount: ing.cantidad,
-        unit: ing.unidad || "unidad",
-        category: info.category,
-        aisle: info.aisle,
+        name: entryToName(entry),
+        amount: 1,
+        unit: "",
+        category: meta.category,
+        aisle: meta.aisle,
         purchased: false,
-        estimatedPrice: info.estimatedPrice,
+        estimatedPrice: 0,
       })
     }
   }
 
-  if (items.length === 0) return apiError("No se encontraron ingredientes en el plan", 400)
+  if (items.length === 0) return apiError("No se encontraron artículos en la lista de la compra del plan", 400)
 
   items.sort((a, b) => a.aisle.localeCompare(b.aisle))
 
@@ -69,7 +73,7 @@ export async function POST() {
     data: {
       userId: user.id,
       supermarket: "Mi Supermercado",
-      totalEstimated: items.reduce((s, i) => s + i.estimatedPrice, 0),
+      totalEstimated: 0,
       items: { create: items },
     },
     include: { items: true },

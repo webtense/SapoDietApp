@@ -67,6 +67,44 @@ const MEAL_ORDER: Array<{ key: string; label: string }> = [
   { key: "cena", label: "Cena" },
 ]
 
+interface RecipeIngredientView {
+  name: string
+  weight: number | null
+}
+
+interface RecipeView {
+  id: string
+  name: string
+  description: string | null
+  preparationTime: number | null
+  servings: number
+  method: string
+  steps: string[]
+  allergens: string[]
+  ingredients: RecipeIngredientView[]
+}
+
+interface RecipeOptions {
+  recommended: RecipeView | null
+  alternatives: { day: string; recipe: RecipeView }[]
+}
+
+interface TodayResponse {
+  ok: boolean
+  hasPlan: boolean
+  today?: string
+  desayuno?: { horario?: string; descripcion?: string } | null
+  mediaManana?: { horario?: string; descripcion?: string; hoy: string | null; opciones: string[]; notas?: string } | null
+  comida?: ({ horario?: string; descripcion?: string } & RecipeOptions) | null
+  merienda?: { horario?: string; descripcion?: string; opciones: string[]; notas?: string } | null
+  cena?: ({ horario?: string; descripcion?: string } & RecipeOptions) | null
+}
+
+const DAY_LABEL: Record<string, string> = {
+  LUNES: "Lunes", MARTES: "Martes", MIERCOLES: "Miércoles", JUEVES: "Jueves",
+  VIERNES: "Viernes", SABADO: "Sábado", DOMINGO: "Domingo",
+}
+
 export default function NutricionPage() {
   const [loading, setLoading] = useState(true)
   const [plan, setPlan] = useState<NutritionistPlan | null>(null)
@@ -76,6 +114,8 @@ export default function NutricionPage() {
   const [addingMember, setAddingMember] = useState(false)
   const [generatingList, setGeneratingList] = useState(false)
 
+  const [today, setToday] = useState<TodayResponse | null>(null)
+  const [openAlternatives, setOpenAlternatives] = useState<string | null>(null)
   const [showCamera, setShowCamera] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
@@ -107,6 +147,11 @@ export default function NutricionPage() {
       }
     }
     load()
+
+    fetch("/api/nutrition/today")
+      .then((r) => r.json())
+      .then((data: TodayResponse) => setToday(data))
+      .catch(() => null)
   }, [])
 
   const addMember = async () => {
@@ -237,63 +282,95 @@ export default function NutricionPage() {
         </Card>
       )}
 
-      {MEAL_ORDER.map(({ key, label }) => {
-        const meal = meals[key]
-        if (!meal) return null
+      {today?.hasPlan && (
+        <>
+          {today.desayuno && (
+            <MealCard title="Desayuno" horario={today.desayuno.horario} onCamera={() => openCamera("desayuno")}>
+              <p className="text-sm text-muted-foreground">{today.desayuno.descripcion}</p>
+            </MealCard>
+          )}
 
-        return (
-          <Card key={key} className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <Utensils className="h-4 w-4" /> {label}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => openCamera(key)}>
-                    <Camera className="h-3 w-3" />
-                  </Button>
-                  {meal.horario && (
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {meal.horario}
-                    </Badge>
-                  )}
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {meal.nombre && <p className="font-medium text-sm">{meal.nombre}</p>}
-
-              {meal.ingredientes && meal.ingredientes.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">Ingredientes (en crudo):</p>
+          {today.mediaManana && (
+            <MealCard title="Media mañana" horario={today.mediaManana.horario} onCamera={() => openCamera("mediaManana")}>
+              <p className="text-sm text-muted-foreground">{today.mediaManana.descripcion}</p>
+              {today.mediaManana.hoy && (
+                <p className="text-sm font-medium">Hoy: {today.mediaManana.hoy}</p>
+              )}
+              {today.mediaManana.opciones.length > 0 && (
+                <OptionsToggle
+                  isOpen={openAlternatives === "mediaManana"}
+                  onToggle={() => setOpenAlternatives((v) => (v === "mediaManana" ? null : "mediaManana"))}
+                >
                   <div className="flex flex-wrap gap-2">
-                    {meal.ingredientes.map((ing, i) => (
-                      <Badge key={i} variant="secondary" className="font-normal text-[10px]">
-                        {ing.nombre} ({ing.cantidad}{ing.unidad || "g"})
-                      </Badge>
+                    {today.mediaManana.opciones.map((op, i) => (
+                      <Badge key={i} variant="secondary" className="font-normal text-xs">{op}</Badge>
                     ))}
                   </div>
-                </div>
+                </OptionsToggle>
               )}
+            </MealCard>
+          )}
 
-              {meal.instrucciones && meal.instrucciones.length > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">Preparación:</p>
-                  <ul className="text-xs space-y-1 list-disc list-inside text-muted-foreground">
-                    {meal.instrucciones.map((inst, i) => (
-                      <li key={i}>{inst}</li>
+          {today.comida && (
+            <MealCard title="Comida" horario={today.comida.horario} onCamera={() => openCamera("comida")}>
+              {today.comida.descripcion && <p className="text-xs text-muted-foreground">{today.comida.descripcion}</p>}
+              <RecipeBlock recipe={today.comida.recommended} label="Hoy toca" />
+              {today.comida.alternatives.length > 0 && (
+                <OptionsToggle
+                  isOpen={openAlternatives === "comida"}
+                  onToggle={() => setOpenAlternatives((v) => (v === "comida" ? null : "comida"))}
+                  label={`Ver otras ${today.comida.alternatives.length} opciones`}
+                >
+                  <div className="space-y-3">
+                    {today.comida.alternatives.map(({ day, recipe }) => (
+                      <RecipeBlock key={recipe.id} recipe={recipe} label={DAY_LABEL[day] ?? day} compact />
                     ))}
-                  </ul>
-                </div>
+                  </div>
+                </OptionsToggle>
               )}
+            </MealCard>
+          )}
 
-              {meal.notas && (
-                <p className="text-[11px] text-muted-foreground italic border-l-2 border-muted pl-2">{meal.notas}</p>
+          {today.merienda && (
+            <MealCard title="Merienda" horario={today.merienda.horario} onCamera={() => openCamera("merienda")}>
+              <p className="text-sm text-muted-foreground">{today.merienda.descripcion}</p>
+              {today.merienda.opciones.length > 0 && (
+                <OptionsToggle
+                  isOpen={openAlternatives === "merienda"}
+                  onToggle={() => setOpenAlternatives((v) => (v === "merienda" ? null : "merienda"))}
+                  label="Ver opciones"
+                >
+                  <div className="flex flex-wrap gap-2">
+                    {today.merienda.opciones.map((op, i) => (
+                      <Badge key={i} variant="secondary" className="font-normal text-xs">{op}</Badge>
+                    ))}
+                  </div>
+                </OptionsToggle>
               )}
-            </CardContent>
-          </Card>
-        )
-      })}
+            </MealCard>
+          )}
+
+          {today.cena && (
+            <MealCard title="Cena" horario={today.cena.horario} onCamera={() => openCamera("cena")}>
+              {today.cena.descripcion && <p className="text-xs text-muted-foreground">{today.cena.descripcion}</p>}
+              <RecipeBlock recipe={today.cena.recommended} label="Hoy toca" />
+              {today.cena.alternatives.length > 0 && (
+                <OptionsToggle
+                  isOpen={openAlternatives === "cena"}
+                  onToggle={() => setOpenAlternatives((v) => (v === "cena" ? null : "cena"))}
+                  label={`Ver otras ${today.cena.alternatives.length} opciones`}
+                >
+                  <div className="space-y-3">
+                    {today.cena.alternatives.map(({ day, recipe }) => (
+                      <RecipeBlock key={recipe.id} recipe={recipe} label={DAY_LABEL[day] ?? day} compact />
+                    ))}
+                  </div>
+                </OptionsToggle>
+              )}
+            </MealCard>
+          )}
+        </>
+      )}
 
       <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
         <CardHeader className="pb-3">
@@ -411,6 +488,100 @@ export default function NutricionPage() {
             </CardContent>
           </Card>
         </div>
+      )}
+    </div>
+  )
+}
+
+function MealCard({
+  title,
+  horario,
+  onCamera,
+  children,
+}: {
+  title: string
+  horario?: string
+  onCamera: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <Utensils className="h-4 w-4" /> {title}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="h-6 px-2" onClick={onCamera}>
+              <Camera className="h-3 w-3" />
+            </Button>
+            {horario && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Clock className="h-3 w-3" /> {horario}
+              </Badge>
+            )}
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">{children}</CardContent>
+    </Card>
+  )
+}
+
+function OptionsToggle({
+  isOpen,
+  onToggle,
+  label = "Ver otras opciones",
+  children,
+}: {
+  isOpen: boolean
+  onToggle: () => void
+  label?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-2">
+      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={onToggle}>
+        {isOpen ? "Ocultar opciones" : label}
+      </Button>
+      {isOpen && children}
+    </div>
+  )
+}
+
+function RecipeBlock({ recipe, label, compact }: { recipe: RecipeView | null; label: string; compact?: boolean }) {
+  if (!recipe) return null
+  return (
+    <div className={compact ? "rounded-lg border border-muted p-2 space-y-1" : "space-y-2"}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-muted-foreground uppercase">{label}</p>
+        {recipe.preparationTime != null && (
+          <span className="text-[10px] text-muted-foreground">{recipe.preparationTime} min</span>
+        )}
+      </div>
+      <p className={compact ? "text-sm font-medium" : "font-medium text-sm"}>{recipe.name}</p>
+
+      <div className="flex flex-wrap gap-2">
+        {recipe.ingredients.map((ing, i) => (
+          <Badge key={i} variant="secondary" className="font-normal text-[10px]">
+            {ing.name}{ing.weight != null ? ` (${ing.weight}g)` : ""}
+          </Badge>
+        ))}
+      </div>
+
+      {!compact && recipe.steps.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-muted-foreground uppercase">Preparación:</p>
+          <ul className="text-xs space-y-1 list-disc list-inside text-muted-foreground">
+            {recipe.steps.map((step, i) => (
+              <li key={i}>{step}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {recipe.description && (
+        <p className="text-[11px] text-muted-foreground italic border-l-2 border-muted pl-2">{recipe.description}</p>
       )}
     </div>
   )

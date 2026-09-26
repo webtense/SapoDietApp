@@ -3,6 +3,18 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.11.0",
+      date: "26/09/2026",
+      features: [
+        "Consulta \"¿Qué toca hoy?\" en /nutricion: comida y cena recomendadas según el día, con botón para ver otras opciones (rota entre las recetas del resto de la semana); media mañana y merienda muestran todas sus alternativas",
+        "Lista de la compra desde /compra: nuevo botón \"Desde mi plan de nutrición\" que la genera a partir del plan activo real"
+      ],
+      fixes: [
+        "/nutricion mostraba las tarjetas de comida y cena vacías: esperaban ingredientes embebidos por comida, pero el plan real referencia recetas por id",
+        "El generador de lista de la compra del módulo de nutrición devolvía siempre \"no se encontraron ingredientes\": mismo problema de contrato, ahora usa la lista de la compra ya calculada del plan"
+      ]
+    },
+    {
       version: "3.10.0",
       date: "26/09/2026",
       features: [

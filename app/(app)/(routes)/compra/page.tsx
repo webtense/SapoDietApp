@@ -100,6 +100,21 @@ export default function CompraPage() {
     }
   }
 
+  const generarDesdeNutricion = async () => {
+    setStatusMessage("")
+    const res = await fetch("/api/nutrition/shopping-list/generate", { method: "POST" })
+    const data = await res.json().catch(() => null)
+    if (res.ok && data?.shoppingList) {
+      setShoppingListId(data.shoppingList.id || "")
+      setShoppingList((data.shoppingList.items || []).map(normalizeShoppingItem))
+      setSupermercado(data.shoppingList.supermarket || "")
+      setTotal(data.shoppingList.totalEstimated || 0)
+      setStatusMessage("Lista generada desde tu plan de nutrición")
+    } else {
+      setStatusMessage(data?.error || "No se pudo generar la lista desde tu plan de nutrición")
+    }
+  }
+
   const exportPdf = () => {
     if (!shoppingListId) return
     window.open(`/api/shopping/export?listId=${shoppingListId}`, "_blank", "noopener,noreferrer")
@@ -155,6 +170,7 @@ export default function CompraPage() {
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" className="border-white/30 bg-white/10 text-white hover:bg-white/20" onClick={exportPdf} disabled={!shoppingListId}><FileText className="mr-1 h-4 w-4" /> PDF</Button>
             <Button variant="outline" size="sm" className="border-white/30 bg-white/10 text-white hover:bg-white/20" onClick={generarNuevaLista}><RotateCw className="mr-1 h-4 w-4" /> Nueva lista</Button>
+            <Button variant="outline" size="sm" className="border-white/30 bg-white/10 text-white hover:bg-white/20" onClick={generarDesdeNutricion}><ShoppingCart className="mr-1 h-4 w-4" /> Desde mi plan de nutrición</Button>
           </div>
         </div>
 

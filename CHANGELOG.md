@@ -4,6 +4,18 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.11.0] — Septiembre 26, 2026
+
+### ✨ Características nuevas
+- **"¿Qué toca hoy?" en `/nutricion`** — nuevo endpoint `GET /api/nutrition/today`: calcula el día de la semana en la zona horaria del usuario y resuelve la receta real (ingredientes, pasos) de comida y cena. Cada una lleva un botón "Ver otras opciones" que despliega las recetas del resto de la semana como alternativas. Media mañana y merienda muestran todas sus opciones de proteína.
+- **Lista de la compra desde el plan real** — botón "Desde mi plan de nutrición" en `/compra`.
+
+### 🐛 Correcciones
+- `/nutricion` renderizaba las tarjetas de comida/cena vacías: el componente esperaba `{nombre, ingredientes, instrucciones}` embebidos por comida, pero el plan real (tanto el de Zoraida como el genérico "alta en proteínas") referencia recetas por id (`recetasPorDia`). Reescrita la sección para consumir `/api/nutrition/today`.
+- `POST /api/nutrition/shopping-list/generate` siempre devolvía "no se encontraron ingredientes en el plan" por el mismo desajuste de contrato; ahora usa `listaCompra4pax`/`listaCompraBase4pax`, la sección ya calculada y categorizada del plan.
+
+---
+
 ## [3.10.0] — Septiembre 26, 2026
 
 ### ✨ Características nuevas
