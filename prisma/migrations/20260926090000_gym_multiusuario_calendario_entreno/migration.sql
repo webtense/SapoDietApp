@@ -3,7 +3,7 @@ ALTER TABLE "Gym" ADD COLUMN     "createdById" TEXT,
 ADD COLUMN     "isPublic" BOOLEAN NOT NULL DEFAULT true;
 
 -- AlterTable
-ALTER TABLE "User" DROP COLUMN "subscriptionstatus";
+ALTER TABLE "User" DROP COLUMN IF EXISTS "subscriptionstatus";
 
 -- CreateTable
 CREATE TABLE "WorkoutSchedule" (
