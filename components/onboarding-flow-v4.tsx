@@ -22,7 +22,7 @@ interface OnboardingData {
   weight: number
   height: number
   age: number
-  sex: "M" | "F"
+  sex: "hombre" | "mujer"
   bodyType: string
 
   waist: string
@@ -129,7 +129,7 @@ export function OnboardingFlowV4({ userName }: { userName: string }) {
     weight: 70,
     height: 170,
     age: 30,
-    sex: "M",
+    sex: "hombre",
     bodyType: "",
     waist: "",
     hip: "",
@@ -176,7 +176,7 @@ export function OnboardingFlowV4({ userName }: { userName: string }) {
               weight: profile.weightKg ?? prev.weight,
               height: profile.heightCm ?? prev.height,
               age: profile.age ?? prev.age,
-              sex: (profile.sex as "M" | "F") ?? prev.sex,
+              sex: profile.sex === "M" ? "hombre" : profile.sex === "F" ? "mujer" : profile.sex === "hombre" || profile.sex === "mujer" ? profile.sex : prev.sex,
               bodyType: profile.bodyType ?? prev.bodyType,
               waist: profile.waistCm ? String(profile.waistCm) : prev.waist,
               hip: profile.hipCm ? String(profile.hipCm) : prev.hip,
@@ -329,11 +329,11 @@ export function OnboardingFlowV4({ userName }: { userName: string }) {
                     <Label>Sexo</Label>
                     <select
                       value={data.sex}
-                      onChange={(e) => setData({ ...data, sex: e.target.value as "M" | "F" })}
+                      onChange={(e) => setData({ ...data, sex: e.target.value as "hombre" | "mujer" })}
                       className="w-full rounded-md border border-gray-300 px-3 py-2"
                     >
-                      <option value="M">Hombre</option>
-                      <option value="F">Mujer</option>
+                      <option value="hombre">Hombre</option>
+                      <option value="mujer">Mujer</option>
                     </select>
                   </div>
                 </div>

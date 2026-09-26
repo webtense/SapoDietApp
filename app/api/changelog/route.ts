@@ -3,6 +3,14 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.12.1",
+      date: "26/09/2026",
+      features: [],
+      fixes: [
+        "El onboarding V4 rechazaba el envío en el último paso para cualquier usuario cuyo perfil ya tuviera el sexo guardado (\"hombre\"/\"mujer\", el formato real usado en toda la app): el wizard asumía un enum \"M\"/\"F\" que nunca se había usado en producción"
+      ]
+    },
+    {
       version: "3.12.0",
       date: "26/09/2026",
       features: [

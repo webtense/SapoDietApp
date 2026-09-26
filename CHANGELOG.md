@@ -4,6 +4,13 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.12.1] — Septiembre 26, 2026
+
+### 🐛 Corrección crítica
+- El paso final del onboarding V4 fallaba con `Invalid enum value. Expected 'M' | 'F', received 'hombre'` para cualquier usuario con perfil previo: el wizard asumía un enum `M`/`F` que **ningún perfil real usa** (todos, sin excepción, tienen `sex` guardado como `hombre`/`mujer`, igual que el resto de la app — `/perfil`, `/objetivo`, `/api/plan`). Wizard y endpoint alineados al formato real.
+
+---
+
 ## [3.12.0] — Septiembre 26, 2026
 
 ### ✨ Onboarding V4

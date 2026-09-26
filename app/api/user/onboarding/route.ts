@@ -10,7 +10,15 @@ const onboardingSchema = z.object({
   weight: z.number().min(30).max(300),
   height: z.number().min(100).max(250),
   age: z.number().min(1).max(120),
-  sex: z.enum(["M", "F"]),
+  sex: z
+    .string()
+    .transform((v) => {
+      const n = v.trim().toLowerCase()
+      if (n === "m" || n === "hombre") return "hombre"
+      if (n === "f" || n === "mujer") return "mujer"
+      return v
+    })
+    .pipe(z.enum(["hombre", "mujer"])),
   bodyType: z.string().max(60).optional(),
 
   waist: z.number().min(20).max(300).optional(),
