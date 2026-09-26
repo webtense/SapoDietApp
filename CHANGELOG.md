@@ -4,6 +4,14 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.13.1] — Septiembre 26, 2026
+
+### 🐛 Corrección crítica — Gemini roto en silencio
+- Verificando "Más opciones" en producción: la IA nunca respondía, siempre caía al fallback genérico. Causa real: `gemini-1.5-flash` ya no existe (Google lo retiró), la API devuelve 404 y el `catch` silencioso de cada endpoint lo ocultaba sin dejar rastro en los logs.
+- Afectaba a las 3 únicas llamadas a Gemini del proyecto: `POST /api/plan/meal/alternatives` (nuevo hoy), `POST /api/ai/meal-photo` (análisis de foto, llevaba tiempo roto sin que nadie lo notara) y `POST /api/nutrition/plan/import` (importar PDF, roto desde que se creó hoy mismo). Las tres actualizadas a `gemini-2.5-flash`, verificado con una llamada real.
+
+---
+
 ## [3.13.0] — Septiembre 26, 2026
 
 ### ✨ Más opciones de comida con IA

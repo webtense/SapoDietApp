@@ -100,7 +100,7 @@ Responde SOLO con un array JSON de 3 objetos, cada uno con este formato exacto:
 {"nombre": "string", "ingredientes": [{"nombre": "string", "cantidad": número, "unidad": "g|ml|unidad", "calorias": número, "proteinas": número, "carbohidratos": número, "grasas": número}], "instrucciones": ["paso 1", "paso 2"], "calorias": número, "proteinas": número, "carbohidratos": número, "grasas": número, "tiempoPreparacion": número}`
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
     const result = await model.generateContent(prompt)
     const text = result.response.text()
     const match = text.match(/\[[\s\S]*\]/)

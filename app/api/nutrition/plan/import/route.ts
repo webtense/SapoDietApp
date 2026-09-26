@@ -27,7 +27,7 @@ async function checkAndUpdateQuota(userId: string): Promise<boolean> {
 }
 
 async function extractPlanFromPdf(buffer: Buffer): Promise<{ extractedText: string; needsReview: boolean }> {
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
   const filePart = {
     inlineData: {
       data: buffer.toString("base64"),

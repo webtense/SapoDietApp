@@ -3,6 +3,14 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.13.1",
+      date: "26/09/2026",
+      features: [],
+      fixes: [
+        "Las 3 funciones que usan Gemini (más opciones de comida, análisis de foto, importar PDF de nutrición) fallaban en silencio: el modelo gemini-1.5-flash ya no existe (retirado por Google), caían siempre al resultado genérico sin que se notara"
+      ]
+    },
+    {
       version: "3.13.0",
       date: "26/09/2026",
       features: [
