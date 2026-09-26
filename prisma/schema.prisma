@@ -200,6 +200,16 @@ model Profile {
   onboardingCompletedAt   DateTime?
   gymId                   String?
   activeGym               Gym?     @relation("ProfileActiveGym", fields: [gymId], references: [id], onDelete: SetNull)
+  waistCm                 Float?
+  hipCm                   Float?
+  chestCm                 Float?
+  allergies               String?
+  hasAirFryer             Boolean?
+  takesSupplements        Boolean?
+  supplementsDetail       String?
+  cookingLevel            String?
+  weeklyBudget            Float?
+  onboardingVersion       Int      @default(1)
   lastCalculatedCarbs     Float?
   lastCalculatedFat       Float?
   createdAt               DateTime @default(now())

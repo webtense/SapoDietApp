@@ -3,6 +3,14 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.12.0",
+      date: "26/09/2026",
+      features: [
+        "Onboarding V4: wizard de 8 pasos con medidas corporales, alergias/intolerancias, air fryer, suplementos, nivel de cocina, presupuesto semanal y gestión de gimnasio (unirse a uno existente o crear el tuyo con 7 máquinas de ejemplo). Precarga tus datos si ya tenías perfil, para completar solo lo nuevo"
+      ],
+      fixes: []
+    },
+    {
       version: "3.11.0",
       date: "26/09/2026",
       features: [

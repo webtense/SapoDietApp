@@ -4,6 +4,15 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.12.0] — Septiembre 26, 2026
+
+### ✨ Onboarding V4
+- Wizard de 8 pasos: datos básicos, medidas corporales (cintura/cadera/pecho, opcional), objetivo, entrenamiento, gimnasio (unirse/crear/saltar — crear siembra 7 máquinas de ejemplo reutilizando el catálogo compartido), nutrición (dieta, alimentos a evitar, alergias/intolerancias, air fryer, suplementos), cocina y compra (nivel de experiencia, presupuesto semanal), resumen final.
+- Precarga los datos ya existentes de `/api/profile` al montar: quien repite el onboarding revisa y completa lo nuevo, no empieza de cero.
+- Nuevos campos en `Profile`: `waistCm/hipCm/chestCm`, `allergies`, `hasAirFryer`, `takesSupplements/supplementsDetail`, `cookingLevel`, `weeklyBudget`, `onboardingVersion`.
+
+---
+
 ## [3.11.0] — Septiembre 26, 2026
 
 ### ✨ Características nuevas
