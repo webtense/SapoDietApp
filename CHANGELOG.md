@@ -4,6 +4,15 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.13.0] — Septiembre 26, 2026
+
+### ✨ Más opciones de comida con IA
+- El botón "Cambiar receta" de `/Hoy` existía en el diseño desde siempre pero nunca se implementó (deshabilitado). Ahora "Más opciones" llama a Gemini (`POST /api/plan/meal/alternatives`) y propone 3 alternativas para esa comida con calorías y macros equivalentes a las actuales, respetando el tipo de dieta y las alergias/alimentos a evitar del perfil.
+- Al elegir una, `POST /api/plan/meal/replace` sustituye la receta de ese día en el plan, persistiéndola.
+- Si no hay cuota de IA disponible ese día o falla la llamada, se ofrecen alternativas genéricas sin bloquear al usuario.
+
+---
+
 ## [3.12.2] — Septiembre 26, 2026
 
 ### 🐛 Corrección

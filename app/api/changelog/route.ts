@@ -3,6 +3,14 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.13.0",
+      date: "26/09/2026",
+      features: [
+        "\"Más opciones\" en /Hoy: la IA propone 3 alternativas para cada comida (respetando tu dieta, alergias y las mismas calorías/macros objetivo) y eliges la que prefieras, sustituyendo la receta del día"
+      ],
+      fixes: []
+    },
+    {
       version: "3.12.2",
       date: "26/09/2026",
       features: [],

@@ -66,6 +66,11 @@ export default function HoyPage() {
   const [prefs, setPrefs] = useState(defaultV3Preferences)
   const [hasLoadedFromApi, setHasLoadedFromApi] = useState(false)
   const [planSemana, setPlanSemana] = useState<{ semana: number; completadas: number; total: number } | null>(null)
+  const [alternativesFor, setAlternativesFor] = useState<string | null>(null)
+  const [loadingAlternatives, setLoadingAlternatives] = useState(false)
+  const [alternatives, setAlternatives] = useState<Meal[]>([])
+  const [alternativesFromAi, setAlternativesFromAi] = useState(true)
+  const [replacingMeal, setReplacingMeal] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -186,6 +191,43 @@ export default function HoyPage() {
     })
   }
 
+  const openAlternatives = async (mealType: string) => {
+    setAlternativesFor(mealType)
+    setLoadingAlternatives(true)
+    setAlternatives([])
+    try {
+      const res = await fetch("/api/plan/meal/alternatives", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mealType }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setAlternatives(data.alternatives || [])
+        setAlternativesFromAi(Boolean(data.fromAi))
+      }
+    } finally {
+      setLoadingAlternatives(false)
+    }
+  }
+
+  const chooseAlternative = async (mealType: string, meal: Meal) => {
+    setReplacingMeal(true)
+    try {
+      const res = await fetch("/api/plan/meal/replace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mealType, meal }),
+      })
+      if (res.ok) {
+        setPlan((prev) => prev ? { ...prev, planComidas: { ...prev.planComidas, [mealType]: meal } } : prev)
+        setAlternativesFor(null)
+      }
+    } finally {
+      setReplacingMeal(false)
+    }
+  }
+
   const completedMeals = useMemo(() => mealTracking.filter((item) => item.completed).length, [mealTracking])
   const completedExercises = useMemo(() => exerciseTracking.filter((item) => item.completed).length, [exerciseTracking])
   const dailyProgress = Math.round((((completedMeals / mealConfig.length) * 0.6) + ((plan?.planEntreno?.length ? completedExercises / plan.planEntreno.length : 0) * 0.4)) * 100)
@@ -296,7 +338,7 @@ export default function HoyPage() {
                       <div className="flex flex-wrap gap-2 md:justify-end">
                         <Button size="sm" variant="outline" onClick={() => updateMeal(mealInfo.key, true, true)}>Hecho</Button>
                         <Button size="sm" variant="outline" onClick={() => updateMeal(mealInfo.key, false, false)}><SkipForward className="mr-1 h-4 w-4" /> Omitir</Button>
-                        <Button size="sm" variant="outline" disabled><Sparkles className="mr-1 h-4 w-4" /> Cambiar receta</Button>
+                        <Button size="sm" variant="outline" onClick={() => openAlternatives(mealInfo.key)}><Sparkles className="mr-1 h-4 w-4" /> Más opciones</Button>
                       </div>
                     </div>
 
@@ -320,6 +362,48 @@ export default function HoyPage() {
                           <p><span className="font-medium">C</span> {meal.carbohidratos}g</p>
                           <p><span className="font-medium">G</span> {meal.grasas}g</p>
                         </div>
+                      </div>
+                    )}
+
+                    {alternativesFor === mealInfo.key && (
+                      <div className="mt-3 space-y-2 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold uppercase text-muted-foreground">
+                            {loadingAlternatives ? "Generando opciones con IA…" : alternativesFromAi ? "Opciones sugeridas por IA" : "Opciones (sin IA disponible ahora)"}
+                          </p>
+                          <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setAlternativesFor(null)}>Cerrar</Button>
+                        </div>
+
+                        {loadingAlternatives && <p className="text-sm text-muted-foreground">Un momento…</p>}
+
+                        {!loadingAlternatives && alternatives.map((alt, i) => (
+                          <div key={i} className="rounded-xl border bg-white p-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <p className="font-medium text-sm">{alt.nombre}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {alt.calorias} kcal · P {alt.proteinas}g · C {alt.carbohidratos}g · G {alt.grasas}g
+                                </p>
+                                {alt.ingredientes?.length > 0 && (
+                                  <div className="mt-1 flex flex-wrap gap-1">
+                                    {alt.ingredientes.slice(0, 5).map((ing, j) => (
+                                      <Badge key={j} variant="secondary" className="font-normal text-[10px]">
+                                        {ing.nombre}{ing.cantidad ? ` · ${ing.cantidad}${ing.unidad || "g"}` : ""}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              <Button size="sm" disabled={replacingMeal} onClick={() => chooseAlternative(mealInfo.key, alt)}>
+                                Elegir
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+
+                        {!loadingAlternatives && alternatives.length === 0 && (
+                          <p className="text-sm text-muted-foreground">No se pudieron generar opciones, inténtalo de nuevo.</p>
+                        )}
                       </div>
                     )}
                   </div>
