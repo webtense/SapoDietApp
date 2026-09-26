@@ -4,6 +4,13 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.9.1] — Septiembre 26, 2026
+
+### 🐛 Corrección crítica
+- Verificando v3.9.0 en producción: cambiar de gimnasio activo y añadir una máquina nueva rompía `/entrenamiento` con `Unique constraint failed on WorkoutExercise_workoutPlanId_order_key`. `lib/training/service.ts` calculaba el `order` de cada ejercicio por posición dentro de las máquinas del gimnasio *actual* (`i + 1`), pero `WorkoutPlan` (userId+planType) se comparte entre todos los gimnasios del usuario, así que la unicidad de `order` es sobre el plan completo, no por gimnasio. Corregido para continuar desde el máximo `order` ya existente en el plan.
+
+---
+
 ## [3.9.0] — Septiembre 26, 2026
 
 ### ✨ Características nuevas

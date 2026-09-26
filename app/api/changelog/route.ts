@@ -3,6 +3,14 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.9.1",
+      date: "26/09/2026",
+      features: [],
+      fixes: [
+        "Cambiar de gimnasio activo con máquinas nuevas rompía /entrenamiento con un error 500 (el orden de los ejercicios se calculaba por posición dentro del gimnasio actual, pero debe ser único en todo el plan, que se comparte entre gimnasios)"
+      ]
+    },
+    {
       version: "3.9.0",
       date: "26/09/2026",
       features: [

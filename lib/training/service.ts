@@ -55,6 +55,11 @@ export async function getOrCreateTodayWorkout(
     existingExercises.map((ex) => [ex.gymMachineId, ex])
   );
 
+  // El plan (userId+planType) se comparte entre gimnasios: el order debe ser
+  // único a nivel de TODO el plan, nunca reiniciarse por posición local del
+  // gimnasio activo (@@unique([workoutPlanId, order]) revienta si no).
+  let nextOrder = existingExercises.reduce((max, ex) => Math.max(max, ex.order), 0) + 1;
+
   for (let i = 0; i < machines.length; i++) {
     const machine = machines[i];
 
@@ -83,7 +88,7 @@ export async function getOrCreateTodayWorkout(
         workoutPlanId: plan.id,
         exerciseId: exercise.id,
         gymMachineId: machine.id,
-        order: i + 1,
+        order: nextOrder++,
         plannedSets: 3,
         plannedReps: 12,
       },
