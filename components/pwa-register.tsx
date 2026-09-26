@@ -28,7 +28,16 @@ export function PwaRegister() {
       }
     }
 
+    let reloading = false
+    const onControllerChange = () => {
+      if (reloading) return
+      reloading = true
+      window.location.reload()
+    }
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange)
+
     registerServiceWorker()
+    return () => navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange)
   }, [])
 
   return null

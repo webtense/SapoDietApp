@@ -3,6 +3,14 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.7.7",
+      date: "26/09/2026",
+      features: [],
+      fixes: [
+        "El Service Worker servía para siempre el HTML de la primera visita en /inicio, /entrenamiento, etc.; tras cada actualización la app se quedaba sin estilos y en \"Cargando…\". Ahora las páginas siempre van a red y las pestañas abiertas se recargan solas al activarse una versión nueva"
+      ]
+    },
+    {
       version: "3.7.6",
       date: "25/09/2026",
       features: [

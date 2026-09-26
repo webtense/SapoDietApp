@@ -4,6 +4,13 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.7.7] — Septiembre 26, 2026
+
+### 🐛 Correcciones
+- **Service Worker servía HTML antiguo para siempre.** En `public/sw.js` las rutas de la app (`/inicio`, `/entrenamiento`…) no coincidían con ninguna regla network-first y caían en cache-first: tras cada deploy el HTML cacheado apuntaba a chunks `_next/static` inexistentes (404) y la app quedaba sin CSS/JS ("Cargando…"). Era también la causa del "v3.7.0" persistente del 24-25/09. Ahora: navegaciones siempre por red (respuesta offline mínima si no hay conexión), `/api` sin caché, `_next/static` cache-first (inmutable), resto network-first. Al activarse un SW nuevo se recargan las pestañas abiertas (`clients.navigate` + `controllerchange` en `PwaRegister`).
+
+---
+
 ## [3.7.6] — Septiembre 25, 2026
 
 ### ✨ Características nuevas
