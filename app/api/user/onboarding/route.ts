@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireUser } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
+import { ensureWorkoutReminder } from "@/lib/server/reminders"
+import { assignHighProteinPlanIfNeeded, isHighProteinDiet } from "@/lib/nutrition/high-protein-template"
 import { z } from "zod"
 
 const onboardingSchema = z.object({
@@ -9,9 +11,9 @@ const onboardingSchema = z.object({
   age: z.number().min(1).max(120),
   sex: z.enum(["M", "F"]),
   goalWeightKg: z.number().min(30).max(300),
-  goalDescription: z.string().min(5).max(500),
+  goalDescription: z.string().min(5).max(500).optional(),
   trainingFrequency: z.enum(["1-2", "3-4", "5-6", "7"]),
-  trainingLevel: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]),
+  trainingLevel: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]).optional(),
   preferredEquipment: z.array(z.string()).default([]),
   dietType: z.string(),
   avoidFoods: z.string().optional().default(""),
@@ -26,37 +28,52 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const data = onboardingSchema.parse(body)
 
-    // Actualizar o crear perfil
-    const profile = await prisma.profile.upsert({
-      where: { userId: user.id },
-      create: {
-        userId: user.id,
-        weight: data.weight,
-        height: data.height,
-        age: data.age,
-        sex: data.sex,
-        goalWeight: data.goalWeightKg,
-        dietType: data.dietType,
-        avoidedFoods: data.avoidFoods,
-        mealsPerDay: data.mealsPerDay,
-        trainingFrequency: data.trainingFrequency,
-        trainingLevel: data.trainingLevel,
-        onboardingCompleted: true,
-      },
-      update: {
-        weight: data.weight,
-        height: data.height,
-        age: data.age,
-        sex: data.sex,
-        goalWeight: data.goalWeightKg,
-        dietType: data.dietType,
-        avoidedFoods: data.avoidFoods,
-        mealsPerDay: data.mealsPerDay,
-        trainingFrequency: data.trainingFrequency,
-        trainingLevel: data.trainingLevel,
-        onboardingCompleted: true,
-      },
-    })
+    const [profile] = await prisma.$transaction([
+      prisma.profile.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          weightKg: data.weight,
+          heightCm: data.height,
+          age: data.age,
+          sex: data.sex,
+          dietType: data.dietType,
+          forbiddenFoods: data.avoidFoods,
+          trainingFrequency: data.trainingFrequency,
+          homeEquipment: JSON.stringify(data.preferredEquipment),
+          onboardingCompleted: true,
+          onboardingCompletedAt: new Date(),
+        },
+        update: {
+          weightKg: data.weight,
+          heightCm: data.height,
+          age: data.age,
+          sex: data.sex,
+          dietType: data.dietType,
+          forbiddenFoods: data.avoidFoods,
+          trainingFrequency: data.trainingFrequency,
+          homeEquipment: JSON.stringify(data.preferredEquipment),
+          onboardingCompleted: true,
+          onboardingCompletedAt: new Date(),
+        },
+      }),
+      prisma.goal.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          targetWeightKg: data.goalWeightKg,
+        },
+        update: {
+          targetWeightKg: data.goalWeightKg,
+        },
+      }),
+    ])
+
+    await ensureWorkoutReminder(user.id, data.trainingFrequency)
+
+    if (isHighProteinDiet(data.dietType)) {
+      await assignHighProteinPlanIfNeeded(user.id).catch(() => null)
+    }
 
     return NextResponse.json({
       ok: true,

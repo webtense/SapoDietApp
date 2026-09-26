@@ -4,6 +4,7 @@ import { apiError, requireUser } from "@/lib/server/api"
 import { profileSchema } from "@/lib/validation"
 import { sanitizeText } from "@/lib/server/security"
 import { ensureWorkoutReminder } from "@/lib/server/reminders"
+import { assignHighProteinPlanIfNeeded, isHighProteinDiet } from "@/lib/nutrition/high-protein-template"
 
 export async function GET() {
   const { user, error } = await requireUser()
@@ -103,6 +104,9 @@ export async function PUT(req: NextRequest) {
 
   await ensureWorkoutReminder(user.id, data.frecuenciaEntrenamiento)
 
+  if (isHighProteinDiet(data.tipoDieta)) {
+    await assignHighProteinPlanIfNeeded(user.id).catch(() => null)
+  }
 
   return NextResponse.json({ ok: true, viability })
 }

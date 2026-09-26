@@ -4,6 +4,17 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.10.0] — Septiembre 26, 2026
+
+### ✨ Características nuevas
+- **Menú "alta en proteínas" automático** — 14 recetas reales para 4 personas (lunes a domingo, comida y cena) con su lista de la compra, aportadas por el usuario. Cualquier persona que seleccione "Alta en proteínas" como tipo de dieta en su perfil recibe este plan automáticamente si no tiene ya uno propio (`lib/nutrition/high-protein-template.ts`). Aplicado también retroactivamente a los usuarios que ya tenían esa dieta seleccionada.
+
+### 🐛 Correcciones críticas
+- **El onboarding real estaba roto para cualquier usuario nuevo.** `app/api/user/onboarding/route.ts` (el que de verdad usa `OnboardingFlowV2`, no `/api/profile`) guardaba campos que no existen en el esquema desde hace tiempo (`weight`, `height`, `goalWeight`, `avoidedFoods`, `mealsPerDay`, `trainingLevel`): cualquier intento de completar el registro fallaba en Prisma. Reescrito contra `Profile.weightKg/heightCm/forbiddenFoods` y `Goal.targetWeightKg`.
+- `Recipe` no tenía ningún campo para los pasos de preparación; añadido `instructions` (JSON de pasos).
+
+---
+
 ## [3.9.1] — Septiembre 26, 2026
 
 ### 🐛 Corrección crítica

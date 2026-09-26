@@ -3,6 +3,17 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.10.0",
+      date: "26/09/2026",
+      features: [
+        "Menú semanal \"alta en proteínas\" (14 recetas para 4 personas, lunes-domingo, con lista de la compra) se asigna automáticamente a cualquier usuario que seleccione ese tipo de dieta en su perfil y aún no tenga plan propio"
+      ],
+      fixes: [
+        "El onboarding real (/api/user/onboarding) llevaba tiempo roto contra el esquema actual (weight/height/goalWeight/avoidedFoods no existían): ningún usuario nuevo podía completar el registro. Reescrito contra el esquema real",
+        "Recipe no tenía dónde guardar los pasos de preparación de una receta"
+      ]
+    },
+    {
       version: "3.9.1",
       date: "26/09/2026",
       features: [],
