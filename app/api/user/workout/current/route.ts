@@ -17,16 +17,18 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const { session, plan, exercises } = await getOrCreateTodayWorkout(
-      user.id,
-      group
-    )
+    const result = await getOrCreateTodayWorkout(user.id, group)
+
+    if (result.needsGym) {
+      return NextResponse.json({ ok: true, plan: null, needsGym: true })
+    }
 
     return NextResponse.json({
       ok: true,
-      session,
-      plan,
-      exercises,
+      needsGym: false,
+      session: result.session,
+      plan: result.plan,
+      exercises: result.exercises,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error loading workout"

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/server/prisma"
 
 // Cargar el plan activo de nutricionista para un usuario
+// NOTA: NutritionistPlan.userId es @unique en el schema (una fila por usuario),
+// así que "activo" en la práctica es equivalente a "el plan del usuario" con status ACTIVE.
 export async function getActivePlan(userId: string) {
   return prisma.nutritionistPlan.findFirst({
     where: {
@@ -13,7 +15,16 @@ export async function getActivePlan(userId: string) {
   })
 }
 
-// Guardar o actualizar un plan de nutricionista (post-extracción desde PDF)
+export async function getPlanById(userId: string, planId: string) {
+  return prisma.nutritionistPlan.findFirst({
+    where: { id: planId, userId },
+    include: { households: true },
+  })
+}
+
+// Guardar o actualizar el plan de nutricionista (post-extracción desde PDF).
+// Debido a la restricción @unique en userId, solo puede existir una fila por usuario:
+// se actualiza en el sitio (incrementando version) en lugar de archivar+crear.
 export async function saveNutritionistPlan(
   userId: string,
   data: {
@@ -25,9 +36,8 @@ export async function saveNutritionistPlan(
     version?: number
   }
 ) {
-  const existing = await prisma.nutritionistPlan.findFirst({
+  const existing = await prisma.nutritionistPlan.findUnique({
     where: { userId },
-    orderBy: { version: "desc" },
   })
 
   if (!existing) {
@@ -44,15 +54,9 @@ export async function saveNutritionistPlan(
     })
   }
 
-  // Archive el anterior y crear nuevo
-  await prisma.nutritionistPlan.update({
-    where: { id: existing.id },
-    data: { status: "ARCHIVED" },
-  })
-
-  return prisma.nutritionistPlan.create({
+  return prisma.nutritionistPlan.update({
+    where: { userId },
     data: {
-      userId,
       ...data,
       status: "ACTIVE",
       version: existing.version + 1,
@@ -60,6 +64,25 @@ export async function saveNutritionistPlan(
     include: {
       households: true,
     },
+  })
+}
+
+// Marca el plan como activo. Con la restricción actual de una fila por usuario
+// no existen otros planes que archivar; se deja preparado por si en el futuro
+// se relaja el @unique de userId para permitir historial de versiones.
+export async function activatePlan(userId: string, planId: string) {
+  const plan = await prisma.nutritionistPlan.findFirst({ where: { id: planId, userId } })
+  if (!plan) return null
+
+  await prisma.nutritionistPlan.updateMany({
+    where: { userId, id: { not: planId }, status: "ACTIVE" },
+    data: { status: "ARCHIVED" },
+  })
+
+  return prisma.nutritionistPlan.update({
+    where: { id: planId },
+    data: { status: "ACTIVE" },
+    include: { households: true },
   })
 }
 
@@ -86,6 +109,17 @@ export async function getHouseholdMembers(nutritionistPlanId: string) {
     where: { nutritionistPlanId },
     orderBy: { createdAt: "asc" },
   })
+}
+
+export async function updateHouseholdMember(
+  id: string,
+  data: { name?: string; age?: number | null; portionFactor?: number }
+) {
+  return prisma.householdMember.update({ where: { id }, data })
+}
+
+export async function deleteHouseholdMember(id: string) {
+  return prisma.householdMember.delete({ where: { id } })
 }
 
 // Crear receta con ingredientes
@@ -164,6 +198,15 @@ export async function addSubstitutionItem(
   })
 }
 
+// Buscar sustituciones alternativas de un ingrediente dado su grupo de sustitución
+export async function getSubstitutionsForGroup(groupName: string) {
+  const group = await prisma.substitutionGroup.findUnique({
+    where: { name: groupName },
+    include: { items: { orderBy: { name: "asc" } } },
+  })
+  return group
+}
+
 // Registrar item en despensa
 export async function addPantryItem(
   userId: string,
@@ -210,5 +253,13 @@ export async function logEatingOut(
       userId,
       ...data,
     },
+  })
+}
+
+export async function getEatingOutLogs(userId: string, limit = 30) {
+  return prisma.eatingOutLog.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: limit,
   })
 }

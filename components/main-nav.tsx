@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity, BarChart3, Calendar, Flame, Home, ListTodo, MessageSquare, Pill, ShoppingCart, Target, User, Settings, LogOut } from "lucide-react"
+import { Activity, BarChart3, Calendar, CalendarClock, Dumbbell, Flame, Home, ListTodo, MessageSquare, Pill, ShoppingCart, Target, User, Settings, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { APP_VERSION } from "@/lib/version"
 
@@ -11,6 +11,8 @@ const navItems = [
   { href: "/Hoy", icon: ShoppingCart, label: "Hoy" },
   { href: "/nutricion", icon: Activity, label: "Nutrición" },
   { href: "/entrenamiento", icon: ListTodo, label: "Entreno" },
+  { href: "/calendario-entreno", icon: CalendarClock, label: "Calendario Entreno" },
+  { href: "/gimnasios", icon: Dumbbell, label: "Gimnasios" },
   { href: "/compra", icon: ShoppingCart, label: "Compra" },
   { href: "/calendario", icon: Calendar, label: "Calendario" },
   { href: "/objetivo", icon: Target, label: "Objetivo" },

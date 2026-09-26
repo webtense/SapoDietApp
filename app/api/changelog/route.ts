@@ -3,6 +3,20 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.9.0",
+      date: "26/09/2026",
+      features: [
+        "Gimnasios multiusuario: cualquiera puede crear su gimnasio, verlo el resto y activar el suyo en /gimnasios; /entrenamiento muestra todas las máquinas del gimnasio activo por Tren Superior/Inferior",
+        "Calendario semanal de entreno (/calendario-entreno): asigna un grupo muscular a cada día y recibe un push motivacional (\"¡HOY: DÍA DE PIERNAS!\") a la hora de tu recordatorio",
+        "Módulo de nutrición completado y conectado: importar plan de nutricionista, comensales del hogar, comida fuera de casa, lista de la compra automática y sustituciones de ingredientes"
+      ],
+      fixes: [
+        "El recordatorio de entreno nunca se disparaba: no había ningún cron llamando al endpoint de envío. Añadido en el VPS y verificado en vivo",
+        "saveNutritionistPlan violaba la restricción de una fila por usuario en cuanto se guardaba un segundo plan",
+        "La página de nutrición seguía usando el sistema antiguo (/api/plan) sin conectar con el nuevo módulo, que llevaba desde septiembre sin usarse"
+      ]
+    },
+    {
       version: "3.8.0",
       date: "26/09/2026",
       features: [

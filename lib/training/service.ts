@@ -4,6 +4,12 @@ export async function getOrCreateTodayWorkout(
   userId: string,
   group: "UPPER" | "LOWER"
 ) {
+  const profile = await prisma.profile.findUnique({ where: { userId } });
+
+  if (!profile?.gymId) {
+    return { needsGym: true as const, session: null, plan: null, exercises: [] };
+  }
+
   // 1. Get or create WorkoutPlan
   const plan = await prisma.workoutPlan.upsert({
     where: {
@@ -16,12 +22,13 @@ export async function getOrCreateTodayWorkout(
     update: {},
   });
 
-  // 2. Get active GymMachines for this group
+  // 2. Get active GymMachines of the user's active gym for this group (FULL cuenta en ambos)
   const machines = await prisma.gymMachine.findMany({
     where: {
+      gymId: profile.gymId,
       active: true,
       machineModel: {
-        group,
+        group: { in: [group, "FULL"] },
       },
     },
     include: {
@@ -110,18 +117,22 @@ export async function getOrCreateTodayWorkout(
     });
   }
 
-  const exercises = await prisma.workoutExercise.findMany({
-    where: { workoutPlanId: plan.id },
-    include: {
-      exercise: true,
-      gymMachine: {
-        include: {
-          machineModel: true,
+  const currentMachineIds = new Set(machines.map((m) => m.id));
+
+  const exercises = (
+    await prisma.workoutExercise.findMany({
+      where: { workoutPlanId: plan.id },
+      include: {
+        exercise: true,
+        gymMachine: {
+          include: {
+            machineModel: true,
+          },
         },
       },
-    },
-    orderBy: { order: "asc" },
-  });
+      orderBy: { order: "asc" },
+    })
+  ).filter((ex) => ex.gymMachineId && currentMachineIds.has(ex.gymMachineId));
 
   // Enrich exercises with their sets for today's session
   const exercisesWithSets = await Promise.all(
@@ -137,7 +148,7 @@ export async function getOrCreateTodayWorkout(
     })
   );
 
-  return { session, plan, exercises: exercisesWithSets };
+  return { needsGym: false as const, session, plan, exercises: exercisesWithSets };
 }
 
 export async function upsertSet(

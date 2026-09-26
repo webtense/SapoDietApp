@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { Info, Pencil } from "lucide-react"
+import Link from "next/link"
 
 type Group = "UPPER" | "LOWER"
 
@@ -42,8 +43,9 @@ interface WorkoutExerciseItem {
 
 interface CurrentWorkoutResponse {
   ok: boolean
+  needsGym?: boolean
   session: { id: string; completedAt: string | null }
-  plan: { id: string; planType: Group }
+  plan: { id: string; planType: Group } | null
   exercises: WorkoutExerciseItem[]
 }
 
@@ -261,7 +263,18 @@ export default function EntrenamientoPage() {
 
       {loading && <p className="py-8 text-center text-sm text-muted-foreground">Cargando entrenamiento…</p>}
 
-      {!loading && tab === "entrenar" && (
+      {!loading && current?.needsGym && (
+        <Card>
+          <CardContent className="space-y-3 py-6 text-center">
+            <p className="text-sm text-muted-foreground">No tienes gimnasio activo.</p>
+            <Link href="/gimnasios">
+              <Button size="sm">Elegir gimnasio</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && !current?.needsGym && tab === "entrenar" && (
         <>
           <div className="flex items-center justify-between">
             <div>
@@ -374,7 +387,7 @@ export default function EntrenamientoPage() {
         </>
       )}
 
-      {!loading && tab === "progresion" && (
+      {!loading && !current?.needsGym && tab === "progresion" && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
             {exercises.map((we) => (

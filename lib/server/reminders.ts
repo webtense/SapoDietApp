@@ -96,6 +96,19 @@ export async function ensureWorkoutReminder(userId: string, trainingFrequency?: 
   })
 }
 
+const GROUP_MOTIVATION: Record<string, string> = {
+  UPPER: "¡HOY: DÍA DE TREN SUPERIOR! 💪🔥",
+  LOWER: "¡HOY: DÍA DE PIERNAS! 🔥🦵💥",
+  FULL: "¡HOY: ENTRENO COMPLETO! 💪🔥",
+}
+
+async function getTodayWorkoutSchedule(userId: string, timezone?: string | null) {
+  const { day } = getReminderMoment(new Date(), timezone)
+  return prisma.workoutSchedule.findUnique({
+    where: { userId_weekday: { userId, weekday: Number(day) } },
+  })
+}
+
 function buildReminderMessage(title: string, isWorkout: boolean) {
   if (isWorkout) {
     return {
@@ -122,7 +135,22 @@ export async function dispatchReminder(reminder: {
     return { skipped: true as const, reason: "deduped" }
   }
 
-  const copy = buildReminderMessage(reminder.title, reminder.kind === "WORKOUT")
+  const isWorkout = reminder.kind === "WORKOUT"
+  let copy = buildReminderMessage(reminder.title, isWorkout)
+
+  if (isWorkout) {
+    const schedule = await getTodayWorkoutSchedule(reminder.user.id, reminder.user.timezone)
+    if (schedule && schedule.enabled && schedule.group === "REST") {
+      return { skipped: true as const, reason: "rest_day" }
+    }
+    if (schedule && schedule.enabled && schedule.group !== "REST") {
+      const title = schedule.label
+        ? `¡HOY: ${schedule.label.toUpperCase()}! 💪🔥`
+        : GROUP_MOTIVATION[schedule.group] || copy.title
+      copy = { title, body: "Vamos, tu cuerpo te lo agradecerá" }
+    }
+  }
+
   const pushResult = await sendPushToUser(reminder.user.id, {
     title: copy.title,
     body: copy.body,

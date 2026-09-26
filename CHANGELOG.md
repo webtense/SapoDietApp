@@ -4,6 +4,24 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.9.0] — Septiembre 26, 2026
+
+### ✨ Características nuevas
+- **Gimnasios multiusuario** — `/gimnasios`: cualquier usuario crea su propio gimnasio (visible para todos), añade máquinas de un catálogo compartido o nuevas, y activa el gimnasio al que va desde `/gimnasios/[id]`. `/entrenamiento` ahora lista TODAS las máquinas activas del gimnasio activo del usuario, agrupadas Tren Superior/Inferior, en vez de un plan A/B/C fijo.
+- **Calendario de entreno** (`/calendario-entreno`) — cada día de la semana tiene un grupo muscular (Superior/Inferior/Full/Descanso) y una etiqueta opcional. El recordatorio diario de entreno manda un push motivacional dinámico ("¡HOY: DÍA DE PIERNAS! 🔥🦵💥") según el día, y no manda nada en días de descanso.
+- **Nutrición completada y conectada** — plan de nutricionista, comensales del hogar (raciones familiares), comida fuera de casa, lista de la compra automática desde el plan activo y sustitución de ingredientes por grupo. La página `/nutricion` pasa a consumir el módulo real (`/api/nutrition/*`) en vez del sistema antiguo.
+
+### 🐛 Correcciones
+- El cron de recordatorios (`/api/cron/reminders-dispatch`) llevaba desde su creación sin que nadie lo llamara; añadida la entrada real en el crontab del VPS y verificada en producción.
+- `saveNutritionistPlan` intentaba archivar+crear un segundo plan por usuario violando `NutritionistPlan.userId @unique`; reescrito como actualización in-place con control de versión.
+- El módulo de nutrición (schema + 4 endpoints, creado en septiembre) nunca se conectó a la UI real; `/nutricion` seguía usando `/api/plan` del sistema antiguo.
+- Drift de esquema real corregido de paso (ver v3.8.0): `Profile.gymId`/`onboardingCompletedAt` restaurados, columna huérfana `subscriptionstatus` eliminada.
+
+### 🗄️ Datos
+- Sembrado el plan real de nutrición de Zoraida (horario de 5 comidas, 40g de pan en media mañana con el histórico de 60g descartado explícitamente, receta "Pan Pita" marcada `needsReview`), con backup previo en el VPS.
+
+---
+
 ## [3.8.0] — Septiembre 26, 2026 (base de datos)
 
 ### 🗄️ Esquema
