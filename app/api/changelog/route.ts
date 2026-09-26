@@ -3,6 +3,14 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.12.2",
+      date: "26/09/2026",
+      features: [],
+      fixes: [
+        "El plan \"alta en proteínas\" mostraba \"Este plan necesita revisión\" sin necesidad: el contenido viene literal del documento aportado, solo un par de puntos menores quedan como nota informativa (rotación de fiambre, merienda libre) en vez de bloquear con la alerta"
+      ]
+    },
+    {
       version: "3.12.1",
       date: "26/09/2026",
       features: [],

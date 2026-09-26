@@ -4,6 +4,13 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.12.2] — Septiembre 26, 2026
+
+### 🐛 Corrección
+- El plan genérico "alta en proteínas" quedaba marcado `needsReview: true` por precaución excesiva al crearlo: revisando el documento real, prácticamente todo el contenido viene literal de él (recetas, desayuno, rotación de media mañana). Se quita la alerta bloqueante y se deja como nota informativa el único punto real: el total de jamón serrano de la lista de compra no cuadra exactamente con la suma de la rotación diaria (diferencia menor, no afecta a lo que se come cada día).
+
+---
+
 ## [3.12.1] — Septiembre 26, 2026
 
 ### 🐛 Corrección crítica
