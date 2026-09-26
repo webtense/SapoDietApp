@@ -57,6 +57,8 @@ model User {
   nutritionistPlan   NutritionistPlan? @relation("NutritionistPlan")
   pantryItems        PantryItem[] @relation("PantryItem")
   eatingOutLogs      EatingOutLog[] @relation("EatingOutLog")
+  gymsCreated        Gym[] @relation("GymCreatedBy")
+  workoutSchedules   WorkoutSchedule[] @relation("WorkoutSchedule")
 
   @@index([status])
   @@index([role])
@@ -195,11 +197,16 @@ model Profile {
   onboardingCompleted      Boolean  @default(false)
   lastCalculatedCalories  Float?
   lastCalculatedProtein   Float?
+  onboardingCompletedAt   DateTime?
+  gymId                   String?
+  activeGym               Gym?     @relation("ProfileActiveGym", fields: [gymId], references: [id], onDelete: SetNull)
   lastCalculatedCarbs     Float?
   lastCalculatedFat       Float?
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
   user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([gymId])
 }
 
 model Goal {
@@ -441,9 +448,15 @@ model Gym {
   id          String        @id @default(cuid())
   name        String
   location    String?
+  createdById String?
+  isPublic    Boolean       @default(true)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
+  createdBy   User?         @relation("GymCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   machines    GymMachine[]
+  activeFor   Profile[]     @relation("ProfileActiveGym")  // Profile.gymId = gimnasio activo del usuario
+
+  @@index([createdById])
 }
 
 model MachineModel {
@@ -835,4 +848,23 @@ model ScheduledUpdate {
   updatedAt    DateTime @updatedAt
 
   @@index([status, scheduledFor])
+}
+
+// ───────────────────────────────────────────────────────────────────────────────
+// CALENDARIO DE ENTRENO: día de la semana → grupo muscular + push motivacional
+// ───────────────────────────────────────────────────────────────────────────────
+
+model WorkoutSchedule {
+  id        String   @id @default(cuid())
+  userId    String
+  weekday   Int      // 0=domingo … 6=sábado
+  group     String   // UPPER | LOWER | FULL | REST
+  label     String?  // "Día de piernas" (si no se indica, se genera a partir de group)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation("WorkoutSchedule", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekday])
+  @@index([userId])
 }

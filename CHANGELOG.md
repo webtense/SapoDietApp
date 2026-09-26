@@ -4,6 +4,17 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.8.0] — Septiembre 26, 2026 (base de datos)
+
+### 🗄️ Esquema
+- `Gym`: `createdById` + `isPublic` — cualquier usuario podrá crear su propio gimnasio, visible para el resto.
+- `WorkoutSchedule`: calendario semanal (día → grupo muscular UPPER/LOWER/FULL/REST) por usuario, para el push motivacional ("HOY: Día de piernas 💪").
+- **Drift corregido:** `Profile.gymId` y `Profile.onboardingCompletedAt` estaban en uso real en `app/api/profile/route.ts` pero ausentes del `schema.prisma` del repo — restaurados con su relación/índice formal. `User.subscriptionstatus` (columna huérfana en minúsculas, sin relación con el `subscriptionStatus` real) eliminada.
+
+Este release es solo de base de datos; el API/UI de estas features llega en los siguientes commits.
+
+---
+
 ## [3.7.7] — Septiembre 26, 2026
 
 ### 🐛 Correcciones

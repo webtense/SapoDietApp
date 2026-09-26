@@ -3,6 +3,17 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.8.0",
+      date: "26/09/2026",
+      features: [
+        "Base de datos para gimnasios multiusuario (cualquiera puede crear su gimnasio) y calendario semanal de entreno con push motivacional"
+      ],
+      fixes: [
+        "Drift de esquema: Profile.gymId y Profile.onboardingCompletedAt existían en producción pero no en el schema del repo (riesgo de build roto). Restaurados y formalizados con relación e índice",
+        "Columna huérfana User.subscriptionstatus (minúsculas, sin relación con el subscriptionStatus real) eliminada"
+      ]
+    },
+    {
       version: "3.7.7",
       date: "26/09/2026",
       features: [],
