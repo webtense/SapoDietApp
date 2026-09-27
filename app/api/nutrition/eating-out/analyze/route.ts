@@ -49,7 +49,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: { code: "AI_QUOTA_EXCEEDED", message: "Daily AI limit reached" } }, { status: 429 })
     }
 
-    const formData = await req.formData()
+    let formData: FormData
+    try {
+      formData = await req.formData()
+    } catch {
+      return NextResponse.json({ error: { code: "INVALID_REQUEST", message: "Envía la foto como multipart/form-data" } }, { status: 400 })
+    }
     const file = formData.get("file") as File | null
     const mealType = (formData.get("mealType") as string) || "COMIDA"
 

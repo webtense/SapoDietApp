@@ -3,6 +3,14 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.15.1",
+      date: "27/09/2026",
+      features: [],
+      fixes: [
+        "Analizar la carta de un restaurante devolvía un error 500 si la petición llegaba mal formada; ahora responde con un error claro"
+      ]
+    },
+    {
       version: "3.15.0",
       date: "27/09/2026",
       features: [

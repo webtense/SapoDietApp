@@ -4,6 +4,13 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.15.1] — Septiembre 27, 2026
+
+### 🐛 Corrección
+- Verificando el análisis de carta de restaurante en producción: una petición mal formada (sin la foto en el formato esperado) tumbaba el endpoint con un 500 real en vez de devolver un error claro. Corregido.
+
+---
+
 ## [3.15.0] — Septiembre 27, 2026
 
 ### ✨ Motor de nutrición completo
