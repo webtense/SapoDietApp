@@ -2,18 +2,21 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/server/prisma"
 import { apiError, requireAdmin, requireUser } from "@/lib/server/api"
 
-const CHALLENGE_TYPES = ["ENTRENAMIENTOS_SEMANA", "RACHA_DIAS", "VOLUMEN_TOTAL", "MINUTOS_ACTIVOS"]
-
 export async function GET() {
   const { error } = await requireUser()
   if (error) return error
 
   const challenges = await prisma.challenge.findMany({
-    orderBy: { fechaInicio: "desc" },
-    include: { _count: { select: { participantes: true } } },
+    orderBy: { createdAt: "desc" },
+    include: { _count: { select: { userChallenges: true } } },
   })
 
-  return NextResponse.json({ challenges })
+  return NextResponse.json({
+    challenges: challenges.map((c) => ({
+      ...c,
+      _count: { participantes: c._count.userChallenges },
+    })),
+  })
 }
 
 export async function POST(req: NextRequest) {
@@ -21,22 +24,20 @@ export async function POST(req: NextRequest) {
   if (error) return error
 
   const body = await req.json().catch(() => null)
-  if (
-    !body ||
-    typeof body.nombre !== "string" ||
-    !CHALLENGE_TYPES.includes(body.tipo) ||
-    typeof body.objetivo !== "number" ||
-    !body.fechaInicio ||
-    !body.fechaFin
-  ) {
+  if (!body || typeof body.nombre !== "string" || !body.nombre.trim()) {
     return apiError("Datos de reto inválidos")
+  }
+  if (!body.objetivo || !body.fechaInicio || !body.fechaFin) {
+    return apiError("Faltan objetivo, fecha de inicio o fecha de fin")
   }
 
   const challenge = await prisma.challenge.create({
     data: {
-      nombre: body.nombre.slice(0, 120),
-      tipo: body.tipo,
-      objetivo: body.objetivo,
+      name: body.nombre.slice(0, 120),
+      description: typeof body.descripcion === "string" ? body.descripcion.slice(0, 500) : undefined,
+      icon: typeof body.icon === "string" ? body.icon.slice(0, 60) : undefined,
+      tipo: typeof body.tipo === "string" ? body.tipo : "ENTRENAMIENTOS_SEMANA",
+      objetivo: Number(body.objetivo),
       fechaInicio: new Date(body.fechaInicio),
       fechaFin: new Date(body.fechaFin),
     },

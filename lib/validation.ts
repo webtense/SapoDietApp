@@ -230,12 +230,11 @@ export const adminCreateGymSchema = z.object({
 
 export const adminCreateMachineModelSchema = z.object({
   name: z.string().min(2).max(120),
-  manufacturer: z.string().max(120).optional(),
-  fabricantPhoto: z.string().max(500).optional(),
-  primaryMuscleGroupId: z.string().min(1).max(60),
-  secondaryMuscleGroupIds: z.array(z.string().min(1).max(60)).max(10).optional(),
-  movementType: z.string().max(60).optional(),
+  group: z.enum(["UPPER", "LOWER", "FULL"]).optional(),
+  description: z.string().max(1000).optional(),
   instructions: z.string().max(2000).optional(),
+  tips: z.string().max(1000).optional(),
+  recommendedWeight: z.number().optional(),
 })
 
 export const adminCreateMachineSchema = z.object({
@@ -248,7 +247,5 @@ export const adminCreateMachineSchema = z.object({
 
 export const adminCreateExerciseSchema = z.object({
   name: z.string().min(2).max(120),
-  muscleGroupId: z.string().min(1).max(60),
-  description: z.string().max(1000).optional(),
-  instructions: z.string().max(2000).optional(),
+  machineModelId: z.string().min(1).max(60),
 })

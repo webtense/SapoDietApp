@@ -9,7 +9,7 @@ export async function GET() {
 
   const exercises = await prisma.exercise.findMany({
     orderBy: { name: "asc" },
-    include: { muscleGroup: true },
+    include: { machineModel: true },
   })
 
   return NextResponse.json({ ok: true, exercises })

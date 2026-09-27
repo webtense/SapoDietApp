@@ -24,7 +24,7 @@ export async function createDatabaseBackup(triggeredBy: "MANUAL" | "CRON") {
   const filePath = path.join(dir, filename)
 
   const log = await prisma.backupLog.create({
-    data: { status: "RUNNING", triggeredBy },
+    data: { status: "RUNNING", trigger: triggeredBy },
   })
 
   try {
@@ -34,22 +34,21 @@ export async function createDatabaseBackup(triggeredBy: "MANUAL" | "CRON") {
       "-f", filePath,
     ])
 
-    const stat = await fs.stat(filePath)
+    await fs.stat(filePath)
 
     return prisma.backupLog.update({
       where: { id: log.id },
       data: {
         status: "SUCCESS",
-        filename,
-        sizeBytes: stat.size,
-        finishedAt: new Date(),
+        backupPath: filePath,
+        completedAt: new Date(),
       },
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     await prisma.backupLog.update({
       where: { id: log.id },
-      data: { status: "FAILED", error: message.slice(0, 2000), finishedAt: new Date() },
+      data: { status: "FAILED", errorMessage: message.slice(0, 2000), completedAt: new Date() },
     })
     throw err
   }

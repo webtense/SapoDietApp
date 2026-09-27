@@ -38,9 +38,8 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       date,
       pose: body.pose,
-      filePath: body.filePath,
-      fileName: body.fileName,
-      weightEntryId: typeof body.weightEntryId === "string" ? body.weightEntryId : null,
+      imagePath: body.filePath,
+      notes: typeof body.fileName === "string" ? body.fileName : null,
     },
   })
 

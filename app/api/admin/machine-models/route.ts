@@ -9,7 +9,6 @@ export async function GET() {
 
   const machineModels = await prisma.machineModel.findMany({
     orderBy: { name: "asc" },
-    include: { primaryMuscleGroup: true },
   })
 
   return NextResponse.json({ ok: true, machineModels })

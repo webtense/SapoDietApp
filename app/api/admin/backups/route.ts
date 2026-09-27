@@ -7,7 +7,7 @@ export async function GET() {
   if (error) return error
 
   const backups = await prisma.backupLog.findMany({
-    orderBy: { startedAt: "desc" },
+    orderBy: { createdAt: "desc" },
     take: 50,
   })
 

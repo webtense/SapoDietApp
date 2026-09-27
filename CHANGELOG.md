@@ -4,6 +4,25 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.15.0] — Septiembre 27, 2026
+
+### ✨ Motor de nutrición completo
+- `lib/nutrition/scaling.ts` — escala ingredientes de una receta según los comensales reales (factor de ración de cada miembro del hogar).
+- `lib/nutrition/conversions.ts` — devuelve el peso disponible más fiable de un ingrediente (crudo, cocinado, escurrido o congelado) sin inventar ratios de conversión entre estados que no existen de forma fiable.
+- `lib/nutrition/safety.ts` — jerarquía real: una alergia bloquea la receta por completo; un alimento que no te gusta solo avisa. Integrado en `/api/nutrition/today`: si la receta de hoy está bloqueada, cae a la primera alternativa segura de la semana.
+- `lib/nutrition/pantry.ts` + `POST /api/nutrition/shopping-list/generate-with-pantry` — resta de la lista de la compra lo que ya tienes en casa y avisa de lo que caduca en menos de 3 días.
+- `lib/nutrition/eating-out.ts` + `POST /api/nutrition/eating-out/analyze` — sube una foto de la carta de un restaurante y la IA propone 3 opciones según tu dieta y alergias.
+
+### ✨ Panel de retos operativo
+- `Challenge` ahora tiene `tipo`, `objetivo`, `fechaInicio`, `fechaFin` y `status`. El progreso de cada participante se calcula automáticamente contando entrenamientos completados en el rango de fechas del reto, marca el reto como completado al alcanzar el objetivo y desbloquea el logro correspondiente.
+
+### 🐛 Correcciones
+- 44 errores de TypeScript por drift real entre código y esquema (no eran solo tipos: cada endpoint afectado habría fallado en producción al ejecutarse): backups de admin, ejercicios y modelos de máquina de admin, retos sociales, medidas corporales/peso/fotos de progreso. Verificado con escrituras y lecturas reales contra la base de datos de producción.
+- Una sesión caducada producía un error 500 real: `getSessionUser()` intentaba borrar la cookie de sesión durante el renderizado de una página, algo que Next.js no permite fuera de una Route Handler o Server Action. El cierre de sesión normal ya lo hacía bien en su sitio y no se ha tocado.
+- Eliminada `/entrenamiento-gym`, una versión antigua y huérfana de la pantalla de entrenamiento que ya nadie enlazaba.
+
+---
+
 ## [3.14.0] — Septiembre 27, 2026
 
 ### ✨ Gestión de máquinas abierta a todos

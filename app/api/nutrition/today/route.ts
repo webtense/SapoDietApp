@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
 import { getActivePlan } from "@/lib/nutrition/service"
 import { getReminderMoment } from "@/lib/server/reminders"
+import { checkRecipeSafety, parseAllergies, parseForbiddenFoods, type SafetyContext } from "@/lib/nutrition/safety"
 
 const WEEKDAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"] as const
 
@@ -33,7 +34,19 @@ function recipeSummary(recipe: {
   }
 }
 
-async function resolveMealWithOptions(recetasPorDia: Record<string, string> | undefined, todayName: string) {
+function isRecipeSafe(
+  recipe: { name: string; allergens: string | null; ingredients: { ingredient: string }[] },
+  ctx: SafetyContext
+) {
+  const violations = checkRecipeSafety(recipe, ctx)
+  return !violations.some((v) => v.severity === "block")
+}
+
+async function resolveMealWithOptions(
+  recetasPorDia: Record<string, string> | undefined,
+  todayName: string,
+  safetyCtx: SafetyContext
+) {
   if (!recetasPorDia) return null
 
   const ids = Object.values(recetasPorDia).filter(Boolean)
@@ -48,13 +61,26 @@ async function resolveMealWithOptions(recetasPorDia: Record<string, string> | un
   const todayId = recetasPorDia[todayName]
   const today = todayId ? byId.get(todayId) : undefined
 
-  const alternatives = Object.entries(recetasPorDia)
-    .filter(([day, id]) => day !== todayName && id && byId.has(id))
+  const otherEntries = Object.entries(recetasPorDia).filter(([day, id]) => day !== todayName && id && byId.has(id))
+
+  let recommended = today ?? null
+  let blockedBySafety = false
+
+  if (recommended && !isRecipeSafe(recommended, safetyCtx)) {
+    blockedBySafety = true
+    // Buscar la primera alternativa de la semana que sí pase el check de seguridad.
+    const fallback = otherEntries.find(([, id]) => isRecipeSafe(byId.get(id)!, safetyCtx))
+    recommended = fallback ? byId.get(fallback[1])! : null
+  }
+
+  const alternatives = otherEntries
+    .filter(([, id]) => id !== recommended?.id)
     .map(([day, id]) => ({ day, recipe: recipeSummary(byId.get(id)!) }))
 
   return {
-    recommended: today ? recipeSummary(today) : null,
+    recommended: recommended ? recipeSummary(recommended) : null,
     alternatives,
+    blockedBySafety,
   }
 }
 
@@ -65,6 +91,13 @@ export async function GET() {
   const plan = await getActivePlan(user.id)
   if (!plan || !plan.mealsJson) {
     return NextResponse.json({ ok: true, hasPlan: false })
+  }
+
+  const profile = await prisma.profile.findUnique({ where: { userId: user.id } })
+  const safetyCtx: SafetyContext = {
+    allergies: parseAllergies(profile?.allergies),
+    forbiddenFoods: parseForbiddenFoods(profile?.forbiddenFoods),
+    dietType: profile?.dietType ?? null,
   }
 
   let meals: Record<string, unknown>
@@ -90,8 +123,8 @@ export async function GET() {
   const cena = root.cena as { horario?: string; descripcion?: string; recetasPorDia?: Record<string, string> } | undefined
 
   const [comidaResuelta, cenaResuelta] = await Promise.all([
-    resolveMealWithOptions(comida?.recetasPorDia, todayName),
-    resolveMealWithOptions(cena?.recetasPorDia, todayName),
+    resolveMealWithOptions(comida?.recetasPorDia, todayName, safetyCtx),
+    resolveMealWithOptions(cena?.recetasPorDia, todayName, safetyCtx),
   ])
 
   return NextResponse.json({

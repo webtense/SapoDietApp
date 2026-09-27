@@ -43,8 +43,15 @@ export async function getSessionUser() {
   if (!session) return null
 
   if (session.expiresAt < new Date()) {
+    // Borrar la fila de sesión en BD es una operación de servidor legítima
+    // (no toca cookies), pero NO intentamos borrar la cookie aquí: getSessionUser()
+    // se invoca desde Server Components (páginas/layouts) durante el renderizado,
+    // donde Next.js App Router prohíbe modificar cookies y lanza una excepción no
+    // capturable que provoca un 500 real. El borrado de la cookie en el navegador
+    // ya ocurre solo, porque se creó con `expires: expiresAt` igual a `Session.expiresAt`
+    // (ver createSession). El borrado activo, cuando hace falta, se hace en
+    // clearSession() desde un Route Handler (p.ej. app/api/auth/logout).
     await prisma.session.delete({ where: { id: session.id } }).catch(() => null)
-    cookieStore.delete(SESSION_COOKIE)
     return null
   }
 

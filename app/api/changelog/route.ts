@@ -3,6 +3,19 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.15.0",
+      date: "27/09/2026",
+      features: [
+        "Motor de nutrición completo: escalado de recetas por comensales, conversión de pesos crudo/cocinado/escurrido, jerarquía de seguridad (alergias bloquean recetas, alimentos que no te gustan avisan), modo despensa que resta lo que ya tienes de la lista de la compra, y análisis con IA de la carta de un restaurante",
+        "Panel de retos (admin) operativo de verdad: tipo, objetivo numérico, fechas y progreso automático calculado por entrenamientos completados"
+      ],
+      fixes: [
+        "44 errores de TypeScript por desajuste real entre el código y la base de datos (backups, ejercicios de admin, retos, medidas/peso/fotos de progreso) — cada endpoint afectado ya funciona contra el esquema real, verificado con datos reales",
+        "Una sesión caducada podía tumbar la página con un error 500 (se intentaba borrar la cookie desde un sitio donde Next.js no lo permite); el cierre de sesión ya funcionaba bien en su sitio correcto y no se tocó",
+        "Eliminada una versión antigua y sin usar de la pantalla de entrenamiento"
+      ]
+    },
+    {
       version: "3.14.0",
       date: "27/09/2026",
       features: [

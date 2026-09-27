@@ -381,7 +381,7 @@ export default function AdminMetricsDashboard() {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="date" tick={{ fontSize: 12 }} interval="preserveStartEnd" />
                         <YAxis tick={{ fontSize: 12 }} width={36} />
-                        <Tooltip formatter={(value: number) => formatEUR(value)} />
+                        <Tooltip formatter={(value) => formatEUR(typeof value === "number" ? value : Number(value) || 0)} />
                         <Bar dataKey="ingresos" fill="#059669" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>

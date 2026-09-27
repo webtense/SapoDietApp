@@ -34,21 +34,23 @@ export async function POST(req: NextRequest) {
   const date = new Date(body.date)
   if (Number.isNaN(date.getTime())) return apiError("Fecha inválida")
 
-  const entry = await prisma.weightEntry.upsert({
-    where: { userId_date: { userId: user.id, date } },
-    create: {
-      userId: user.id,
-      date,
-      weightKg: body.weightKg,
-      fatPercentage: typeof body.fatPercentage === "number" ? body.fatPercentage : null,
-      muscleMassKg: typeof body.muscleMassKg === "number" ? body.muscleMassKg : null,
-    },
-    update: {
-      weightKg: body.weightKg,
-      fatPercentage: typeof body.fatPercentage === "number" ? body.fatPercentage : null,
-      muscleMassKg: typeof body.muscleMassKg === "number" ? body.muscleMassKg : null,
-    },
+  const dayStart = new Date(date)
+  dayStart.setHours(0, 0, 0, 0)
+  const dayEnd = new Date(dayStart)
+  dayEnd.setDate(dayEnd.getDate() + 1)
+
+  const existing = await prisma.weightEntry.findFirst({
+    where: { userId: user.id, date: { gte: dayStart, lt: dayEnd } },
   })
+
+  const entry = existing
+    ? await prisma.weightEntry.update({
+        where: { id: existing.id },
+        data: { weight: body.weightKg, date },
+      })
+    : await prisma.weightEntry.create({
+        data: { userId: user.id, date, weight: body.weightKg },
+      })
 
   return NextResponse.json({ entry })
 }
