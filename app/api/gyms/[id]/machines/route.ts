@@ -46,7 +46,9 @@ export async function POST(
   if (!gym) {
     return NextResponse.json({ error: "Gimnasio no encontrado" }, { status: 404 })
   }
-  if (gym.createdById !== user.id) {
+  // Cualquier usuario autenticado puede gestionar las máquinas de un gimnasio
+  // público (editar/borrar el gimnasio en sí sigue reservado a su creador).
+  if (!gym.isPublic && gym.createdById !== user.id) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 })
   }
 

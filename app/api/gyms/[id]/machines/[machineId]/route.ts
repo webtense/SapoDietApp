@@ -12,7 +12,8 @@ const updateMachineSchema = z.object({
 async function assertOwner(gymId: string, userId: string) {
   const gym = await prisma.gym.findUnique({ where: { id: gymId } })
   if (!gym) return { ok: false as const, response: NextResponse.json({ error: "Gimnasio no encontrado" }, { status: 404 }) }
-  if (gym.createdById !== userId) {
+  // Cualquier usuario autenticado puede gestionar las máquinas de un gimnasio público.
+  if (!gym.isPublic && gym.createdById !== userId) {
     return { ok: false as const, response: NextResponse.json({ error: "No autorizado" }, { status: 403 }) }
   }
   return { ok: true as const }

@@ -4,6 +4,14 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.14.0] — Septiembre 27, 2026
+
+### ✨ Gestión de máquinas abierta a todos
+- Reportado: "no puedo modificar las máquinas". Causa real: el gimnasio "Planet Fitness" (el único que existe, el que casi todos tienen activo) se sembró sin `createdById`, así que con la regla "solo el creador edita" **nadie** podía gestionarlo.
+- Cambiado el criterio: cualquier usuario autenticado puede añadir/activar/desactivar máquinas en un gimnasio público. Renombrar o borrar el gimnasio en sí sigue reservado a quien lo creó.
+
+---
+
 ## [3.13.1] — Septiembre 26, 2026
 
 ### 🐛 Corrección crítica — Gemini roto en silencio

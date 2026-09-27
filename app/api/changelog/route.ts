@@ -3,6 +3,14 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.14.0",
+      date: "27/09/2026",
+      features: [
+        "Cualquier usuario puede añadir, activar o desactivar máquinas en un gimnasio público (antes solo podía su creador; el gimnasio Planet Fitness no tenía creador asignado, así que nadie podía tocarlo)"
+      ],
+      fixes: []
+    },
+    {
       version: "3.13.1",
       date: "26/09/2026",
       features: [],

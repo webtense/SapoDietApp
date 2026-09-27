@@ -36,6 +36,7 @@ interface GymDetail {
   name: string
   location: string | null
   createdById: string | null
+  isPublic: boolean
   machines: GymMachineItem[]
 }
 
@@ -52,6 +53,7 @@ export default function GimnasioDetallePage() {
   const [gym, setGym] = useState<GymDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [isOwner, setIsOwner] = useState(false)
+  const [canManageMachines, setCanManageMachines] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState("")
   const [group, setGroup] = useState<Group>("FULL")
@@ -74,9 +76,14 @@ export default function GimnasioDetallePage() {
 
       if (meRes && meRes.ok) {
         const meData = await meRes.json()
-        setIsOwner(meData?.user?.id && meData.user.id === gymData.gym?.createdById)
+        const ownerMatch = Boolean(meData?.user?.id && meData.user.id === gymData.gym?.createdById)
+        // Cualquier usuario puede gestionar las máquinas de un gimnasio público;
+        // renombrar/borrar el gimnasio en sí sigue reservado a su creador.
+        setIsOwner(ownerMatch)
+        setCanManageMachines(ownerMatch || Boolean(gymData.gym?.isPublic))
       } else {
         setIsOwner(false)
+        setCanManageMachines(false)
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error cargando el gimnasio")
@@ -166,7 +173,7 @@ export default function GimnasioDetallePage() {
           <h1 className="text-lg font-semibold">{gym.name}</h1>
           {gym.location && <p className="text-sm text-muted-foreground">{gym.location}</p>}
         </div>
-        {isOwner && (
+        {canManageMachines && (
           <Button size="sm" onClick={() => setShowForm((v) => !v)}>
             <Plus className="h-4 w-4" />
             Añadir máquina
@@ -174,7 +181,7 @@ export default function GimnasioDetallePage() {
         )}
       </div>
 
-      {isOwner && showForm && (
+      {canManageMachines && showForm && (
         <Card>
           <CardContent className="space-y-3 py-4">
             <div>
@@ -232,7 +239,7 @@ export default function GimnasioDetallePage() {
                     <Badge variant={m.active ? "default" : "secondary"}>
                       {m.active ? "Activa" : "Inactiva"}
                     </Badge>
-                    {isOwner && (
+                    {canManageMachines && (
                       <Button
                         size="sm"
                         variant="ghost"
