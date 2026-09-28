@@ -17,7 +17,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     <div className="px-4 md:px-8">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 py-4">
         <div>
-          <p className="text-sm font-medium text-emerald-700">SapoFit v{APP_VERSION}</p>
+          <Link href="/api/changelog" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-emerald-700 hover:text-emerald-800 hover:underline transition-colors">
+            SapoFit v{APP_VERSION}
+          </Link>
           <p className="text-xs text-muted-foreground">Admin · usuarios, IA y operación</p>
         </div>
         <div className="flex items-center gap-2">
