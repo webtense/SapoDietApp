@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Activity, CheckCircle2, Circle, Dumbbell, Droplets, Flame, Scale, SkipForward, Sparkles, Utensils } from "lucide-react"
+import { Activity, CheckCircle2, Circle, Dumbbell, Droplets, Flame, Scale, SkipForward, Sparkles, Utensils, AlertCircle, ChevronUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
+import { MacroRing } from "@/components/macro-ring"
 import { defaultV3Preferences, parseV3Preferences, V3_PREFERENCES_KEY } from "@/lib/v3-preferences"
 import { normalizeMacros } from "@/lib/plan-normalizers"
 import type { NormalizedMacros } from "@/lib/plan-normalizers"
@@ -71,6 +72,7 @@ export default function HoyPage() {
   const [alternatives, setAlternatives] = useState<Meal[]>([])
   const [alternativesFromAi, setAlternativesFromAi] = useState(true)
   const [replacingMeal, setReplacingMeal] = useState(false)
+  const [showQuickMeal, setShowQuickMeal] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -241,12 +243,28 @@ export default function HoyPage() {
     }, 0)
   }, [mealTracking, plan])
 
+  const estimatedMacrosConsumed = useMemo(() => {
+    if (!plan) return { protein: 0, carbs: 0, fat: 0 }
+    return mealConfig.reduce((sum, mealInfo) => {
+      const meal = plan.planComidas[mealInfo.key as keyof MealPlan]
+      const track = mealTracking.find((t) => t.mealType === mealInfo.key)
+      if (track?.completed && meal) {
+        return {
+          protein: sum.protein + (meal.proteinas || 0),
+          carbs: sum.carbs + (meal.carbohidratos || 0),
+          fat: sum.fat + (meal.grasas || 0),
+        }
+      }
+      return sum
+    }, { protein: 0, carbs: 0, fat: 0 })
+  }, [mealTracking, plan])
+
   if (loading) return <div className="p-4 text-center">Cargando...</div>
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
       <section className="rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
-        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-5">
           <div>
             <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium">Agenda del día</div>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight">Hoy</h1>
@@ -254,34 +272,48 @@ export default function HoyPage() {
               {prefs.needsTupperMeals ? "Modo tupper activado" : "Modo cocina en casa"} · {prefs.hasAirfryer ? "recetas con opción Airfryer" : "recetas estándar"} · {prefs.primaryGoal.toLowerCase()}.
             </p>
           </div>
-          <div className="rounded-[1.5rem] bg-white/12 p-4 backdrop-blur">
-            <div className="flex items-center gap-4">
-              {/* Anillo de calorías estilo MacroFactor */}
-              {(() => {
-                const goal = plan?.necesidades.calories || 2000
-                const consumed = estimatedCaloriesConsumed
-                const r = 36
-                const circ = 2 * Math.PI * r
-                const pct = Math.min(1, consumed / goal)
-                const offset = circ * (1 - pct)
-                const remaining = goal - consumed
-                const over = remaining < 0
-                return (
-                  <div className="relative flex-shrink-0">
-                    <svg width="90" height="90" viewBox="0 0 90 90">
-                      <circle cx="45" cy="45" r={r} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="7" />
-                      <circle cx="45" cy="45" r={r} fill="none"
-                        stroke={over ? "#f87171" : "#34d399"} strokeWidth="7"
-                        strokeDasharray={circ} strokeDashoffset={offset}
-                        strokeLinecap="round" transform="rotate(-90 45 45)"
-                        style={{ transition: "stroke-dashoffset 0.6s ease" }} />
-                      <text x="45" y="41" textAnchor="middle" fontSize="13" fontWeight="bold" fill="white">{consumed}</text>
-                      <text x="45" y="54" textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.7)">kcal</text>
-                    </svg>
-                  </div>
-                )
-              })()}
-              <div className="min-w-0 flex-1">
+
+          {/* Próxima comida */}
+          {(() => {
+            const nextMealIndex = mealConfig.findIndex(m => {
+              const track = mealTracking.find(t => t.mealType === m.key)
+              return !track?.completed
+            })
+            if (nextMealIndex !== -1) {
+              const nextMeal = mealConfig[nextMealIndex]
+              return (
+                <div className="rounded-xl bg-white/10 px-4 py-2 flex items-center gap-2 text-sm">
+                  <ChevronUp className="h-4 w-4 text-yellow-300" />
+                  <span>Próxima: <strong>{nextMeal.label}</strong></span>
+                </div>
+              )
+            }
+            return null
+          })()}
+
+          {/* Anillos de macros */}
+          <div className="rounded-[1.5rem] bg-white/12 p-4 backdrop-blur space-y-4">
+            {/* Calorías + Resumen */}
+            <div className="flex items-start justify-between">
+              <div className="flex gap-4">
+                <MacroRing
+                  consumed={Math.round(estimatedCaloriesConsumed)}
+                  target={Math.round(plan?.necesidades.calories || 2000)}
+                  label="Calorías"
+                  shortLabel="kcal"
+                  color="#34d399"
+                  unit=""
+                />
+                <MacroRing
+                  consumed={Math.round(estimatedMacrosConsumed.protein)}
+                  target={Math.round(plan?.necesidades.protein || 150)}
+                  label="Proteína"
+                  shortLabel="P"
+                  color="#60a5fa"
+                  unit="g"
+                />
+              </div>
+              <div className="min-w-0 flex-1 text-right">
                 {(() => {
                   const goal = plan?.necesidades.calories || 2000
                   const remaining = goal - estimatedCaloriesConsumed
@@ -289,26 +321,84 @@ export default function HoyPage() {
                   return (
                     <div className="mb-2">
                       <p className={`text-lg font-semibold leading-none ${over ? "text-red-300" : ""}`}>
-                        {over ? `+${Math.abs(remaining)}` : remaining} kcal
+                        {over ? `+${Math.abs(remaining)}` : remaining}
                       </p>
-                      <p className="text-xs text-white/70">{over ? "por encima" : "restantes"} de {goal}</p>
+                      <p className="text-xs text-white/70">{over ? "excedente" : "restantes"}</p>
                     </div>
                   )
                 })()}
-                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="grid grid-cols-2 gap-2 text-center text-xs">
                   <div><p className="font-semibold">{completedMeals}/{mealConfig.length}</p><p className="text-white/70">Comidas</p></div>
                   <div><p className="font-semibold">{completedExercises}</p><p className="text-white/70">Ejercicios</p></div>
-                  <div><p className="font-semibold">{plan?.necesidades.water || 2.5}L</p><p className="text-white/70">Agua</p></div>
                 </div>
               </div>
             </div>
-            <div className="mt-3">
+
+            {/* Carbs + Grasas */}
+            <div className="flex gap-4">
+              <MacroRing
+                consumed={Math.round(estimatedMacrosConsumed.carbs)}
+                target={Math.round(plan?.necesidades.carbs || 250)}
+                label="Carbohidratos"
+                shortLabel="C"
+                color="#fbbf24"
+                unit="g"
+              />
+              <MacroRing
+                consumed={Math.round(estimatedMacrosConsumed.fat)}
+                target={Math.round(plan?.necesidades.fat || 65)}
+                label="Grasas"
+                shortLabel="G"
+                color="#f87171"
+                unit="g"
+              />
+            </div>
+
+            {/* Hidratación interactiva + Progreso */}
+            <div className="space-y-3 pt-3 border-t border-white/20">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <div className="mb-2 flex items-center justify-between text-xs text-white/70">
+                    <span className="flex items-center gap-1"><Droplets className="h-3 w-3" /> Hidratación</span>
+                    <span>{checkin.water || 0} / {plan?.necesidades.water || 2.5}L</span>
+                  </div>
+                  <Progress value={Math.min(100, ((Number(checkin.water || 0) / (plan?.necesidades.water || 2.5)) * 100))} className="bg-white/20 h-2" />
+                </div>
+                <div className="flex gap-1">
+                  <button onClick={() => setCheckin((p) => ({ ...p, water: String((Number(p.water || 0) - 0.25).toFixed(2)) }))}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-xs font-bold hover:bg-white/30 active:scale-95">−</button>
+                  <button onClick={() => setCheckin((p) => ({ ...p, water: String((Number(p.water || 0) + 0.25).toFixed(2)) }))}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-xs font-bold hover:bg-white/30 active:scale-95">+</button>
+                </div>
+              </div>
+
               <div className="mb-1 flex items-center justify-between text-xs text-white/70"><span>Progreso diario</span><span>{dailyProgress}%</span></div>
               <Progress value={dailyProgress} className="bg-white/20 [&_[data-slot=progress-indicator]]:bg-white" />
             </div>
           </div>
         </div>
       </section>
+
+      {/* Notificaciones inteligentes */}
+      {(() => {
+        const alerts = []
+        const proteinGoal = plan?.necesidades.protein || 150
+        const waterGoal = plan?.necesidades.water || 2.5
+        if (estimatedMacrosConsumed.protein < proteinGoal * 0.5) alerts.push(`Faltan ${Math.round(proteinGoal - estimatedMacrosConsumed.protein)}g de proteína`)
+        if (Number(checkin.water || 0) < waterGoal * 0.5) alerts.push(`Faltan ${(waterGoal - Number(checkin.water || 0)).toFixed(1)}L de agua`)
+        if (completedMeals === 0 && new Date().getHours() > 12) alerts.push("¡No has registrado ninguna comida hoy!")
+
+        return alerts.length > 0 ? (
+          <div className="space-y-2">
+            {alerts.map((alert, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 text-amber-600" />
+                {alert}
+              </div>
+            ))}
+          </div>
+        ) : null
+      })()}
 
       <div className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
         <div className="space-y-4">
@@ -497,6 +587,42 @@ export default function HoyPage() {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Botón flotante para marcar comida rápido */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-2 items-end">
+        {showQuickMeal && (
+          <div className="bg-white rounded-2xl shadow-lg p-4 mb-2 max-w-xs">
+            <p className="text-sm font-semibold mb-3">Marcar comida como hecha</p>
+            <div className="grid grid-cols-2 gap-2">
+              {mealConfig.map((mealInfo) => {
+                const track = mealTracking.find((item) => item.mealType === mealInfo.key)
+                return (
+                  <Button
+                    key={mealInfo.key}
+                    size="sm"
+                    variant={track?.completed ? "default" : "outline"}
+                    onClick={() => {
+                      updateMeal(mealInfo.key, !track?.completed, true)
+                    }}
+                    className="text-xs"
+                  >
+                    {mealInfo.label} {track?.completed && "✓"}
+                  </Button>
+                )
+              })}
+            </div>
+            <Button size="sm" variant="ghost" className="w-full mt-2 text-xs" onClick={() => setShowQuickMeal(false)}>
+              Cerrar
+            </Button>
+          </div>
+        )}
+        <button
+          onClick={() => setShowQuickMeal(!showQuickMeal)}
+          className="h-14 w-14 rounded-full bg-emerald-500 text-white shadow-lg hover:bg-emerald-600 flex items-center justify-center active:scale-95 transition-all"
+        >
+          <CheckCircle2 className="h-6 w-6" />
+        </button>
       </div>
     </div>
   )
