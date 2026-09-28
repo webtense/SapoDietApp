@@ -4,6 +4,13 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.16.0] — Septiembre 28, 2026
+
+### ✨ Botón +5 kg en el entreno
+- Cada serie de cada máquina en `/entrenamiento` tiene ahora un botón "+5" junto al campo de kg: suma 5 al peso actual con un toque, sin tener que escribirlo a mano.
+
+---
+
 ## [3.15.1] — Septiembre 27, 2026
 
 ### 🐛 Corrección

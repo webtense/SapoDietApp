@@ -145,6 +145,11 @@ export default function EntrenamientoPage() {
     }
   }, [tab, selectedProgressionExercise, loadProgression])
 
+  function incrementWeight(workoutExerciseId: string, setIndex: number, current: string, delta: number) {
+    const next = Math.max(0, (parseFloat(current) || 0) + delta)
+    updateDraft(workoutExerciseId, setIndex, "weight", String(next))
+  }
+
   function updateDraft(workoutExerciseId: string, setIndex: number, field: keyof SetDraft, value: string) {
     setDrafts((prev) => {
       const list = [...(prev[workoutExerciseId] ?? [])]
@@ -356,12 +361,23 @@ export default function EntrenamientoPage() {
                         <div key={idx} className="flex items-end gap-2">
                           <div className="flex-1">
                             <Label className="text-xs">Serie {idx + 1} — kg</Label>
-                            <Input
-                              type="number"
-                              inputMode="decimal"
-                              value={draft.weight}
-                              onChange={(e) => updateDraft(we.id, idx, "weight", e.target.value)}
-                            />
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="number"
+                                inputMode="decimal"
+                                value={draft.weight}
+                                onChange={(e) => updateDraft(we.id, idx, "weight", e.target.value)}
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="secondary"
+                                className="shrink-0 px-2"
+                                onClick={() => incrementWeight(we.id, idx, draft.weight, 5)}
+                              >
+                                +5
+                              </Button>
+                            </div>
                           </div>
                           <div className="flex-1">
                             <Label className="text-xs">Reps</Label>

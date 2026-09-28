@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-globals */
 
 // Debe cambiar en cada release (ver lib/version.ts) para invalidar caches antiguas
-const CACHE_NAME = "sapofit-v3.15.1-20260927"
+const CACHE_NAME = "sapofit-v3.16.0-20260928"
 
 self.addEventListener("install", () => {
   self.skipWaiting()

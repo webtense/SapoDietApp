@@ -3,6 +3,14 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.16.0",
+      date: "28/09/2026",
+      features: [
+        "Botón +5 kg junto a cada serie en /entrenamiento, en todas las máquinas, para subir peso rápido sin escribirlo a mano"
+      ],
+      fixes: []
+    },
+    {
       version: "3.15.1",
       date: "27/09/2026",
       features: [],
