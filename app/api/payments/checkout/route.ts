@@ -10,6 +10,11 @@ export async function POST() {
   const fullUser = await prisma.user.findUnique({ where: { id: user.id } })
   if (!fullUser) return apiError("Usuario no encontrado", 404)
 
+  // Cuentas de desarrollo no pueden ir a checkout (ya son PRO)
+  if (user.email?.endsWith("@sapofit.local")) {
+    return apiError("Cuentas de desarrollo no pueden hacer checkout", 400)
+  }
+
   if (fullUser.subscriptionStatus === "PRO") {
     return apiError("Ya tienes una suscripción activa", 400)
   }

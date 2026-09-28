@@ -56,7 +56,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  if (fullUser?.subscriptionStatus !== "PRO") {
+  // Cuentas de desarrollo (@sapofit.local) son siempre PRO
+  const isDevelopmentAccount = user.email?.endsWith("@sapofit.local")
+
+  if (fullUser?.subscriptionStatus !== "PRO" && !isDevelopmentAccount) {
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const plansThisMonth = await prisma.mealPlan.count({
