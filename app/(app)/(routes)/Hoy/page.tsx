@@ -73,6 +73,25 @@ export default function HoyPage() {
   const [alternativesFromAi, setAlternativesFromAi] = useState(true)
   const [replacingMeal, setReplacingMeal] = useState(false)
   const [showQuickMeal, setShowQuickMeal] = useState(false)
+  const [darkMode, setDarkMode] = useState(false)
+  const [last7Days, setLast7Days] = useState<Array<{ date: string; weight?: number; energy?: number; mood?: number }>>([])
+
+  useEffect(() => {
+    // Generar datos simulados para últimos 7 días (en producción vendría de API)
+    const days = []
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      const dateStr = date.toISOString().split('T')[0]
+      days.push({
+        date: dateStr,
+        weight: checkin.weight ? Number(checkin.weight) - (Math.random() * 0.5 - 0.25) : undefined,
+        energy: checkin.energy,
+        mood: checkin.mood,
+      })
+    }
+    setLast7Days(days)
+  }, [checkin])
 
   useEffect(() => {
     const load = async () => {
@@ -550,6 +569,64 @@ export default function HoyPage() {
               <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Hidratación</p><p className="mt-1 text-muted-foreground">Meta {plan?.necesidades.water || 2.5}L. Hoy llevas {checkin.water || 0}L.</p></div>
               <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Proteína</p><p className="mt-1 text-muted-foreground">Objetivo de {plan?.necesidades.protein || 0}g para apoyar {prefs.primaryGoal.toLowerCase()}.</p></div>
               <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Constancia</p><p className="mt-1 text-muted-foreground">Marca tus comidas y tu entreno aunque estés offline; el módulo de entrenamiento ya conserva progreso local.</p></div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center justify-between">
+                Últimos 7 días
+                <button onClick={() => setDarkMode(!darkMode)} className="text-xs px-2 py-1 rounded-lg bg-muted hover:bg-muted/80">
+                  {darkMode ? "🌙" : "☀️"}
+                </button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm">
+              {/* Peso */}
+              <div>
+                <p className="font-medium mb-2">Peso (kg)</p>
+                <div className="flex gap-1 h-12 items-end">
+                  {last7Days.map((day, i) => {
+                    const weights = last7Days.filter(d => d.weight).map(d => d.weight || 0)
+                    const minWeight = weights.length > 0 ? Math.min(...weights) : 70
+                    const maxWeight = weights.length > 0 ? Math.max(...weights) : 71
+                    const range = maxWeight - minWeight || 1
+                    const height = day.weight ? ((day.weight - minWeight) / range * 100) : 0
+                    return (
+                      <div key={i} className="flex-1 flex flex-col items-center">
+                        <div className="w-full bg-emerald-200 rounded-t" style={{ height: `${Math.max(height, 20)}%` }} title={day.weight?.toFixed(1)} />
+                        <p className="text-[10px] text-muted-foreground mt-1">{day.date.split('-')[2]}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Energía + Ánimo */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="font-medium mb-2 text-[12px]">Energía</p>
+                  <div className="flex gap-1">
+                    {last7Days.map((day, i) => (
+                      <div key={i} className="flex-1 text-center">
+                        <div className="text-sm font-bold text-amber-600">{day.energy || 3}</div>
+                        <p className="text-[10px] text-muted-foreground">{day.date.split('-')[2]}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="font-medium mb-2 text-[12px]">Ánimo</p>
+                  <div className="flex gap-1">
+                    {last7Days.map((day, i) => (
+                      <div key={i} className="flex-1 text-center">
+                        <div className="text-sm font-bold text-blue-600">{day.mood || 3}</div>
+                        <p className="text-[10px] text-muted-foreground">{day.date.split('-')[2]}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
