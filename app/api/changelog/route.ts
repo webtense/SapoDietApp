@@ -3,6 +3,14 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.18.0",
+      date: "28/09/2026",
+      features: [
+        "Botón \"+ Añadir máquina\" directamente en /entrenamiento: crea la máquina en tu gimnasio activo sin salir de la pantalla de entreno"
+      ],
+      fixes: []
+    },
+    {
       version: "3.17.0",
       date: "28/09/2026",
       features: [

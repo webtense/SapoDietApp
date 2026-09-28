@@ -153,7 +153,7 @@ export async function getOrCreateTodayWorkout(
     })
   );
 
-  return { needsGym: false as const, session, plan, exercises: exercisesWithSets };
+  return { needsGym: false as const, gymId: profile.gymId, session, plan, exercises: exercisesWithSets };
 }
 
 export async function upsertSet(

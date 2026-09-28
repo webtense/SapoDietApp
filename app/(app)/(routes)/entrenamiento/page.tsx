@@ -45,6 +45,7 @@ interface WorkoutExerciseItem {
 interface CurrentWorkoutResponse {
   ok: boolean
   needsGym?: boolean
+  gymId?: string | null
   session: { id: string; completedAt: string | null }
   plan: { id: string; planType: Group } | null
   exercises: WorkoutExerciseItem[]
@@ -88,6 +89,10 @@ export default function EntrenamientoPage() {
   const [progression, setProgression] = useState<ExerciseProgressionSession[]>([])
   const [progressionLoading, setProgressionLoading] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
+  const [showAddMachine, setShowAddMachine] = useState(false)
+  const [newMachineName, setNewMachineName] = useState("")
+  const [newMachineGroup, setNewMachineGroup] = useState<Group>("UPPER")
+  const [addingMachine, setAddingMachine] = useState(false)
 
   const loadCurrent = useCallback(async () => {
     setLoading(true)
@@ -237,6 +242,34 @@ export default function EntrenamientoPage() {
     return () => window.removeEventListener("online", syncPendingSets)
   }, [syncPendingSets])
 
+  async function handleAddMachine() {
+    if (!current?.gymId) return
+    if (!newMachineName.trim()) {
+      toast.error("Indica el nombre de la máquina")
+      return
+    }
+    setAddingMachine(true)
+    try {
+      const res = await fetch(`/api/gyms/${current.gymId}/machines`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newMachineName.trim(), group: newMachineGroup }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo añadir la máquina")
+      toast.success("Máquina añadida")
+      setNewMachineName("")
+      setShowAddMachine(false)
+      if (newMachineGroup === group) {
+        loadCurrent()
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error añadiendo la máquina")
+    } finally {
+      setAddingMachine(false)
+    }
+  }
+
   async function handleEndSession() {
     if (!current) return
     setEnding(true)
@@ -330,18 +363,59 @@ export default function EntrenamientoPage() {
                 )}
               </div>
             </div>
-            {exercises.length > 0 && (
-              <Button size="sm" onClick={handleEndSession} disabled={ending || savedCount === 0}>
-                Finalizar sesión
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => setShowAddMachine((v) => !v)}>
+                + Añadir máquina
               </Button>
-            )}
+              {exercises.length > 0 && (
+                <Button size="sm" onClick={handleEndSession} disabled={ending || savedCount === 0}>
+                  Finalizar sesión
+                </Button>
+              )}
+            </div>
           </div>
+
+          {showAddMachine && (
+            <Card>
+              <CardContent className="space-y-3 py-4">
+                <div>
+                  <Label className="text-xs">Nombre de la máquina</Label>
+                  <Input
+                    value={newMachineName}
+                    onChange={(e) => setNewMachineName(e.target.value)}
+                    placeholder="Press de banca"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Grupo muscular</Label>
+                  <div className="mt-1 flex gap-2">
+                    {(["UPPER", "LOWER"] as Group[]).map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setNewMachineGroup(g)}
+                        className={cn(
+                          "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                          newMachineGroup === g ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {GROUP_LABEL[g]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Button size="sm" disabled={addingMachine} onClick={handleAddMachine}>
+                  {addingMachine ? "Guardando…" : "Guardar máquina"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {exercises.length === 0 && (
             <Card>
               <CardContent className="py-6 text-sm text-muted-foreground">
-                No hay máquinas activas para {GROUP_LABEL[group].toLowerCase()}. Un administrador puede añadirlas en
-                Admin → Máquinas.
+                No hay máquinas activas para {GROUP_LABEL[group].toLowerCase()} en tu gimnasio. Añade una con el botón
+                de arriba.
               </CardContent>
             </Card>
           )}

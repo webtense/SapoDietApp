@@ -4,6 +4,13 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.18.0] — Septiembre 28, 2026
+
+### ✨ Añadir máquina desde el propio entreno
+- Nuevo botón "+ Añadir máquina" en `/entrenamiento`, junto a "Finalizar sesión". Crea la máquina en el gimnasio activo del usuario sin tener que navegar a `/gimnasios`; si el grupo elegido coincide con la vista actual, aparece al instante en la lista.
+
+---
+
 ## [3.17.0] — Septiembre 28, 2026
 
 ### ✨ Guardado de series a prueba de mala cobertura

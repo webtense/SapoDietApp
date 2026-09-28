@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       needsGym: false,
+      gymId: result.gymId,
       session: result.session,
       plan: result.plan,
       exercises: result.exercises,
