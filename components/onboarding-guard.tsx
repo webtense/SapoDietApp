@@ -3,7 +3,10 @@
 import { useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 
-const ALLOWED_WITHOUT_ONBOARDING = ["/onboarding", "/perfil", "/admin"]
+// Gestionar gimnasios (crear/unirse/añadir máquinas) no depende de tener el
+// perfil nutricional/físico completo — se libera para no bloquear esa gestión
+// a usuarios que aún no han terminado el onboarding.
+const ALLOWED_WITHOUT_ONBOARDING = ["/onboarding", "/perfil", "/admin", "/gimnasios"]
 
 export function OnboardingGuard({ onboardingCompleted }: { onboardingCompleted: boolean }) {
   const pathname = usePathname()

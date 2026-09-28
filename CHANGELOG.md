@@ -4,6 +4,17 @@ Todos los cambios significativos en este proyecto serán documentados en este ar
 
 ---
 
+## [3.17.0] — Septiembre 28, 2026
+
+### ✨ Guardado de series a prueba de mala cobertura
+- Reportado: "se han borrado los pesos". Causa real: guardar una serie hacía una única petición de red sin ningún reintento; si fallaba (wifi del gimnasio, sin cobertura), el dato se perdía sin aviso.
+- Ahora el guardado es optimista: la serie se marca como guardada en el móvil al instante. Si la subida falla, queda en una cola local y se reintenta sola al recuperar conexión o al volver a abrir `/entrenamiento`. Un aviso ámbar muestra cuántas series quedan pendientes de subir.
+
+### 🐛 Corrección
+- `/gimnasios` estaba bloqueado por el asistente de bienvenida para cualquier cuenta que no lo hubiera completado, aunque gestionar máquinas no depende de tener peso/altura registrados. Liberado.
+
+---
+
 ## [3.16.0] — Septiembre 28, 2026
 
 ### ✨ Botón +5 kg en el entreno

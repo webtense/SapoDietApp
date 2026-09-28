@@ -9,8 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { Info, Pencil } from "lucide-react"
+import { CloudOff, Info, Pencil } from "lucide-react"
 import Link from "next/link"
+import { enqueuePendingSet, flushPendingSets, getPendingSets } from "@/lib/offline-sets-queue"
 
 type Group = "UPPER" | "LOWER"
 
@@ -86,6 +87,7 @@ export default function EntrenamientoPage() {
   const [selectedProgressionExercise, setSelectedProgressionExercise] = useState<string | null>(null)
   const [progression, setProgression] = useState<ExerciseProgressionSession[]>([])
   const [progressionLoading, setProgressionLoading] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
 
   const loadCurrent = useCallback(async () => {
     setLoading(true)
@@ -96,18 +98,22 @@ export default function EntrenamientoPage() {
       const payload = data as CurrentWorkoutResponse
       setCurrent(payload)
 
+      const pending = getPendingSets()
       const nextDrafts: Record<string, SetDraft[]> = {}
       const nextSaved: Record<string, boolean> = {}
       for (const we of payload.exercises) {
         nextDrafts[we.id] = Array.from({ length: we.plannedSets }, (_, idx) => {
           const existing = we.workoutSets.find((s) => s.setNumber === idx + 1)
-          if (existing) nextSaved[`${we.id}-${idx}`] = true
+          const pendingEntry = pending.find((p) => p.workoutExerciseId === we.id && p.setNumber === idx + 1)
+          if (existing || pendingEntry) nextSaved[`${we.id}-${idx}`] = true
+          if (pendingEntry) return { weight: String(pendingEntry.weight), reps: String(pendingEntry.reps) }
           return { weight: existing ? String(existing.weight) : "", reps: existing ? String(existing.reps) : "" }
         })
       }
       setDrafts(nextDrafts)
       setSavedSets(nextSaved)
       setEditingSets({})
+      setPendingCount(pending.length)
 
       setSelectedProgressionExercise((prev) => {
         if (prev && payload.exercises.some((we) => we.exercise.id === prev)) return prev
@@ -175,6 +181,18 @@ export default function EntrenamientoPage() {
 
     const key = `${we.id}-${setIndex}`
     setSaving(key)
+
+    // Guardado optimista: la serie se marca como guardada en pantalla al instante,
+    // pase lo que pase con la red. Si el peso no llega al servidor ahora, se queda
+    // en cola local y se reintenta solo — nunca se pierde por falta de conexión.
+    setDrafts((prev) => {
+      const list = [...(prev[we.id] ?? [])]
+      list[setIndex] = { weight: String(weight), reps: String(reps) }
+      return { ...prev, [we.id]: list }
+    })
+    setSavedSets((prev) => ({ ...prev, [key]: true }))
+    setEditingSets((prev) => ({ ...prev, [key]: false }))
+
     try {
       const res = await fetch(`/api/user/workout/exercise/${we.id}/set`, {
         method: "POST",
@@ -189,19 +207,35 @@ export default function EntrenamientoPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo guardar la serie")
       toast.success(`Serie ${setIndex + 1} guardada`)
-      setDrafts((prev) => {
-        const list = [...(prev[we.id] ?? [])]
-        list[setIndex] = { weight: String(weight), reps: String(reps) }
-        return { ...prev, [we.id]: list }
+    } catch {
+      enqueuePendingSet({
+        workoutSessionId: current.session.id,
+        workoutExerciseId: we.id,
+        setNumber: setIndex + 1,
+        weight,
+        reps,
       })
-      setSavedSets((prev) => ({ ...prev, [key]: true }))
-      setEditingSets((prev) => ({ ...prev, [key]: false }))
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error guardando la serie")
+      setPendingCount(getPendingSets().length)
+      toast.warning(`Serie ${setIndex + 1} guardada en el móvil, se subirá cuando haya conexión`)
     } finally {
       setSaving(null)
     }
   }
+
+  const syncPendingSets = useCallback(async () => {
+    if (getPendingSets().length === 0) return
+    const result = await flushPendingSets()
+    setPendingCount(result.remaining)
+    if (result.synced > 0) {
+      toast.success(`${result.synced} serie${result.synced > 1 ? "s" : ""} sincronizada${result.synced > 1 ? "s" : ""}`)
+    }
+  }, [])
+
+  useEffect(() => {
+    syncPendingSets()
+    window.addEventListener("online", syncPendingSets)
+    return () => window.removeEventListener("online", syncPendingSets)
+  }, [syncPendingSets])
 
   async function handleEndSession() {
     if (!current) return
@@ -284,9 +318,17 @@ export default function EntrenamientoPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-semibold">{GROUP_LABEL[group]}</h1>
-              <Badge variant="secondary">
-                {exercises.length} máquinas · {savedCount} series hoy
-              </Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="secondary">
+                  {exercises.length} máquinas · {savedCount} series hoy
+                </Badge>
+                {pendingCount > 0 && (
+                  <Badge variant="outline" className="gap-1 border-amber-400 text-amber-700">
+                    <CloudOff className="h-3 w-3" />
+                    {pendingCount} pendiente{pendingCount > 1 ? "s" : ""} de subir
+                  </Badge>
+                )}
+              </div>
             </div>
             {exercises.length > 0 && (
               <Button size="sm" onClick={handleEndSession} disabled={ending || savedCount === 0}>

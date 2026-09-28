@@ -3,6 +3,16 @@ export const revalidate = 3600 // Cache 1 hora
 const CHANGELOG = {
   entries: [
     {
+      version: "3.17.0",
+      date: "28/09/2026",
+      features: [
+        "Guardar una serie de entreno ya no depende de tener cobertura en el gimnasio: si falla la subida se guarda en el móvil y se sube sola en cuanto vuelva la conexión, con un aviso de cuántas quedan pendientes"
+      ],
+      fixes: [
+        "Gestionar máquinas de un gimnasio (crear/añadir) estaba bloqueado para cualquier cuenta con el perfil de bienvenida sin completar, aunque esa gestión no depende de esos datos"
+      ]
+    },
+    {
       version: "3.16.0",
       date: "28/09/2026",
       features: [

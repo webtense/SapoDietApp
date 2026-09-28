@@ -1,3 +1,3 @@
-export const APP_VERSION = "3.16.0"
-export const BUILD_ID = "3.16.0-20260928"
+export const APP_VERSION = "3.17.0"
+export const BUILD_ID = "3.17.0-20260928"
 export const RELEASE_LABEL = "septiembre 2026"
