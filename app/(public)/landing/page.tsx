@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
+import { Share2, Play, CheckCircle } from "lucide-react"
 
 export default function LandingPage() {
   const router = useRouter()
@@ -15,6 +16,16 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    // Analytics: página vista
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("event", "page_view", {
+        page_title: "SapoFit Landing",
+        page_path: "/landing",
+      })
+    }
+  }, [])
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,6 +57,11 @@ export default function LandingPage() {
         throw new Error(data.error || "Error al registrarse")
       }
 
+      // Analytics: signup
+      if (typeof window !== "undefined" && window.gtag) {
+        window.gtag("event", "sign_up", { method: "email" })
+      }
+
       setSuccess(true)
       setFormData({ email: "", password: "", confirmPassword: "" })
 
@@ -58,6 +74,17 @@ export default function LandingPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const shareUrl = "https://sapofit.semillasdeti.com/landing"
+  const shareText = "🥗 SapoFit Pro: Planes IA + Entrenamiento sin límites. Tracker inteligente con IA, offline-first y €4,99/mes"
+
+  const shareLinks = {
+    whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`,
+    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    reddit: `https://reddit.com/submit?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent("SapoFit Pro")}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
   }
 
   return (
@@ -101,6 +128,90 @@ export default function LandingPage() {
                 <p className="text-gray-600">{feature.desc}</p>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Video Demo */}
+      <section className="py-20 px-4 bg-gradient-to-b from-white to-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-8">Mira cómo funciona (60 seg)</h2>
+          <div className="relative mb-8">
+            <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
+              <div className="text-center">
+                <Play className="w-16 h-16 text-white mx-auto mb-4" />
+                <p className="text-white text-lg">Video demo: Registro → Hoy → Entrenamientos → Admin</p>
+                <p className="text-gray-400 text-sm mt-2">*Próximamente en YouTube</p>
+              </div>
+            </div>
+            <div className="mt-6 grid md:grid-cols-4 gap-4 text-center">
+              <div>
+                <div className="text-2xl mb-2">📝</div>
+                <p className="text-sm font-semibold">Registro</p>
+              </div>
+              <div>
+                <div className="text-2xl mb-2">📊</div>
+                <p className="text-sm font-semibold">Hoy (Macros)</p>
+              </div>
+              <div>
+                <div className="text-2xl mb-2">💪</div>
+                <p className="text-sm font-semibold">Entrenamientos</p>
+              </div>
+              <div>
+                <div className="text-2xl mb-2">🎯</div>
+                <p className="text-sm font-semibold">Dashboard</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Share Section */}
+          <div className="bg-white rounded-lg p-8 border-2 border-emerald-200">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <Share2 className="w-5 h-5" /> Comparte SapoFit
+            </h3>
+            <p className="text-gray-600 mb-6">Ayuda a otros a descubrir nutrición inteligente:</p>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <a
+                href={shareLinks.whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2 px-3 bg-green-500 hover:bg-green-600 text-white rounded font-semibold text-sm text-center transition"
+              >
+                WhatsApp
+              </a>
+              <a
+                href={shareLinks.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2 px-3 bg-blue-400 hover:bg-blue-500 text-white rounded font-semibold text-sm text-center transition"
+              >
+                Twitter
+              </a>
+              <a
+                href={shareLinks.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold text-sm text-center transition"
+              >
+                Facebook
+              </a>
+              <a
+                href={shareLinks.reddit}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2 px-3 bg-orange-500 hover:bg-orange-600 text-white rounded font-semibold text-sm text-center transition"
+              >
+                Reddit
+              </a>
+              <a
+                href={shareLinks.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2 px-3 bg-blue-700 hover:bg-blue-800 text-white rounded font-semibold text-sm text-center transition"
+              >
+                LinkedIn
+              </a>
+            </div>
           </div>
         </div>
       </section>
