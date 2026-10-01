@@ -133,6 +133,12 @@
 - **Reps realizadas:** 12 ✅
 - **Notas:** `12x32`
 
+#### Set 3
+- **Peso:** 41 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x41`
+
 ---
 
 ## 📊 RESUMEN SESSION
@@ -141,11 +147,11 @@
 |---------|-------|
 | Duración | ~? min |
 | Ejercicios | 6 (Remo + Tríceps + Hombro + Bíceps + Polea Alta + Pecho) |
-| Total sets | 17 |
-| Total reps | 204 (12×17) |
+| Total sets | 18 |
+| Total reps | 216 (12×18) |
 | Peso máximo | 59 kg (Tríceps) |
-| Intensidad | BRUTAL 🔥💪 |
-| Completadas | 17/17 sets ✅ 100% |
+| Intensidad | ÉLITE 🔥💪⭐ |
+| Completadas | 18/18 sets ✅ 100% |
 
 ---
 
