@@ -1,0 +1,85 @@
+# 📋 Datos offline — 01/10/2026
+## (Para sincronizar cuando vuelva servidor)
+
+**Usuario:** Andrés (admin@sapofit.local)  
+**Fecha:** 01/10/2026  
+**Estado:** ⏸️ VPS caída — datos en cola para sincronizar
+
+---
+
+## 💪 ENTRENAMIENTOS
+
+### Set 1
+- **Ejercicio:** Peso (dumbbell/mancuerna)
+- **Peso:** 27 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 10 (perdió 2 reps)
+- **Notas:** `12x27 -2 Rep`
+
+### Set 2
+- **Ejercicio:** Peso (dumbbell/mancuerna)
+- **Peso:** 32 kg (27kg + 5kg)
+- **Reps programadas:** 12
+- **Reps realizadas:** 1
+- **Notas:** `12x27+5 1 Rep`
+
+---
+
+## 📊 RESUMEN SESSION
+
+| Métrica | Valor |
+|---------|-------|
+| Duración | ~? min |
+| Ejercicios | 1 (pesos) |
+| Total reps | 11 |
+| Peso máximo | 32 kg |
+| Intensidad | Moderada→Alta |
+
+---
+
+## 🔄 INSTRUCCIONES DE SINCRONIZACIÓN
+
+Cuando vuelva el servidor:
+
+### Opción A: Entrada manual (fácil)
+1. Abrir SapoFit → "Entrenamientos"
+2. Crear nueva sesión (01/10/2026)
+3. Agregar sets:
+   - Set 1: 27kg x10 reps
+   - Set 2: 32kg x1 rep
+4. Guardar
+
+### Opción B: Insertar directo en BD (rápido)
+```sql
+-- Crear sesión
+INSERT INTO "WorkoutSession" (id, "userId", date, "durationMinutes", notes)
+VALUES (gen_random_uuid(), 'USER_ID', '2026-10-01', NULL, 'Sesión offline 01/10');
+
+-- Agregar ejercicios (necesitas machine IDs)
+INSERT INTO "WorkoutExercise" (id, "sessionId", "machineId", notes)
+VALUES 
+  (gen_random_uuid(), 'SESSION_ID', 'MACHINE_ID_27KG', 'Set 1: 27kg'),
+  (gen_random_uuid(), 'SESSION_ID', 'MACHINE_ID_32KG', 'Set 2: 32kg+5kg');
+
+-- Agregar sets
+INSERT INTO "WorkoutSet" (id, "exerciseId", "repsTarget", "repsActual", weight, notes)
+VALUES 
+  (gen_random_uuid(), 'EXERCISE_ID_1', 12, 10, 27.0, 'Perdió 2 reps'),
+  (gen_random_uuid(), 'EXERCISE_ID_2', 12, 1, 32.0, 'Nueva máquina +5kg');
+```
+
+---
+
+## ✅ ESTADO
+
+- [x] Datos capturados
+- [x] Guardados offline
+- [ ] Esperando reconexión servidor
+- [ ] Sincronización pendiente
+- [ ] Confirmación en BD
+
+---
+
+**Creado:** 01/10/2026 21:XX UTC  
+**VPS Status:** 🔴 CAÍDA (217.154.188.166)  
+**Sincronización:** ⏳ Pendiente de reconexión
