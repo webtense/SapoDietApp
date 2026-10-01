@@ -97,17 +97,39 @@
 
 ---
 
+### EJERCICIO 5: Polea Alta (High Cable/Lat Pulldown)
+
+#### Set 1
+- **Peso:** 27 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x27`
+
+#### Set 2
+- **Peso:** 36 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x36`
+
+#### Set 3
+- **Peso:** 41 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x41`
+
+---
+
 ## 📊 RESUMEN SESSION
 
 | Métrica | Valor |
 |---------|-------|
 | Duración | ~? min |
-| Ejercicios | 4 (Remo + Tríceps + Hombro + Bíceps) |
-| Total sets | 12 |
-| Total reps | 144 (12+12+12+12+12+12+12+12+12+12+12+12) |
+| Ejercicios | 5 (Remo + Tríceps + Hombro + Bíceps + Polea Alta) |
+| Total sets | 15 |
+| Total reps | 180 (5 ejercicios × 3 sets × 12 reps) |
 | Peso máximo | 59 kg (Tríceps) |
-| Intensidad | ALTA 💪 |
-| Completadas | 12/12 sets ✅ 100% |
+| Intensidad | MUY ALTA 🔥 |
+| Completadas | 15/15 sets ✅ 100% |
 
 ---
 
