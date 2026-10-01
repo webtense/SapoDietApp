@@ -69,17 +69,33 @@
 
 ---
 
+### EJERCICIO 4: Hombro (Shoulder Machine)
+
+#### Set 1
+- **Peso:** 27 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 10 (perdió 2 reps)
+- **Notas:** `12x27 -2 Rep`
+
+#### Set 2
+- **Peso:** 32 kg (27kg + 5kg)
+- **Reps programadas:** 12
+- **Reps realizadas:** 1
+- **Notas:** `12x27+5 1 Rep`
+
+---
+
 ## 📊 RESUMEN SESSION
 
 | Métrica | Valor |
 |---------|-------|
 | Duración | ~? min |
-| Ejercicios | 3 (Pesos + Remo + Tríceps) |
-| Total sets | 8 |
-| Total reps | 83 (10+1+12+12+12+12+12+12) |
+| Ejercicios | 4 (Pesos + Remo + Tríceps + Hombro) |
+| Total sets | 10 |
+| Total reps | 94 (10+1+12+12+12+12+12+12+10+1) |
 | Peso máximo | 59 kg (Tríceps) |
-| Intensidad | Moderada→Alta |
-| Completadas | 7/8 sets ✅ |
+| Intensidad | Alta |
+| Completadas | 8/10 sets ✅ |
 
 ---
 
