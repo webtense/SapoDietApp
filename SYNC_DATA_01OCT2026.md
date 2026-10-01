@@ -141,17 +141,33 @@
 
 ---
 
+### EJERCICIO 7: Press Banca (Barbell Bench Press)
+
+#### Set 1
+- **Peso:** 35 kg (barra 20kg + 7,5kg por lado)
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x35`
+
+#### Set 2
+- **Peso:** 35 kg (barra 20kg + 7,5kg por lado)
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x35`
+
+---
+
 ## 📊 RESUMEN SESSION
 
 | Métrica | Valor |
 |---------|-------|
 | Duración | ~? min |
-| Ejercicios | 6 (Remo + Tríceps + Hombro + Bíceps + Polea Alta + Pecho) |
-| Total sets | 18 |
-| Total reps | 216 (12×18) |
-| Peso máximo | 59 kg (Tríceps) |
-| Intensidad | ÉLITE 🔥💪⭐ |
-| Completadas | 18/18 sets ✅ 100% |
+| Ejercicios | 7 (Remo + Tríceps + Hombro + Bíceps + Polea Alta + Pecho + Press Banca) |
+| Total sets | 20 |
+| Total reps | 240 (12×20) |
+| Peso máximo | 59 kg (Tríceps en máquina) |
+| Intensidad | OLÍMPICA 🏆🔥💪⭐ |
+| Completadas | 20/20 sets ✅ 100% |
 
 ---
 
