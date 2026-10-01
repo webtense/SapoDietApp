@@ -62,10 +62,16 @@
 - **Notas:** `12x27`
 
 #### Set 2
-- **Peso:** 27 kg
+- **Peso:** 32 kg
 - **Reps programadas:** 12
 - **Reps realizadas:** 12 ✅
-- **Notas:** `12x27`
+- **Notas:** `12x32`
+
+#### Set 3
+- **Peso:** 32 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x32`
 
 ---
 
@@ -97,11 +103,11 @@
 |---------|-------|
 | Duración | ~? min |
 | Ejercicios | 4 (Remo + Tríceps + Hombro + Bíceps) |
-| Total sets | 11 |
-| Total reps | 132 (12+12+12+12+12+12+12+12+12+12+12) |
+| Total sets | 12 |
+| Total reps | 144 (12+12+12+12+12+12+12+12+12+12+12+12) |
 | Peso máximo | 59 kg (Tríceps) |
 | Intensidad | ALTA 💪 |
-| Completadas | 11/11 sets ✅ 100% |
+| Completadas | 12/12 sets ✅ 100% |
 
 ---
 
