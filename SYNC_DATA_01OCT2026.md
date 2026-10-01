@@ -47,17 +47,39 @@
 
 ---
 
+### EJERCICIO 3: Tríceps (Triceps Machine)
+
+#### Set 1
+- **Peso:** 45 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x45`
+
+#### Set 2
+- **Peso:** 50 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x50`
+
+#### Set 3
+- **Peso:** 59 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x59`
+
+---
+
 ## 📊 RESUMEN SESSION
 
 | Métrica | Valor |
 |---------|-------|
 | Duración | ~? min |
-| Ejercicios | 2 (Pesos + Remo Sentado) |
-| Total sets | 5 |
-| Total reps | 47 (10+1+12+12+12) |
-| Peso máximo | 37 kg (32+5) |
+| Ejercicios | 3 (Pesos + Remo + Tríceps) |
+| Total sets | 8 |
+| Total reps | 83 (10+1+12+12+12+12+12+12) |
+| Peso máximo | 59 kg (Tríceps) |
 | Intensidad | Moderada→Alta |
-| Completadas | 4/5 sets ✅ |
+| Completadas | 7/8 sets ✅ |
 
 ---
 
