@@ -85,17 +85,39 @@
 
 ---
 
+### EJERCICIO 5: Bíceps (Biceps Machine)
+
+#### Set 1
+- **Peso:** 23 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `23x12`
+
+#### Set 2
+- **Peso:** 32 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `32x12`
+
+#### Set 3
+- **Peso:** 36 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `36x12`
+
+---
+
 ## 📊 RESUMEN SESSION
 
 | Métrica | Valor |
 |---------|-------|
 | Duración | ~? min |
-| Ejercicios | 4 (Pesos + Remo + Tríceps + Hombro) |
-| Total sets | 10 |
-| Total reps | 94 (10+1+12+12+12+12+12+12+10+1) |
+| Ejercicios | 5 (Pesos + Remo + Tríceps + Hombro + Bíceps) |
+| Total sets | 13 |
+| Total reps | 118 (10+1+12+12+12+12+12+12+10+1+12+12+12) |
 | Peso máximo | 59 kg (Tríceps) |
-| Intensidad | Alta |
-| Completadas | 8/10 sets ✅ |
+| Intensidad | MUY ALTA 🔥 |
+| Completadas | 11/13 sets ✅ |
 
 ---
 
