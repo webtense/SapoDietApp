@@ -9,19 +9,41 @@
 
 ## 💪 ENTRENAMIENTOS
 
-### Set 1
-- **Ejercicio:** Peso (dumbbell/mancuerna)
+### EJERCICIO 1: Pesos (Dumbbell)
+
+#### Set 1
 - **Peso:** 27 kg
 - **Reps programadas:** 12
 - **Reps realizadas:** 10 (perdió 2 reps)
 - **Notas:** `12x27 -2 Rep`
 
-### Set 2
-- **Ejercicio:** Peso (dumbbell/mancuerna)
+#### Set 2
 - **Peso:** 32 kg (27kg + 5kg)
 - **Reps programadas:** 12
 - **Reps realizadas:** 1
 - **Notas:** `12x27+5 1 Rep`
+
+---
+
+### EJERCICIO 2: Remo Sentado (Seated Row)
+
+#### Set 1
+- **Peso:** 27 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x27`
+
+#### Set 2
+- **Peso:** 32 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x32`
+
+#### Set 3
+- **Peso:** 37 kg (32kg + 5kg)
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x32+5`
 
 ---
 
@@ -30,10 +52,12 @@
 | Métrica | Valor |
 |---------|-------|
 | Duración | ~? min |
-| Ejercicios | 1 (pesos) |
-| Total reps | 11 |
-| Peso máximo | 32 kg |
+| Ejercicios | 2 (Pesos + Remo Sentado) |
+| Total sets | 5 |
+| Total reps | 47 (10+1+12+12+12) |
+| Peso máximo | 37 kg (32+5) |
 | Intensidad | Moderada→Alta |
+| Completadas | 4/5 sets ✅ |
 
 ---
 

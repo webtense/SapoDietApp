@@ -36,7 +36,7 @@ async function syncOfflineData() {
     console.log(`✅ Sesión creada: ${session.id}`)
 
     // 3. Crear máquinas (si no existen)
-    const machine27kg = await prisma.machine.upsert({
+    const dumbbell27 = await prisma.machine.upsert({
       where: { name: "Dumbbell 27kg" },
       update: {},
       create: {
@@ -46,7 +46,7 @@ async function syncOfflineData() {
       },
     })
 
-    const machine32kg = await prisma.machine.upsert({
+    const dumbbell32 = await prisma.machine.upsert({
       where: { name: "Dumbbell 32kg" },
       update: {},
       create: {
@@ -56,31 +56,88 @@ async function syncOfflineData() {
       },
     })
 
+    const seatedRow27 = await prisma.machine.upsert({
+      where: { name: "Seated Row 27kg" },
+      update: {},
+      create: {
+        name: "Seated Row 27kg",
+        category: "CARDIO",
+        description: "Remo sentado 27kg",
+      },
+    })
+
+    const seatedRow32 = await prisma.machine.upsert({
+      where: { name: "Seated Row 32kg" },
+      update: {},
+      create: {
+        name: "Seated Row 32kg",
+        category: "CARDIO",
+        description: "Remo sentado 32kg",
+      },
+    })
+
+    const seatedRow37 = await prisma.machine.upsert({
+      where: { name: "Seated Row 37kg" },
+      update: {},
+      create: {
+        name: "Seated Row 37kg",
+        category: "CARDIO",
+        description: "Remo sentado 37kg (32kg + 5kg)",
+      },
+    })
+
     console.log(`✅ Máquinas creadas/actualizadas`)
 
     // 4. Crear ejercicios
-    const exercise1 = await prisma.workoutExercise.create({
+    // EJERCICIO 1: Pesos (Dumbbell)
+    const ex1_set1 = await prisma.workoutExercise.create({
       data: {
         sessionId: session.id,
-        machineId: machine27kg.id,
-        notes: "Set 1: 27kg - Perdió 2 reps",
+        machineId: dumbbell27.id,
+        notes: "Dumbbell - Set 1: 27kg",
       },
     })
 
-    const exercise2 = await prisma.workoutExercise.create({
+    const ex1_set2 = await prisma.workoutExercise.create({
       data: {
         sessionId: session.id,
-        machineId: machine32kg.id,
-        notes: "Set 2: 27kg+5kg - Nueva máquina",
+        machineId: dumbbell32.id,
+        notes: "Dumbbell - Set 2: 27kg+5kg",
       },
     })
 
-    console.log(`✅ Ejercicios creados`)
+    // EJERCICIO 2: Remo Sentado (Seated Row)
+    const ex2_set1 = await prisma.workoutExercise.create({
+      data: {
+        sessionId: session.id,
+        machineId: seatedRow27.id,
+        notes: "Seated Row - Set 1: 27kg",
+      },
+    })
+
+    const ex2_set2 = await prisma.workoutExercise.create({
+      data: {
+        sessionId: session.id,
+        machineId: seatedRow32.id,
+        notes: "Seated Row - Set 2: 32kg",
+      },
+    })
+
+    const ex2_set3 = await prisma.workoutExercise.create({
+      data: {
+        sessionId: session.id,
+        machineId: seatedRow37.id,
+        notes: "Seated Row - Set 3: 32kg+5kg",
+      },
+    })
+
+    console.log(`✅ Ejercicios creados (2 ejercicios, 5 sets)`)
 
     // 5. Crear sets
-    const set1 = await prisma.workoutSet.create({
+    // DUMBBELL SETS
+    await prisma.workoutSet.create({
       data: {
-        exerciseId: exercise1.id,
+        exerciseId: ex1_set1.id,
         repsTarget: 12,
         repsActual: 10,
         weight: 27.0,
@@ -88,13 +145,44 @@ async function syncOfflineData() {
       },
     })
 
-    const set2 = await prisma.workoutSet.create({
+    await prisma.workoutSet.create({
       data: {
-        exerciseId: exercise2.id,
+        exerciseId: ex1_set2.id,
         repsTarget: 12,
         repsActual: 1,
         weight: 32.0,
         notes: "12x27+5 1 Rep",
+      },
+    })
+
+    // SEATED ROW SETS
+    await prisma.workoutSet.create({
+      data: {
+        exerciseId: ex2_set1.id,
+        repsTarget: 12,
+        repsActual: 12,
+        weight: 27.0,
+        notes: "12x27 ✅",
+      },
+    })
+
+    await prisma.workoutSet.create({
+      data: {
+        exerciseId: ex2_set2.id,
+        repsTarget: 12,
+        repsActual: 12,
+        weight: 32.0,
+        notes: "12x32 ✅",
+      },
+    })
+
+    await prisma.workoutSet.create({
+      data: {
+        exerciseId: ex2_set3.id,
+        repsTarget: 12,
+        repsActual: 12,
+        weight: 37.0,
+        notes: "12x32+5 ✅",
       },
     })
 
