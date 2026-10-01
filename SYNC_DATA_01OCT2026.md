@@ -9,23 +9,7 @@
 
 ## 💪 ENTRENAMIENTOS
 
-### EJERCICIO 1: Pesos (Dumbbell)
-
-#### Set 1
-- **Peso:** 27 kg
-- **Reps programadas:** 12
-- **Reps realizadas:** 10 (perdió 2 reps)
-- **Notas:** `12x27 -2 Rep`
-
-#### Set 2
-- **Peso:** 32 kg (27kg + 5kg)
-- **Reps programadas:** 12
-- **Reps realizadas:** 1
-- **Notas:** `12x27+5 1 Rep`
-
----
-
-### EJERCICIO 2: Remo Sentado (Seated Row)
+### EJERCICIO 1: Remo Sentado (Seated Row)
 
 #### Set 1
 - **Peso:** 27 kg
@@ -47,7 +31,7 @@
 
 ---
 
-### EJERCICIO 3: Tríceps (Triceps Machine)
+### EJERCICIO 2: Tríceps (Triceps Machine)
 
 #### Set 1
 - **Peso:** 45 kg
@@ -69,23 +53,23 @@
 
 ---
 
-### EJERCICIO 4: Hombro (Shoulder Machine)
+### EJERCICIO 3: Hombro (Shoulder Machine)
 
 #### Set 1
 - **Peso:** 27 kg
 - **Reps programadas:** 12
-- **Reps realizadas:** 10 (perdió 2 reps)
-- **Notas:** `12x27 -2 Rep`
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x27`
 
 #### Set 2
-- **Peso:** 32 kg (27kg + 5kg)
+- **Peso:** 27 kg
 - **Reps programadas:** 12
-- **Reps realizadas:** 1
-- **Notas:** `12x27+5 1 Rep`
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x27`
 
 ---
 
-### EJERCICIO 5: Bíceps (Biceps Machine)
+### EJERCICIO 4: Bíceps (Biceps Machine)
 
 #### Set 1
 - **Peso:** 23 kg
@@ -112,12 +96,12 @@
 | Métrica | Valor |
 |---------|-------|
 | Duración | ~? min |
-| Ejercicios | 5 (Pesos + Remo + Tríceps + Hombro + Bíceps) |
-| Total sets | 13 |
-| Total reps | 118 (10+1+12+12+12+12+12+12+10+1+12+12+12) |
+| Ejercicios | 4 (Remo + Tríceps + Hombro + Bíceps) |
+| Total sets | 11 |
+| Total reps | 132 (12+12+12+12+12+12+12+12+12+12+12) |
 | Peso máximo | 59 kg (Tríceps) |
-| Intensidad | MUY ALTA 🔥 |
-| Completadas | 11/13 sets ✅ |
+| Intensidad | ALTA 💪 |
+| Completadas | 11/11 sets ✅ 100% |
 
 ---
 
