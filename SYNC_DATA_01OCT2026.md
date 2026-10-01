@@ -119,17 +119,33 @@
 
 ---
 
+### EJERCICIO 6: Pecho (Chest Press)
+
+#### Set 1
+- **Peso:** 23 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x23`
+
+#### Set 2
+- **Peso:** 32 kg
+- **Reps programadas:** 12
+- **Reps realizadas:** 12 ✅
+- **Notas:** `12x32`
+
+---
+
 ## 📊 RESUMEN SESSION
 
 | Métrica | Valor |
 |---------|-------|
 | Duración | ~? min |
-| Ejercicios | 5 (Remo + Tríceps + Hombro + Bíceps + Polea Alta) |
-| Total sets | 15 |
-| Total reps | 180 (5 ejercicios × 3 sets × 12 reps) |
+| Ejercicios | 6 (Remo + Tríceps + Hombro + Bíceps + Polea Alta + Pecho) |
+| Total sets | 17 |
+| Total reps | 204 (12×17) |
 | Peso máximo | 59 kg (Tríceps) |
-| Intensidad | MUY ALTA 🔥 |
-| Completadas | 15/15 sets ✅ 100% |
+| Intensidad | BRUTAL 🔥💪 |
+| Completadas | 17/17 sets ✅ 100% |
 
 ---
 
