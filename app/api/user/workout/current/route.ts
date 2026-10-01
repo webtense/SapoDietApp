@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const result = await getOrCreateTodayWorkout(user.id, group)
 
     if (result.needsGym) {
-      return NextResponse.json({ ok: true, plan: null, needsGym: true })
+      return NextResponse.json({ ok: true, plan: null, needsGym: true, exercises: [] })
     }
 
     return NextResponse.json({

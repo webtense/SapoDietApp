@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { hash } from "bcryptjs"
-import { prisma } from "@/lib/db"
+import { prisma } from "@/lib/server/prisma"
 
 export async function POST(req: NextRequest) {
   try {
