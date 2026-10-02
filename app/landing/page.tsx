@@ -27,19 +27,19 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-emerald-600 to-emerald-700 text-white py-24 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
+      <section className="bg-gradient-to-br from-emerald-600 to-emerald-700 text-white py-12 sm:py-24 px-4">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
             🥗 Tu Entrenamiento + Nutrición en UNA App
           </h1>
-          <p className="text-xl text-emerald-50 mb-8 max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-emerald-50 mx-auto">
             Planes IA personalizados, tracking de máquinas, modo offline. Todo sincronizado automáticamente.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-emerald-700 hover:bg-gray-100">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 justify-center pt-4">
+            <Button size="lg" className="bg-white text-emerald-700 hover:bg-gray-100 w-full sm:w-auto">
               <Link href="/login">Empezar gratis</Link>
             </Button>
-            <Button size="lg" className="bg-white/20 text-white hover:bg-white/30 border-2 border-white font-semibold">
+            <Button size="lg" className="bg-white/20 text-white hover:bg-white/30 border-2 border-white font-semibold w-full sm:w-auto">
               Ver demo (60 seg)
             </Button>
           </div>
@@ -47,11 +47,11 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="py-24 px-4 max-w-6xl mx-auto">
-        <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">
+      <section className="py-12 sm:py-24 px-4 max-w-6xl mx-auto">
+        <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-8 sm:mb-16">
           Por qué SapoFit es diferente
         </h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
           {[
             { icon: '🤖', title: 'Planes IA', desc: 'La IA genera tus comidas según objetivos, alergias y presupuesto.' },
             { icon: '🏋️', title: 'Gym Smart', desc: 'Añade máquinas, trackea progreso de peso, genera rutinas automáticas.' },
@@ -73,36 +73,38 @@ export default function LandingPage() {
       </section>
 
       {/* Video Demo */}
-      <section className="py-24 px-4 bg-gray-50">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-gray-900 mb-12">
+      <section className="py-12 sm:py-24 px-4 bg-gray-50">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
             Mira cómo funciona
           </h2>
-          <div className="rounded-2xl overflow-hidden shadow-2xl bg-black">
+          <div className="rounded-2xl overflow-hidden shadow-2xl bg-black mx-auto max-w-2xl aspect-video">
             <video
               width="100%"
-              height="auto"
+              height="100%"
               controls
-              className="w-full"
+              playsinline
+              preload="metadata"
+              className="w-full h-full object-cover"
               poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920'%3E%3Crect fill='%2310b981' width='1080' height='1920'/%3E%3Ctext x='540' y='960' font-size='120' fill='white' text-anchor='middle' dominant-baseline='middle'%3E▶ SapoFit Demo%3C/text%3E%3C/svg%3E"
             >
-              <source src="/videos/sapofit-marketing.mp4" type="video/mp4" />
+              <source src="/videos/sapofit-marketing.mp4" type="video/mp4; codecs=&quot;avc1.42E01E&quot;" />
               Tu navegador no soporta videos HTML5.
             </video>
           </div>
-          <p className="text-gray-600 mt-8 text-lg">
+          <p className="text-gray-600 text-sm sm:text-lg">
             Crear plan → Trackear máquinas → Recibir alternativas → Sincronizar offline
           </p>
         </div>
       </section>
 
       {/* Pricing */}
-      <section className="py-24 px-4 bg-white">
+      <section className="py-12 sm:py-24 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 mb-8 sm:mb-16">
             Planes
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
             {/* Free */}
             <div className="bg-white rounded-2xl p-8 border-2 border-gray-200">
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Free</h3>
@@ -173,23 +175,23 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-gradient-to-br from-emerald-600 to-emerald-700 text-white py-24 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">Sé de los primeros</h2>
-          <p className="text-xl text-emerald-50 mb-8">
+      <section className="bg-gradient-to-br from-emerald-600 to-emerald-700 text-white py-12 sm:py-24 px-4">
+        <div className="max-w-2xl mx-auto text-center space-y-4">
+          <h2 className="text-2xl sm:text-4xl font-bold">Sé de los primeros</h2>
+          <p className="text-base sm:text-xl text-emerald-50">
             Únete a nuestra lista de espera. Acceso anticipado + 50% descuento primer mes.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center w-full">
             <input
               type="email"
               placeholder="tu@email.com"
-              className="flex-1 px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500"
+              className="px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500 w-full sm:flex-1"
             />
-            <Button size="lg" className="bg-white text-emerald-700 hover:bg-gray-100">
+            <Button size="lg" className="bg-white text-emerald-700 hover:bg-gray-100 w-full sm:w-auto">
               Apuntarme
             </Button>
           </div>
-          <p className="text-sm text-emerald-100 mt-4">Sin spam. Cancelar en cualquier momento.</p>
+          <p className="text-xs sm:text-sm text-emerald-100">Sin spam. Cancelar en cualquier momento.</p>
         </div>
       </section>
 
