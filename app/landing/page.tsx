@@ -39,7 +39,7 @@ export default function LandingPage() {
             <Button size="lg" className="bg-white text-emerald-700 hover:bg-gray-100">
               <Link href="/login">Empezar gratis</Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+            <Button size="lg" className="bg-white/20 text-white hover:bg-white/30 border-2 border-white font-semibold">
               Ver demo (60 seg)
             </Button>
           </div>
