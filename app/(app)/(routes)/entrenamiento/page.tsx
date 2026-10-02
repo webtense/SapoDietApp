@@ -54,6 +54,7 @@ interface CurrentWorkoutResponse {
 interface SetDraft {
   weight: string
   reps: string
+  unit: "kg" | "seg" | "reps"
 }
 
 interface ExerciseProgressionSetPoint {
@@ -111,8 +112,8 @@ export default function EntrenamientoPage() {
           const existing = we.workoutSets.find((s) => s.setNumber === idx + 1)
           const pendingEntry = pending.find((p) => p.workoutExerciseId === we.id && p.setNumber === idx + 1)
           if (existing || pendingEntry) nextSaved[`${we.id}-${idx}`] = true
-          if (pendingEntry) return { weight: String(pendingEntry.weight), reps: String(pendingEntry.reps) }
-          return { weight: existing ? String(existing.weight) : "", reps: existing ? String(existing.reps) : "" }
+          if (pendingEntry) return { weight: String(pendingEntry.weight), reps: String(pendingEntry.reps), unit: "kg" as const }
+          return { weight: existing ? String(existing.weight) : "", reps: existing ? String(existing.reps) : "", unit: "kg" as const }
         })
       }
       setDrafts(nextDrafts)
@@ -460,12 +461,15 @@ export default function EntrenamientoPage() {
                       const isEditing = editingSets[key] ?? !isSaved
 
                       if (isSaved && !isEditing) {
+                        const unit = draft.unit || "kg"
+                        const display =
+                          unit === "reps" ? `${draft.reps || "-"} reps` :
+                          unit === "seg" ? `${draft.weight || "-"} seg` :
+                          `${draft.weight || "-"} kg × ${draft.reps || "-"} reps`
                         return (
                           <div key={idx} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
                             <span className="text-muted-foreground">Serie {idx + 1}</span>
-                            <span className="font-medium">
-                              {draft.weight || "-"} kg × {draft.reps || "-"} reps
-                            </span>
+                            <span className="font-medium">{display}</span>
                             <Button size="sm" variant="ghost" onClick={() => handleEditSet(we.id, idx)}>
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
@@ -473,38 +477,59 @@ export default function EntrenamientoPage() {
                         )
                       }
 
+                      const unit = draft.unit || "kg"
                       return (
                         <div key={idx} className="flex items-end gap-2">
                           <div className="flex-1">
-                            <Label className="text-xs">Serie {idx + 1} — kg</Label>
-                            <div className="flex items-center gap-1">
+                            <Label className="text-xs">Unidad</Label>
+                            <select
+                              value={unit}
+                              onChange={(e) => updateDraft(we.id, idx, "unit", e.target.value as any)}
+                              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                            >
+                              <option value="kg">kg</option>
+                              <option value="seg">segundos</option>
+                              <option value="reps">solo reps</option>
+                            </select>
+                          </div>
+                          {unit !== "reps" && (
+                            <div className="flex-1">
+                              <Label className="text-xs">
+                                {unit === "seg" ? "Segundos" : "Peso (kg)"}
+                              </Label>
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  type="number"
+                                  inputMode={unit === "seg" ? "numeric" : "decimal"}
+                                  value={draft.weight}
+                                  onChange={(e) => updateDraft(we.id, idx, "weight", e.target.value)}
+                                />
+                                {unit === "kg" && (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="secondary"
+                                    className="shrink-0 px-2"
+                                    onClick={() => incrementWeight(we.id, idx, draft.weight, 5)}
+                                  >
+                                    +5
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          {unit !== "seg" && (
+                            <div className="flex-1">
+                              <Label className="text-xs">Reps</Label>
                               <Input
                                 type="number"
-                                inputMode="decimal"
-                                value={draft.weight}
-                                onChange={(e) => updateDraft(we.id, idx, "weight", e.target.value)}
+                                inputMode="numeric"
+                                placeholder={String(we.plannedReps)}
+                                value={draft.reps}
+                                onChange={(e) => updateDraft(we.id, idx, "reps", e.target.value)}
                               />
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="secondary"
-                                className="shrink-0 px-2"
-                                onClick={() => incrementWeight(we.id, idx, draft.weight, 5)}
-                              >
-                                +5
-                              </Button>
                             </div>
-                          </div>
-                          <div className="flex-1">
-                            <Label className="text-xs">Reps</Label>
-                            <Input
-                              type="number"
-                              inputMode="numeric"
-                              placeholder={String(we.plannedReps)}
-                              value={draft.reps}
-                              onChange={(e) => updateDraft(we.id, idx, "reps", e.target.value)}
-                            />
-                          </div>
+                          )}
                           <Button size="sm" variant="outline" disabled={saving === key} onClick={() => handleSaveSet(we, idx)}>
                             {saving === key ? "…" : "Guardar"}
                           </Button>
