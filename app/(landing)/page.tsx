@@ -56,9 +56,9 @@ export default function LandingPage() {
             { icon: '🤖', title: 'Planes IA', desc: 'La IA genera tus comidas según objetivos, alergias y presupuesto.' },
             { icon: '🏋️', title: 'Gym Smart', desc: 'Añade máquinas, trackea progreso de peso, genera rutinas automáticas.' },
             { icon: '📱', title: '100% Offline', desc: 'Entrena sin WiFi. Los datos se sincronizan solos cuando vuelva la conexión.' },
-            { icon: '💬', title: 'WhatsApp Pro', desc: 'Recordatorios automáticos en WhatsApp. Nada de notificaciones molestas.' },
+            { icon: '🔔', title: 'Notificaciones Smart', desc: 'Recordatorios push semanales de peso, entrenamientos y progreso.' },
             { icon: '💰', title: 'Precio honesto', desc: '€4,99/mes. Sin sorpresas, sin premium escondido, cancel cuando quieras.' },
-            { icon: '🔄', title: 'Alternativas IA', desc: 'Sugiere 3 opciones con macros iguales cuando no te gusta una comida.' },
+            { icon: '📊', title: 'Gráficos Reales', desc: 'Visualiza tu peso de 30 días, progresión de máquinas y análisis nutricional.' },
           ].map((feature, i) => (
             <div
               key={i}
