@@ -35,6 +35,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           <Link href="/admin/version" className="rounded-full border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
             Versiones
           </Link>
+          <Link href="/admin/status" className="rounded-full border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            Estado
+          </Link>
           <Link href="/inicio" className="rounded-full border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
             Volver a la app
           </Link>
