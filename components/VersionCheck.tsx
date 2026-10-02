@@ -1,7 +1,11 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function VersionCheck() {
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
+
   useEffect(() => {
     let lastVersion: string | null = null
     let isChecking = false
@@ -15,10 +19,7 @@ export default function VersionCheck() {
         const data = await res.json()
 
         if (lastVersion && lastVersion !== data.version) {
-          const reload = confirm('🔄 Nueva actualización disponible. ¿Recargar ahora?')
-          if (reload) {
-            window.location.reload()
-          }
+          setShowUpdateModal(true)
         }
         lastVersion = data.version
       } catch (error) {
@@ -29,10 +30,40 @@ export default function VersionCheck() {
     }
 
     checkVersion()
-    const interval = setInterval(checkVersion, 30000)
+    const interval = setInterval(checkVersion, 10000) // Chequea cada 10 seg
 
     return () => clearInterval(interval)
   }, [])
 
-  return null
+  if (!showUpdateModal) return null
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-lg">🔄 Nueva versión disponible</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Se ha descargado una actualización. Recarga para obtener las mejoras más recientes.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowUpdateModal(false)}
+            >
+              Después
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={() => window.location.reload()}
+            >
+              Recargar ahora
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
