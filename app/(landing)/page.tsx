@@ -86,7 +86,7 @@ export default function LandingPage() {
               className="w-full"
               poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920'%3E%3Crect fill='%2310b981' width='1080' height='1920'/%3E%3Ctext x='540' y='960' font-size='120' fill='white' text-anchor='middle' dominant-baseline='middle'%3E▶ SapoFit Demo%3C/text%3E%3C/svg%3E"
             >
-              <source src="/api/video/demo" type="video/mp4" />
+              <source src="/videos/sapofit-demo.mp4" type="video/mp4" />
               Tu navegador no soporta videos HTML5.
             </video>
           </div>
