@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import WeightProgressChart from "@/components/WeightProgressChart"
 import { defaultV3Preferences, parseV3Preferences, V3_PREFERENCES_KEY, type V3Preferences } from "@/lib/v3-preferences"
 import { SUPPLEMENT_BRANDS, SUPPLEMENTS_KEY } from "@/lib/supplements"
 import { PaywallDialog } from "@/components/paywall-dialog"
@@ -425,6 +426,8 @@ export default function PerfilPage() {
               </div>
             </CardContent>
           </Card>
+
+          <WeightProgressChart />
 
           <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
             <CardContent className="space-y-3 p-5">

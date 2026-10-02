@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { MacroRing } from "@/components/macro-ring"
+import WeightProgressChart from "@/components/WeightProgressChart"
 import { defaultV3Preferences, parseV3Preferences, V3_PREFERENCES_KEY } from "@/lib/v3-preferences"
 import { normalizeMacros } from "@/lib/plan-normalizers"
 import type { NormalizedMacros } from "@/lib/plan-normalizers"
@@ -562,6 +563,8 @@ export default function HoyPage() {
               {saved && <Badge className="bg-emerald-500 text-white">Check-in guardado</Badge>}
             </CardContent>
           </Card>
+
+          <WeightProgressChart />
 
           <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
             <CardHeader className="pb-2"><CardTitle className="text-base">Objetivos del día</CardTitle></CardHeader>
