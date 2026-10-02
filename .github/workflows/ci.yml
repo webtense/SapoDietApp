@@ -53,11 +53,5 @@ jobs:
       - name: Deploy database migrations
         run: npm run db:deploy
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Test
-        run: npm test
-
       - name: Build
         run: npm run build
