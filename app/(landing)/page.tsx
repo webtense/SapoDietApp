@@ -72,8 +72,32 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Video Demo */}
       <section className="py-24 px-4 bg-gray-50">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-gray-900 mb-12">
+            Mira cómo funciona
+          </h2>
+          <div className="rounded-2xl overflow-hidden shadow-2xl bg-black">
+            <video
+              width="100%"
+              height="auto"
+              controls
+              className="w-full"
+              poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920'%3E%3Crect fill='%2310b981' width='1080' height='1920'/%3E%3Ctext x='540' y='960' font-size='120' fill='white' text-anchor='middle' dominant-baseline='middle'%3E▶ SapoFit Demo%3C/text%3E%3C/svg%3E"
+            >
+              <source src="/api/video/demo" type="video/mp4" />
+              Tu navegador no soporta videos HTML5.
+            </video>
+          </div>
+          <p className="text-gray-600 mt-8 text-lg">
+            Crear plan → Trackear máquinas → Recibir alternativas → Sincronizar offline
+          </p>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className="py-24 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl font-bold text-center text-gray-900 mb-16">
             Planes
