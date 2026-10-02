@@ -10,15 +10,13 @@ export async function GET() {
     const fileBuffer = await readFile(videoPath)
 
     return new NextResponse(fileBuffer, {
-      status: 200,
       headers: {
         "Content-Type": "video/mp4",
         "Content-Length": fileBuffer.length.toString(),
         "Cache-Control": "public, max-age=86400",
-        "Accept-Ranges": "bytes",
       },
     })
   } catch (error) {
-    return new NextResponse("Not Found", { status: 404 })
+    return NextResponse.json({ error: "Video not found" }, { status: 404 })
   }
 }
