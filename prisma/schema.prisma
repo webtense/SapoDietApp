@@ -617,6 +617,7 @@ model WorkoutSet {
   workoutExerciseId   String
   setNumber           Int
   weight              Float
+  maxWeight           Float?        // Máximo histórico levantado en este ejercicio (se actualiza automáticamente)
   reps                Int
   rir                 Int?          // Reps in Reserve
   rpe                 Int?          // Rate of Perceived Exertion
@@ -629,6 +630,7 @@ model WorkoutSet {
   workoutExercise     WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
 
   @@unique([workoutSessionId, workoutExerciseId, setNumber])
+  @@index([workoutExerciseId, maxWeight])
 }
 
 model WeightEntry {

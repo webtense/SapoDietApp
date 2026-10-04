@@ -1,0 +1,7 @@
+{
+  "setup_vps":"OK",
+  "crear_usuarios":"FAIL",
+  "verificar_bd":"OK",
+  "test_e2e":"FAIL",
+  "verificar_version":"OK"
+}
