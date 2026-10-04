@@ -1,14 +1,41 @@
-import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/server/api"
-import { getDashboardMetrics } from "@/lib/server/metrics"
+import { requireAdmin } from '@/lib/server/api'
+import { prisma } from '@/lib/server/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
-  const { error } = await requireAdmin()
-  if (error) return error
+  const { user: admin, error } = await requireAdmin()
+  if (error || !admin) return error
 
-  const daysParam = Number(req.nextUrl.searchParams.get("days") || 30)
-  const days = Number.isFinite(daysParam) && daysParam > 0 ? Math.min(daysParam, 365) : 30
+  const [totalUsers, activeUsers, newsletterSubscribers, loginEventsToday] = await Promise.all([
+    prisma.user.count({ where: { role: 'USER' } }),
+    prisma.user.count({
+      where: {
+        role: 'USER',
+        lastLoginAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        },
+      },
+    }),
+    prisma.newsletterSubscriber.count({
+      where: { status: 'CONFIRMED' },
+    }),
+    prisma.loginEvent.count({
+      where: {
+        createdAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        },
+      },
+    }),
+  ])
 
-  const metrics = await getDashboardMetrics(days)
-  return NextResponse.json({ ok: true, metrics })
+  return NextResponse.json({
+    ok: true,
+    stats: {
+      totalUsers,
+      activeUsers24h: activeUsers,
+      newsletterSubscribersCONFIRMED: newsletterSubscribers,
+      loginEventsLast24h: loginEventsToday,
+      timestamp: new Date().toISOString(),
+    },
+  })
 }
