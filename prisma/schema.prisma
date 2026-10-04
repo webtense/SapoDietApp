@@ -98,10 +98,25 @@ model User {
   eatingOutLogs      EatingOutLog[] @relation("EatingOutLog")
   gymsCreated        Gym[] @relation("GymCreatedBy")
   workoutSchedules   WorkoutSchedule[] @relation("WorkoutSchedule")
+  auditLogs          AdminAuditLog[]
 
   @@index([status])
   @@index([role])
   @@index([invitedById])
+}
+
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  method    String   // POST, PATCH, PUT, DELETE
+  path      String
+  status    Int
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([path, createdAt(sort: Desc)])
 }
 
 model EvolutionMsg {
