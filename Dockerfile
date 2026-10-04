@@ -8,6 +8,8 @@ RUN npm ci --legacy-peer-deps --verbose
 
 FROM base AS builder
 WORKDIR /app
+ARG NEXT_PUBLIC_BUILD_ID=unknown
+ENV NEXT_PUBLIC_BUILD_ID=$NEXT_PUBLIC_BUILD_ID
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate --schema=prisma/schema.prisma

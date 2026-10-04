@@ -2,6 +2,12 @@
 
 import { useEffect } from "react"
 
+declare global {
+  interface Window {
+    swRegistration?: ServiceWorkerRegistration
+  }
+}
+
 export function PwaRegister() {
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -11,10 +17,12 @@ export function PwaRegister() {
       try {
         const registration = await navigator.serviceWorker.register("/sw.js", {
           scope: "/",
-          updateViaCache: "none", // Siempre verifica si hay actualizaciones
+          updateViaCache: "none",
         })
 
-        // Verificar actualizaciones cada 1 hora
+        window.swRegistration = registration
+
+        // Verificar actualizaciones cada hora
         setInterval(() => {
           registration.update().catch(() => null)
         }, 60 * 60 * 1000)
@@ -28,16 +36,7 @@ export function PwaRegister() {
       }
     }
 
-    let reloading = false
-    const onControllerChange = () => {
-      if (reloading) return
-      reloading = true
-      window.location.reload()
-    }
-    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange)
-
     registerServiceWorker()
-    return () => navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange)
   }, [])
 
   return null

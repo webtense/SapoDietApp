@@ -23,7 +23,7 @@ export function VersionFooter() {
       >
         <span>v{currentVersion}</span>
         <span>·</span>
-        <span>octubre 2026</span>
+        <span>{new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long' }).replace(/\s+/, ' ')}</span>
         <span className="ml-1 opacity-0 group-hover:opacity-100 transition">📋</span>
       </button>
       <ChangelogModal

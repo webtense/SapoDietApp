@@ -6,7 +6,6 @@ import { PwaRegister } from '@/components/pwa-register'
 import { PWAInstaller } from '@/components/pwa-installer'
 import { VersionManager } from '@/components/version-manager'
 import { VersionFooter } from '@/components/version-footer'
-import VersionCheck from '@/components/VersionCheck'
 import WeeklyReminders from '@/components/WeeklyReminders'
 import { APP_VERSION, BUILD_ID } from '@/lib/version'
 import './globals.css'
@@ -73,7 +72,6 @@ export default function RootLayout({
         <PwaRegister />
         <PWAInstaller />
         <VersionManager />
-        <VersionCheck />
         <WeeklyReminders />
 
         <Toaster richColors position="top-right" />

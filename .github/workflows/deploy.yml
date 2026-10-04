@@ -42,22 +42,32 @@ jobs:
           SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          TAG="sapofit:v${VERSION}-${SHA::7}"
+          BUILD_ID="${VERSION}-${SHA::7}"
+          TAG="sapofit:v${BUILD_ID}"
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes root@${{ secrets.VPS_HOST }} bash -s <<EOS
             set -euo pipefail
             cd /opt/sapofit
-            docker build -t "$TAG" .
+            docker build -t "$TAG" --build-arg NEXT_PUBLIC_BUILD_ID="$BUILD_ID" .
             docker service update --force --image "$TAG" sapofit
             docker image prune -f --filter "until=168h" >/dev/null || true
           EOS
           echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "BUILD_ID=$BUILD_ID" >> "$GITHUB_ENV"
 
       - name: Verify deployment
         run: |
           VERSION=$(node -p "require('./package.json').version")
+          BUILD_ID="${{ env.BUILD_ID }}"
           for i in $(seq 1 20); do
-            LIVE=$(curl -fsS https://sapofit.semillasdeti.com/api/version | node -p "JSON.parse(require('fs').readFileSync(0)).version" || true)
-            if [ "$LIVE" = "$VERSION" ]; then echo "OK: producción sirve v$LIVE ($TAG)"; exit 0; fi
-            echo "esperando... (live=$LIVE, esperado=$VERSION)"; sleep 10
+            RESPONSE=$(curl -fsS https://sapofit.semillasdeti.com/api/version || echo '{}')
+            LIVE_VERSION=$(echo "$RESPONSE" | node -p "JSON.parse(require('fs').readFileSync(0)).version" 2>/dev/null || echo '')
+            LIVE_BUILD=$(echo "$RESPONSE" | node -p "JSON.parse(require('fs').readFileSync(0)).buildId" 2>/dev/null || echo '')
+            if [ "$LIVE_VERSION" = "$VERSION" ] && [ "$LIVE_BUILD" = "$BUILD_ID" ]; then
+              echo "✅ OK: producción sirve v$LIVE_VERSION (build $LIVE_BUILD)"
+              exit 0
+            fi
+            echo "⏳ esperando... (live=$LIVE_VERSION/$LIVE_BUILD, esperado=$VERSION/$BUILD_ID)"
+            sleep 10
           done
-          echo "ERROR: producción no sirve v$VERSION"; exit 1
+          echo "❌ ERROR: producción no sirve v$VERSION build $BUILD_ID"
+          exit 1

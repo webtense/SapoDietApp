@@ -79,7 +79,7 @@ export function MainNav({ userRole }: MainNavProps) {
         </div>
 
         <div className="mt-auto rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm">
-          <p className="text-xs text-muted-foreground">v{APP_VERSION} · octubre 2026</p>
+          <p className="text-xs text-muted-foreground">v{APP_VERSION} · {new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long' }).replace(/\s+/, ' ')}</p>
         </div>
       </aside>
     </>

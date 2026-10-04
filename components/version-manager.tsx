@@ -101,11 +101,16 @@ export function VersionManager() {
     void checkVersion()
     const interval = window.setInterval(checkVersion, CHECK_INTERVAL_MS)
     const onFocus = () => void checkVersion()
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void checkVersion()
+    }
     window.addEventListener("focus", onFocus)
+    window.addEventListener("visibilitychange", onVisibility)
 
     return () => {
       window.clearInterval(interval)
       window.removeEventListener("focus", onFocus)
+      window.removeEventListener("visibilitychange", onVisibility)
       broadcastRef.current?.close()
     }
   }, [])
