@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { headers } from 'next/headers'
+import { requireAdmin } from '@/lib/server/api'
 
 interface StatusApparatus {
   name: string
@@ -142,17 +142,9 @@ function getVersion(): { version: string; buildId: string; timestamp: string } {
   }
 }
 
-export async function GET(request: Request) {
-  // Verificar token de admin (simple)
-  const headersList = headers()
-  const token = headersList.get('x-admin-token')
-
-  // Si no hay token configurado, permitir (desarrollo)
-  // En producción, debería validarse contra JWT o similar
-  const adminToken = process.env.ADMIN_STATUS_TOKEN
-  if (adminToken && token !== adminToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+export async function GET() {
+  const { user: admin, error } = await requireAdmin()
+  if (error || !admin) return error
 
   const [stripe, gemini, database, webpush] = await Promise.all([
     checkStripe(),

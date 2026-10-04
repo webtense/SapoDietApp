@@ -13,6 +13,25 @@ function startOfPeriod(days: number) {
   return d
 }
 
+/**
+ * Define un usuario como "activo" basado en su último login dentro de un periodo.
+ *
+ * @param daysBack — número de días hacia atrás. Por defecto:
+ *   - 1 = DAU (Daily Active Users)
+ *   - 7 = WAU (Weekly Active Users)
+ *   - 30 = MAU (Monthly Active Users)
+ */
+export function getActiveUsersQuery(daysBack: number = 30) {
+  const since = new Date()
+  since.setDate(since.getDate() - daysBack)
+  return {
+    where: {
+      role: "USER",
+      lastLoginAt: { gte: since },
+    },
+  }
+}
+
 export async function getMonthlyAdSpend(): Promise<number> {
   const setting = await prisma.marketingSetting.findUnique({ where: { key: AD_SPEND_KEY } })
   if (setting) return setting.value
@@ -53,7 +72,7 @@ export async function getDashboardMetrics(days: number) {
     getMonthlyAdSpend(),
     prisma.user.count({ where: { role: "USER" } }),
     prisma.user.count({ where: { role: "USER", createdAt: { gte: since } } }),
-    prisma.user.count({ where: { role: "USER", status: "ACTIVE" } }),
+    prisma.user.count(getActiveUsersQuery(30)),
     prisma.user.count({ where: { role: "USER", subscriptionStatus: "PRO" } }),
     prisma.review.aggregate({
       where: { approved: true },
