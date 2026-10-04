@@ -249,3 +249,14 @@ export const adminCreateExerciseSchema = z.object({
   name: z.string().min(2).max(120),
   machineModelId: z.string().min(1).max(60),
 })
+
+export const newsletterSubscribeSchema = z.object({
+  email: z.string().email().max(160),
+  consent: z.literal(true),
+})
+
+export const newsletterSendSchema = z.object({
+  subject: z.string().min(2).max(200),
+  htmlBody: z.string().min(1).max(50000),
+})
+

@@ -1,9 +1,51 @@
 'use client'
 
+import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
+type NewsletterStatus = 'idle' | 'loading' | 'success' | 'error'
+
 export default function LandingPage() {
+  const [email, setEmail] = useState('')
+  const [consent, setConsent] = useState(false)
+  const [status, setStatus] = useState<NewsletterStatus>('idle')
+  const [message, setMessage] = useState('')
+
+  async function handleSubscribe(e: FormEvent) {
+    e.preventDefault()
+
+    if (!consent) {
+      setStatus('error')
+      setMessage('Debes aceptar recibir la newsletter')
+      return
+    }
+
+    setStatus('loading')
+    setMessage('')
+
+    try {
+      const res = await fetch('/api/newsletter/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, consent }),
+      })
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        setStatus('error')
+        setMessage(data.error || 'Email inválido. Inténtalo de nuevo.')
+        return
+      }
+
+      setStatus('success')
+      setMessage('Revisa tu correo para confirmar tu suscripción')
+    } catch {
+      setStatus('error')
+      setMessage('Error de conexión. Inténtalo más tarde.')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navbar */}
@@ -181,22 +223,57 @@ export default function LandingPage() {
           <p className="text-base sm:text-xl text-emerald-50">
             Únete a nuestra lista de espera. Acceso anticipado + 50% descuento primer mes.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center w-full">
-            <input
-              type="email"
-              placeholder="tu@email.com"
-              className="px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500 w-full sm:flex-1"
-            />
-            <Button size="lg" className="bg-white text-emerald-700 hover:bg-gray-100 w-full sm:w-auto">
-              Apuntarme
-            </Button>
-          </div>
+          {status === 'success' ? (
+            <p className="bg-white/10 border border-white/30 rounded-lg px-4 py-3 text-emerald-50 font-medium">
+              ✓ {message}
+            </p>
+          ) : (
+            <form onSubmit={handleSubscribe} className="w-full space-y-3">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center w-full">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                  disabled={status === 'loading'}
+                  className="px-4 py-3 rounded-lg text-gray-900 placeholder-gray-500 w-full sm:flex-1"
+                />
+                <Button
+                  type="submit"
+                  size="lg"
+                  disabled={status === 'loading'}
+                  className="bg-white text-emerald-700 hover:bg-gray-100 w-full sm:w-auto"
+                >
+                  {status === 'loading' ? 'Enviando…' : 'Apuntarme'}
+                </Button>
+              </div>
+              <label className="flex items-start gap-2 justify-center text-xs sm:text-sm text-emerald-100">
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  disabled={status === 'loading'}
+                  className="mt-0.5"
+                />
+                <span>
+                  Acepto recibir newsletter y he leído la{' '}
+                  <a href="#privacy" className="underline">
+                    política de privacidad
+                  </a>
+                </span>
+              </label>
+              {status === 'error' && (
+                <p className="text-red-100 bg-red-600/30 rounded-lg px-3 py-2 text-sm">{message}</p>
+              )}
+            </form>
+          )}
           <p className="text-xs sm:text-sm text-emerald-100">Sin spam. Cancelar en cualquier momento.</p>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8 px-4 text-center text-sm">
+      <footer id="privacy" className="bg-gray-900 text-gray-400 py-8 px-4 text-center text-sm">
         <p>© 2026 SapoFit • Privacidad • Términos • Made in Spain 🇪🇸</p>
       </footer>
     </div>

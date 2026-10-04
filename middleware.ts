@@ -11,6 +11,9 @@ const PUBLIC_API_PATHS = [
   "/api/qr/",
   "/api/version", // Cache-busting: debe ser público para VersionManager
   "/api/analytics/version", // El POST anota userId solo si hay sesión; el GET exige ADMIN
+  "/api/newsletter/subscribe",
+  "/api/newsletter/confirm",
+  "/api/newsletter/unsubscribe",
 ]
 
 export function middleware(req: NextRequest) {
