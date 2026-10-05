@@ -21,7 +21,7 @@ async function checkStripe(): Promise<StatusApparatus> {
   try {
     const response = await fetch('https://api.stripe.com/v1/account', {
       headers: { Authorization: `Bearer ${key}` },
-      timeout: 5000,
+      signal: AbortSignal.timeout(5000),
     })
     if (response.ok) {
       return {
@@ -66,7 +66,7 @@ async function checkGemini(): Promise<StatusApparatus> {
         body: JSON.stringify({
           contents: [{ parts: [{ text: 'test' }] }],
         }),
-        timeout: 5000,
+        signal: AbortSignal.timeout(5000),
       }
     )
     if (response.ok) {

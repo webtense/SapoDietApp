@@ -208,7 +208,7 @@ export default function EntrenamientoPage() {
     // en cola local y se reintenta solo — nunca se pierde por falta de conexión.
     setDrafts((prev) => {
       const list = [...(prev[we.id] ?? [])]
-      list[setIndex] = { weight: String(weight), reps: String(reps) }
+      list[setIndex] = { ...list[setIndex], weight: String(weight), reps: String(reps) }
       return { ...prev, [we.id]: list }
     })
     setSavedSets((prev) => ({ ...prev, [key]: true }))
