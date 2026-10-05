@@ -44,10 +44,11 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           BUILD_ID="${VERSION}-${SHA::7}"
           TAG="sapofit:v${BUILD_ID}"
+          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes root@${{ secrets.VPS_HOST }} bash -s <<EOS
             set -euo pipefail
             cd /opt/sapofit
-            docker build -t "$TAG" --build-arg NEXT_PUBLIC_BUILD_ID="$BUILD_ID" .
+            docker build -t "$TAG" --build-arg NEXT_PUBLIC_BUILD_ID="$BUILD_ID" --build-arg BUILD_TIME="$BUILD_TIME" .
             docker service update --force --image "$TAG" sapofit
             docker image prune -f --filter "until=168h" >/dev/null || true
           EOS

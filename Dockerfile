@@ -8,8 +8,10 @@ RUN npm ci --legacy-peer-deps --verbose
 
 FROM base AS builder
 WORKDIR /app
-ARG NEXT_PUBLIC_BUILD_ID=unknown
+ARG NEXT_PUBLIC_BUILD_ID
+ARG BUILD_TIME
 ENV NEXT_PUBLIC_BUILD_ID=$NEXT_PUBLIC_BUILD_ID
+ENV BUILD_TIME=$BUILD_TIME
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate --schema=prisma/schema.prisma
@@ -17,9 +19,11 @@ RUN npm run build 2>&1 || (echo "Build failed" && npm run build)
 
 FROM base AS runner
 WORKDIR /app
+ARG BUILD_TIME
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV BUILD_TIME=$BUILD_TIME
 
 # Node_modules completo (necesario para `npx prisma migrate deploy` en el entrypoint,
 # el output standalone no incluye el CLI de prisma).

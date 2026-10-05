@@ -1,8 +1,9 @@
 {
   "name": "sapofit",
-  "version": "3.27.2",
+  "version": "3.28.0-a",
   "private": true,
   "scripts": {
+    "prebuild": "node scripts/generate-sw.js",
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",

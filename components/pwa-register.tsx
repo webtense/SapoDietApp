@@ -23,7 +23,7 @@ export function PwaRegister() {
         window.swRegistration = registration
 
         // Verificar actualizaciones cada hora
-        setInterval(() => {
+        const interval = setInterval(() => {
           registration.update().catch(() => null)
         }, 60 * 60 * 1000)
 
@@ -31,12 +31,36 @@ export function PwaRegister() {
         setTimeout(() => {
           registration.update().catch(() => null)
         }, 5000)
+
+        // iOS (y Safari en general) congela los timers de una PWA en segundo
+        // plano: forzar comprobación al volver a primer plano.
+        const checkOnForeground = () => {
+          if (document.visibilityState === "visible") {
+            registration.update().catch(() => null)
+          }
+        }
+        document.addEventListener("visibilitychange", checkOnForeground)
+        window.addEventListener("focus", checkOnForeground)
+
+        return () => {
+          clearInterval(interval)
+          document.removeEventListener("visibilitychange", checkOnForeground)
+          window.removeEventListener("focus", checkOnForeground)
+        }
       } catch (error) {
         console.error("Service Worker registration failed:", error)
+        return undefined
       }
     }
 
-    registerServiceWorker()
+    let cleanup: (() => void) | undefined
+    registerServiceWorker().then((fn) => {
+      cleanup = fn
+    })
+
+    return () => {
+      cleanup?.()
+    }
   }, [])
 
   return null

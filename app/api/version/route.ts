@@ -37,7 +37,7 @@ export async function GET() {
   return Response.json(
     {
       version: APP_VERSION,
-      commit: BUILD_ID,
+      buildId: BUILD_ID,
       buildTime: process.env.BUILD_TIME || null,
       forceUpdateAt,
       timestamp: Date.now(),
