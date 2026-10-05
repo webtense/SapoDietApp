@@ -99,6 +99,7 @@ model User {
   gymsCreated        Gym[] @relation("GymCreatedBy")
   workoutSchedules   WorkoutSchedule[] @relation("WorkoutSchedule")
   auditLogs          AdminAuditLog[]
+  exerciseAliases    ExerciseAlias[] @relation("ExerciseAlias")
 
   @@index([status])
   @@index([role])
@@ -551,8 +552,22 @@ model GymMachine {
   machineModel    MachineModel  @relation(fields: [machineModelId], references: [id], onDelete: Cascade)
   weightOptions   MachineWeightOption[]
   workoutExercises WorkoutExercise[]
+  exerciseAliases ExerciseAlias[]
 
   @@unique([gymId, machineModelId])
+}
+
+model ExerciseAlias {
+  id           String      @id @default(cuid())
+  userId       String
+  gymMachineId String
+  alias        String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  user         User        @relation("ExerciseAlias", fields: [userId], references: [id], onDelete: Cascade)
+  gymMachine   GymMachine  @relation(fields: [gymMachineId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gymMachineId])
 }
 
 model MachineWeightOption {

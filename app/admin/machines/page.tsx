@@ -14,6 +14,14 @@ import {
 } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { getSpanishName } from "@/lib/machine-translations"
+
+interface GlobalMax {
+  weight: number
+  date: string
+  userId: string
+  userName: string | null
+}
 
 interface MachineModel {
   id: string
@@ -24,6 +32,14 @@ interface MachineModel {
   tips?: string
   recommendedWeight?: number
   _count: { gymMachines: number }
+  globalMax: GlobalMax | null
+}
+
+function formatMaxLabel(max: GlobalMax | null) {
+  if (!max) return "Sin registros"
+  const date = new Date(max.date).toLocaleDateString("es-ES")
+  const who = max.userName || "usuario"
+  return `${max.weight}kg (${who}, ${date})`
 }
 
 interface Gym {
@@ -302,10 +318,13 @@ export default function MachinesPage() {
                 {upperMachines.map((m) => (
                   <Card key={m.id} className="p-4 flex justify-between items-center">
                     <div>
-                      <p className="font-medium">{m.name}</p>
+                      <p className="font-medium">{getSpanishName(m.name)}</p>
                       <p className="text-sm text-muted-foreground">
                         {m._count.gymMachines} gimnasio(s)
                         {m.recommendedWeight && ` • ${m.recommendedWeight} kg`}
+                      </p>
+                      <p className="text-sm text-emerald-700 font-medium mt-0.5">
+                        Máximo: {formatMaxLabel(m.globalMax)}
                       </p>
                     </div>
                     <Button
@@ -328,10 +347,13 @@ export default function MachinesPage() {
                 {lowerMachines.map((m) => (
                   <Card key={m.id} className="p-4 flex justify-between items-center">
                     <div>
-                      <p className="font-medium">{m.name}</p>
+                      <p className="font-medium">{getSpanishName(m.name)}</p>
                       <p className="text-sm text-muted-foreground">
                         {m._count.gymMachines} gimnasio(s)
                         {m.recommendedWeight && ` • ${m.recommendedWeight} kg`}
+                      </p>
+                      <p className="text-sm text-emerald-700 font-medium mt-0.5">
+                        Máximo: {formatMaxLabel(m.globalMax)}
                       </p>
                     </div>
                     <Button
@@ -354,10 +376,13 @@ export default function MachinesPage() {
                 {fullMachines.map((m) => (
                   <Card key={m.id} className="p-4 flex justify-between items-center">
                     <div>
-                      <p className="font-medium">{m.name}</p>
+                      <p className="font-medium">{getSpanishName(m.name)}</p>
                       <p className="text-sm text-muted-foreground">
                         {m._count.gymMachines} gimnasio(s)
                         {m.recommendedWeight && ` • ${m.recommendedWeight} kg`}
+                      </p>
+                      <p className="text-sm text-emerald-700 font-medium mt-0.5">
+                        Máximo: {formatMaxLabel(m.globalMax)}
                       </p>
                     </div>
                     <Button

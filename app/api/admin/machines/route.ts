@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
+import { getGlobalMaxWeight } from "@/lib/server/workout-stats"
 import { z } from "zod"
 
 const createMachineSchema = z.object({
@@ -30,7 +31,21 @@ export async function GET(req: NextRequest) {
       orderBy: { name: "asc" },
     })
 
-    return NextResponse.json({ ok: true, models })
+    const modelsWithMax = await Promise.all(
+      models.map(async (model) => {
+        // Una máquina puede tener varios Exercise asociados (uno por nombre histórico);
+        // calculamos el máximo global por cada uno y nos quedamos con el más alto.
+        const maxes = await Promise.all(
+          model.exercises.map((ex) => getGlobalMaxWeight(ex.id))
+        )
+        const globalMax = maxes
+          .filter((m): m is NonNullable<typeof m> => m != null)
+          .sort((a, b) => b.weight - a.weight)[0] ?? null
+        return { ...model, globalMax }
+      })
+    )
+
+    return NextResponse.json({ ok: true, models: modelsWithMax })
   } catch (err) {
     return NextResponse.json(
       { error: "Error loading machines" },

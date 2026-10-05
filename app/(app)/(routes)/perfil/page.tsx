@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowRight, CheckCircle2, Dumbbell, Pill, Save, Sparkles, Target, User, UtensilsCrossed } from "lucide-react"
+import { ArrowRight, CheckCircle2, Dumbbell, Pill, Ruler, Save, Scale, Sparkles, Target, User, UtensilsCrossed } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,9 +11,42 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import WeightProgressChart from "@/components/WeightProgressChart"
+import UserWeightChart from "@/components/UserWeightChart"
 import { defaultV3Preferences, parseV3Preferences, V3_PREFERENCES_KEY, type V3Preferences } from "@/lib/v3-preferences"
 import { SUPPLEMENT_BRANDS, SUPPLEMENTS_KEY } from "@/lib/supplements"
 import { PaywallDialog } from "@/components/paywall-dialog"
+
+interface WeightEntry { id: string; date: string; weight: number }
+interface MeasurementEntry {
+  date: string
+  waistCm?: number | null
+  chestCm?: number | null
+  hipsCm?: number | null
+  leftArmCm?: number | null
+  rightArmCm?: number | null
+  leftThighCm?: number | null
+  rightThighCm?: number | null
+  neckCm?: number | null
+  leftCalfCm?: number | null
+  rightCalfCm?: number | null
+}
+
+const MEASUREMENT_FIELDS: { key: keyof MeasurementEntry; label: string }[] = [
+  { key: "waistCm", label: "Cintura" },
+  { key: "chestCm", label: "Pecho" },
+  { key: "hipsCm", label: "Cadera" },
+  { key: "leftArmCm", label: "Brazo izq." },
+  { key: "rightArmCm", label: "Brazo der." },
+  { key: "leftThighCm", label: "Muslo izq." },
+  { key: "rightThighCm", label: "Muslo der." },
+  { key: "neckCm", label: "Cuello" },
+  { key: "leftCalfCm", label: "Gemelo izq." },
+  { key: "rightCalfCm", label: "Gemelo der." },
+]
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10)
+}
 
 interface FormData {
   nombre: string
@@ -76,6 +109,60 @@ export default function PerfilPage() {
   const [v3, setV3] = useState<V3Preferences>(defaultV3Preferences)
   const [supplementBrand, setSupplementBrand] = useState<string>("")
 
+  const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([])
+  const [weightToday, setWeightToday] = useState("")
+  const [savingWeight, setSavingWeight] = useState(false)
+
+  const [measurements, setMeasurements] = useState<MeasurementEntry[]>([])
+  const [measureForm, setMeasureForm] = useState<Record<string, string>>({})
+  const [savingMeasures, setSavingMeasures] = useState(false)
+
+  async function loadProgress() {
+    const [w, m] = await Promise.all([
+      fetch("/api/user/progress/weight").then((r) => r.json()).catch(() => ({ entries: [] })),
+      fetch("/api/user/progress/measurements").then((r) => r.json()).catch(() => ({ entries: [] })),
+    ])
+    setWeightEntries(w.entries ?? [])
+    setMeasurements(m.entries ?? [])
+  }
+
+  const lastWeight = weightEntries[weightEntries.length - 1]
+  const lastMeasurement = measurements[measurements.length - 1]
+
+  async function saveWeightToday() {
+    const value = Number(weightToday)
+    if (!(value > 0 && value <= 500)) return
+    setSavingWeight(true)
+    await fetch("/api/user/progress/weight", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: todayStr(), weightKg: value }),
+    })
+    setSavingWeight(false)
+    setWeightToday("")
+    loadProgress()
+  }
+
+  async function saveMeasurements() {
+    const payload: Record<string, number> = {}
+    for (const { key } of MEASUREMENT_FIELDS) {
+      const raw = measureForm[key]
+      if (!raw) continue
+      const value = Number(raw)
+      if (value > 0 && value <= 300) payload[key] = value
+    }
+    if (Object.keys(payload).length === 0) return
+    setSavingMeasures(true)
+    await fetch("/api/user/progress/measurements", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: todayStr(), ...payload }),
+    })
+    setSavingMeasures(false)
+    setMeasureForm({})
+    loadProgress()
+  }
+
   useEffect(() => {
     const load = async () => {
       const localPrefs = typeof window !== "undefined" ? window.localStorage.getItem(V3_PREFERENCES_KEY) : null
@@ -135,6 +222,7 @@ export default function PerfilPage() {
     }
 
     load()
+    loadProgress()
   }, [])
 
   const updateField = (field: keyof FormData, value: string | string[]) => {
@@ -426,6 +514,74 @@ export default function PerfilPage() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Scale className="h-4 w-4" /> Peso diario</CardTitle>
+              <CardDescription>Registra tu peso de hoy para seguir tu evolución.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Fecha</Label>
+                  <Input value={new Date().toLocaleDateString("es-ES")} disabled />
+                </div>
+                <div>
+                  <Label>Peso (kg)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={weightToday}
+                    onChange={(e) => setWeightToday(e.target.value)}
+                  />
+                </div>
+              </div>
+              <Button
+                className="w-full"
+                disabled={savingWeight || !(Number(weightToday) > 0 && Number(weightToday) <= 500)}
+                onClick={saveWeightToday}
+              >
+                Guardar peso de hoy
+              </Button>
+              {lastWeight && (
+                <p className="text-sm text-muted-foreground">
+                  Último: {lastWeight.weight} kg ({new Date(lastWeight.date).toLocaleDateString("es-ES")})
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Ruler className="h-4 w-4" /> Medidas</CardTitle>
+              <CardDescription>Actualiza tus medidas corporales periódicamente.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                {MEASUREMENT_FIELDS.map(({ key, label }) => (
+                  <div key={key}>
+                    <Label>{label} (cm)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={measureForm[key] ?? ""}
+                      onChange={(e) => setMeasureForm((prev) => ({ ...prev, [key]: e.target.value }))}
+                    />
+                  </div>
+                ))}
+              </div>
+              <Button className="w-full" disabled={savingMeasures} onClick={saveMeasurements}>
+                Guardar medidas
+              </Button>
+              {lastMeasurement && (
+                <p className="text-sm text-muted-foreground">
+                  Última actualización: {new Date(lastMeasurement.date).toLocaleDateString("es-ES")}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <UserWeightChart />
 
           <WeightProgressChart />
 

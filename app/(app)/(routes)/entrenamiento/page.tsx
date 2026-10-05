@@ -9,9 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { CloudOff, Info, Pencil } from "lucide-react"
+import { CloudOff, Info, Pencil, Trophy } from "lucide-react"
 import Link from "next/link"
 import { enqueuePendingSet, flushPendingSets, getPendingSets } from "@/lib/offline-sets-queue"
+import { getSpanishName } from "@/lib/machine-translations"
+import ExerciseAliasEditor from "@/components/ExerciseAliasEditor"
 
 type Group = "UPPER" | "LOWER"
 
@@ -31,6 +33,13 @@ interface WorkoutSetItem {
   reps: number
 }
 
+interface MaxWeightInfo {
+  weight: number
+  date: string
+  userId: string
+  userName?: string | null
+}
+
 interface WorkoutExerciseItem {
   id: string
   order: number
@@ -38,8 +47,10 @@ interface WorkoutExerciseItem {
   plannedReps: number
   plannedWeight: number | null
   exercise: { id: string; name: string }
-  gymMachine: { id: string; machineModel: MachineModelInfo } | null
+  gymMachine: { id: string; machineModel: MachineModelInfo; userAlias?: string | null } | null
   workoutSets: WorkoutSetItem[]
+  userMax?: MaxWeightInfo | null
+  globalMax?: MaxWeightInfo | null
 }
 
 interface CurrentWorkoutResponse {
@@ -73,6 +84,10 @@ interface ExerciseProgressionSession {
 type ViewTab = "entrenar" | "progresion"
 
 const GROUP_LABEL: Record<Group, string> = { UPPER: "Tren Superior", LOWER: "Tren Inferior" }
+
+function displayName(we: WorkoutExerciseItem) {
+  return we.gymMachine?.userAlias || getSpanishName(we.gymMachine?.machineModel.name ?? we.exercise.name)
+}
 
 export default function EntrenamientoPage() {
   const [tab, setTab] = useState<ViewTab>("entrenar")
@@ -424,13 +439,32 @@ export default function EntrenamientoPage() {
           <div className="space-y-3">
             {exercises.map((we) => {
               const model = we.gymMachine?.machineModel
-              const name = model?.name ?? we.exercise.name
+              const baseName = getSpanishName(model?.name ?? we.exercise.name)
+              const alias = we.gymMachine?.userAlias
+              const name = displayName(we)
               const showInfo = model && infoMachine === model.id
+
+              const activeMax = we.userMax && (!we.globalMax || we.userMax.weight >= we.globalMax.weight)
+                ? { ...we.userMax, isPersonal: true }
+                : we.globalMax
+                  ? { ...we.globalMax, isPersonal: we.globalMax.userId === we.userMax?.userId }
+                  : null
+
               return (
                 <Card key={we.id}>
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between text-base">
-                      <span>{name}</span>
+                      {we.gymMachine ? (
+                        <ExerciseAliasEditor
+                          gymMachineId={we.gymMachine.id}
+                          currentAlias={alias}
+                          displayName={name}
+                          placeholder={baseName}
+                          onSaved={loadCurrent}
+                        />
+                      ) : (
+                        <span className="flex items-center gap-1">{name}</span>
+                      )}
                       <span className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
                         {we.plannedSets}x{we.plannedReps}
                         {model?.recommendedWeight ? ` · ${model.recommendedWeight}kg` : ""}
@@ -446,6 +480,21 @@ export default function EntrenamientoPage() {
                         )}
                       </span>
                     </CardTitle>
+                    {activeMax && (
+                      <div
+                        className={cn(
+                          "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium",
+                          activeMax.isPersonal
+                            ? "border-amber-300 bg-amber-50 text-amber-800"
+                            : "border-emerald-300 bg-emerald-50 text-emerald-700"
+                        )}
+                      >
+                        <Trophy className="h-3.5 w-3.5" />
+                        Máximo: {activeMax.weight}kg
+                        {activeMax.userName ? ` (${activeMax.userName}, ` : " ("}
+                        {new Date(activeMax.date).toLocaleDateString("es-ES")})
+                      </div>
+                    )}
                     {showInfo && model && (
                       <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm space-y-1">
                         {model.description && <p><strong>Qué es:</strong> {model.description}</p>}
@@ -559,7 +608,7 @@ export default function EntrenamientoPage() {
                     : "bg-muted text-muted-foreground",
                 )}
               >
-                {we.gymMachine?.machineModel.name ?? we.exercise.name}
+                {displayName(we)}
               </button>
             ))}
           </div>
@@ -567,8 +616,10 @@ export default function EntrenamientoPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                {exercises.find((we) => we.exercise.id === selectedProgressionExercise)?.gymMachine?.machineModel.name ??
-                  "Selecciona una máquina"}
+                {(() => {
+                  const sel = exercises.find((we) => we.exercise.id === selectedProgressionExercise)
+                  return sel ? displayName(sel) : "Selecciona una máquina"
+                })()}
               </CardTitle>
             </CardHeader>
             <CardContent>

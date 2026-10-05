@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/server/prisma";
+import { getGlobalMaxWeight, getMaxWeightByExercise } from "@/lib/server/workout-stats";
 
 export async function getOrCreateTodayWorkout(
   userId: string,
@@ -139,6 +140,17 @@ export async function getOrCreateTodayWorkout(
     })
   ).filter((ex) => ex.gymMachineId && currentMachineIds.has(ex.gymMachineId));
 
+  // Alias personal del usuario por máquina (left join manual vía ExerciseAlias)
+  const gymMachineIds = exercises
+    .map((ex) => ex.gymMachineId)
+    .filter((id): id is string => !!id);
+  const aliases = gymMachineIds.length
+    ? await prisma.exerciseAlias.findMany({
+        where: { userId, gymMachineId: { in: gymMachineIds } },
+      })
+    : [];
+  const aliasByGymMachineId = new Map(aliases.map((a) => [a.gymMachineId, a.alias]));
+
   // Enrich exercises with their sets for today's session
   const exercisesWithSets = await Promise.all(
     exercises.map(async (ex) => {
@@ -149,7 +161,14 @@ export async function getOrCreateTodayWorkout(
         },
         orderBy: { setNumber: "asc" },
       });
-      return { ...ex, workoutSets: sets };
+      const gymMachine = ex.gymMachine
+        ? { ...ex.gymMachine, userAlias: aliasByGymMachineId.get(ex.gymMachine.id) ?? null }
+        : ex.gymMachine;
+      const [userMax, globalMax] = await Promise.all([
+        getMaxWeightByExercise(userId, ex.exerciseId),
+        getGlobalMaxWeight(ex.exerciseId),
+      ]);
+      return { ...ex, gymMachine, workoutSets: sets, userMax, globalMax };
     })
   );
 
