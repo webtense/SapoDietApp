@@ -28,5 +28,16 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# mobile (Capacitor/Android) — el proyecto se compila solo en CI
+mobile/node_modules
+mobile/android/app/build/
+mobile/android/build/
+mobile/android/.gradle/
+mobile/android/capacitor-cordova-android-plugins/
+mobile/android/app/keystore/
+mobile/android/local.properties
+mobile/android/*.iml
+mobile/android/app/*.iml
 next-env.d.ts
 scripts/.env.workflow

@@ -1,11 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Watch, Copy, Trash2, Check } from "lucide-react"
+import { Watch, Copy, Trash2, Check, RefreshCw } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { isNativeAndroid, syncHealthFromDevice } from "@/lib/mobile-health"
 
 interface HealthToken {
   id: string
@@ -22,6 +23,9 @@ export default function ConnectWatchCard() {
   const [creating, setCreating] = useState(false)
   const [newToken, setNewToken] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [isAndroid] = useState(() => isNativeAndroid())
+  const [syncing, setSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
@@ -30,8 +34,28 @@ export default function ConnectWatchCard() {
     setLoading(false)
   }
 
+  async function runSync() {
+    setSyncing(true)
+    setSyncMessage(null)
+    const result = await syncHealthFromDevice()
+    if (result.ok) {
+      setSyncMessage(`Sincronizado (${result.daysSynced ?? 0} días)`)
+      await load()
+    } else if (result.reason === "permission-denied") {
+      setSyncMessage("Health Connect no concedió permisos. Revísalos en sus ajustes.")
+    } else if (result.reason === "unavailable") {
+      setSyncMessage("Health Connect no está instalado en este dispositivo.")
+    } else {
+      setSyncMessage("No se pudo sincronizar. Inténtalo de nuevo.")
+    }
+    setSyncing(false)
+  }
+
   useEffect(() => {
     load()
+    // Sincronización automática al abrir la pantalla en la app Android.
+    if (isAndroid) runSync()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function generateToken() {
@@ -75,10 +99,25 @@ export default function ConnectWatchCard() {
           <Watch className="h-4 w-4" /> Conectar reloj
         </CardTitle>
         <CardDescription>
-          Trae tus pasos, pulso y sueño desde Apple Salud con un Atajo de iOS. Ningún dato se envía sin tu token.
+          {isAndroid
+            ? "Trae tus pasos, pulso, peso y entrenos desde Google Health Connect."
+            : "Trae tus pasos, pulso y sueño desde Apple Salud con un Atajo de iOS. Ningún dato se envía sin tu token."}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {isAndroid && (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border p-3">
+            <div>
+              <p className="text-sm font-medium">Health Connect</p>
+              {syncMessage && <p className="text-xs text-muted-foreground">{syncMessage}</p>}
+            </div>
+            <Button type="button" size="sm" onClick={runSync} disabled={syncing}>
+              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Sincronizando…" : "Sincronizar ahora"}
+            </Button>
+          </div>
+        )}
+
         {newToken ? (
           <div className="space-y-2 rounded-2xl border border-emerald-300 bg-emerald-50 p-4">
             <p className="text-sm font-medium text-emerald-800">
@@ -127,6 +166,7 @@ export default function ConnectWatchCard() {
           <Badge variant="secondary" className="w-fit">Reloj conectado</Badge>
         )}
 
+        {!isAndroid && (
         <div className="rounded-2xl bg-muted/50 p-4 text-xs text-muted-foreground">
           <p className="font-medium text-foreground">Guía del Atajo de iOS</p>
           <ol className="mt-2 list-decimal space-y-1 pl-4">
@@ -144,6 +184,7 @@ export default function ConnectWatchCard() {
             <li>Crea una automatización diaria que ejecute el atajo (hay que hacerlo una vez por iPhone).</li>
           </ol>
         </div>
+        )}
       </CardContent>
     </Card>
   )
