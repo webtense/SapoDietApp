@@ -38,10 +38,25 @@ jobs:
       # asegura la plataforma/build-tools que necesita este proyecto.
       - name: Ensure Android SDK platform/build-tools
         run: |
-          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 2 -name sdkmanager -type f | sort -V | tail -1)
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          find "$ROOT" -maxdepth 3 -iname "sdkmanager*" 2>/dev/null || true
+          SDKMANAGER=$(find "$ROOT" -maxdepth 4 -iname "sdkmanager" -type f 2>/dev/null | sort -V | tail -1)
+          if [ -z "$SDKMANAGER" ]; then
+            echo "No se encontró sdkmanager preinstalado; instalando cmdline-tools manualmente"
+            CMDTOOLS_DIR="$ROOT/cmdline-tools/latest"
+            mkdir -p "$ROOT/cmdline-tools"
+            curl -fsSL -o /tmp/cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+            unzip -q /tmp/cmdline-tools.zip -d "$ROOT/cmdline-tools"
+            mv "$ROOT/cmdline-tools/cmdline-tools" "$CMDTOOLS_DIR"
+            SDKMANAGER="$CMDTOOLS_DIR/bin/sdkmanager"
+          fi
           echo "Using sdkmanager at $SDKMANAGER"
-          yes | "$SDKMANAGER" --licenses >/dev/null || true
-          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+          echo "ANDROID_SDK_ROOT=$ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$ROOT" >> "$GITHUB_ENV"
+          yes | "$SDKMANAGER" --sdk_root="$ROOT" --licenses >/dev/null || true
+          "$SDKMANAGER" --sdk_root="$ROOT" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Install mobile/ dependencies
         working-directory: mobile
