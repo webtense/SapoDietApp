@@ -100,6 +100,9 @@ model User {
   workoutSchedules   WorkoutSchedule[] @relation("WorkoutSchedule")
   auditLogs          AdminAuditLog[]
   exerciseAliases    ExerciseAlias[] @relation("ExerciseAlias")
+  healthTokens       HealthToken[]
+  healthDailies      HealthDaily[]
+  healthWorkouts     HealthWorkout[]
 
   @@index([status])
   @@index([role])
@@ -940,6 +943,58 @@ model ScheduledUpdate {
 // ───────────────────────────────────────────────────────────────────────────────
 // CALENDARIO DE ENTRENO: día de la semana → grupo muscular + push motivacional
 // ───────────────────────────────────────────────────────────────────────────────
+
+// ───────────────────────────────────────────────────────────────────────────────
+// SALUD / WEARABLES: importación desde Atajos de iOS (Apple Salud) y Android
+// ───────────────────────────────────────────────────────────────────────────────
+
+model HealthToken {
+  id          String    @id @default(cuid())
+  userId      String
+  tokenHash   String    @unique
+  label       String
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model HealthDaily {
+  id          String   @id @default(cuid())
+  userId      String
+  date        DateTime
+  steps       Int?
+  activeKcal  Float?
+  restingHr   Int?
+  avgHr       Int?
+  sleepMin    Int?
+  source      String   @default("manual")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model HealthWorkout {
+  id          String    @id @default(cuid())
+  userId      String
+  startedAt   DateTime
+  endedAt     DateTime?
+  type        String
+  kcal        Float?
+  avgHr       Int?
+  source      String    @default("manual")
+  externalId  String
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, source, externalId])
+  @@index([userId, startedAt])
+}
 
 model WorkoutSchedule {
   id        String   @id @default(cuid())

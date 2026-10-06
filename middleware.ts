@@ -14,6 +14,7 @@ const PUBLIC_API_PATHS = [
   "/api/newsletter/subscribe",
   "/api/newsletter/confirm",
   "/api/newsletter/unsubscribe",
+  "/api/import/", // Atajos de iOS: el handler valida su propio token Bearer
 ]
 
 export function middleware(req: NextRequest) {

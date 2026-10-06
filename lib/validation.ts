@@ -260,3 +260,29 @@ export const newsletterSendSchema = z.object({
   htmlBody: z.string().min(1).max(50000),
 })
 
+// ─── Salud / wearables (Atajos de iOS, Android) ──────────────────────────────
+
+export const healthWorkoutImportSchema = z.object({
+  startedAt: z.string().datetime(),
+  endedAt: z.string().datetime().optional(),
+  type: z.string().min(1).max(60),
+  kcal: z.number().min(0).max(10000).optional(),
+  avgHr: z.number().int().min(30).max(220).optional(),
+  externalId: z.string().min(1).max(200),
+})
+
+export const healthImportSchema = z.object({
+  date: z.string().datetime(),
+  steps: z.number().int().min(0).max(100000).optional(),
+  activeKcal: z.number().min(0).max(10000).optional(),
+  restingHr: z.number().int().min(30).max(220).optional(),
+  avgHr: z.number().int().min(30).max(220).optional(),
+  sleepMin: z.number().int().min(0).max(1440).optional(),
+  weightKg: z.number().min(30).max(300).optional(),
+  workouts: z.array(healthWorkoutImportSchema).max(20).optional(),
+})
+
+export const healthTokenCreateSchema = z.object({
+  label: z.string().min(1).max(60),
+})
+

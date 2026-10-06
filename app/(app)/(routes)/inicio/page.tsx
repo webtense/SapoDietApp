@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { LogOut, Target, TrendingDown, TrendingUp, Scale, Droplets } from "lucide-react"
+import { LogOut, Target, TrendingDown, TrendingUp, Scale, Droplets, Footprints, HeartPulse, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -59,12 +59,21 @@ type WeightPoint = {
   weightKg: number
 }
 
+interface HealthDaily {
+  date: string
+  steps: number | null
+  restingHr: number | null
+  avgHr: number | null
+  sleepMin: number | null
+}
+
 export default function InicioPage() {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [goal, setGoal] = useState<Goal | null>(null)
   const [dailyLog, setDailyLog] = useState<DailyLog | null>(null)
   const [weights, setWeights] = useState<WeightPoint[]>([])
+  const [todayHealth, setTodayHealth] = useState<HealthDaily | null>(null)
   const [loading, setLoading] = useState(true)
 
   const chartData = useMemo(() => {
@@ -80,11 +89,12 @@ export default function InicioPage() {
 
   useEffect(() => {
     const load = async () => {
-      const [userRes, profileRes, dailyRes, weightsRes] = await Promise.all([
+      const [userRes, profileRes, dailyRes, weightsRes, healthRes] = await Promise.all([
         fetch("/api/auth/me"),
         fetch("/api/profile"),
         fetch("/api/tracking"),
         fetch("/api/tracking?type=weights&days=30"),
+        fetch("/api/user/health?days=1"),
       ])
 
       if (userRes.ok) {
@@ -109,6 +119,12 @@ export default function InicioPage() {
               .filter((p: any) => p && typeof p.date === "string" && typeof p.weightKg === "number")
               .map((p: any) => ({ date: p.date, weightKg: p.weightKg }))
           )
+        }
+      }
+      if (healthRes.ok) {
+        const h = await healthRes.json()
+        if (Array.isArray(h.dailies) && h.dailies.length > 0) {
+          setTodayHealth(h.dailies[h.dailies.length - 1])
         }
       }
       setLoading(false)
@@ -214,6 +230,42 @@ export default function InicioPage() {
           </CardContent>
         </Card>
       </div>
+
+      {todayHealth && (todayHealth.steps != null || todayHealth.restingHr != null || todayHealth.sleepMin != null) && (
+        <div className="grid grid-cols-3 gap-3">
+          <Card className="bg-gradient-to-br from-sky-50 to-white">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-sky-600 mb-1">
+                <Footprints className="h-4 w-4" />
+                <span className="text-xs font-medium">Pasos</span>
+              </div>
+              <p className="text-2xl font-bold">{todayHealth.steps ?? "--"}</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-rose-50 to-white">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-rose-600 mb-1">
+                <HeartPulse className="h-4 w-4" />
+                <span className="text-xs font-medium">Pulso reposo</span>
+              </div>
+              <p className="text-2xl font-bold">
+                {todayHealth.restingHr ?? "--"} <span className="text-sm font-normal text-muted-foreground">bpm</span>
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-indigo-50 to-white">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-indigo-600 mb-1">
+                <Moon className="h-4 w-4" />
+                <span className="text-xs font-medium">Sueño</span>
+              </div>
+              <p className="text-2xl font-bold">
+                {todayHealth.sleepMin != null ? `${(todayHealth.sleepMin / 60).toFixed(1)}h` : "--"}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Card className="rounded-3xl">
         <CardHeader className="pb-3">

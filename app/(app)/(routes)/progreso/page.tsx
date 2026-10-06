@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Scale, Ruler, Loader2 } from "lucide-react"
+import { Scale, Ruler, Loader2, Footprints } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,12 @@ interface MeasurementEntry {
   chestCm: number | null
   hipsCm: number | null
 }
+interface HealthDaily {
+  date: string
+  steps: number | null
+  restingHr: number | null
+  sleepMin: number | null
+}
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10)
@@ -26,6 +32,7 @@ function todayStr() {
 export default function ProgresoPage() {
   const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([])
   const [measurements, setMeasurements] = useState<MeasurementEntry[]>([])
+  const [healthDailies, setHealthDailies] = useState<HealthDaily[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -36,12 +43,14 @@ export default function ProgresoPage() {
 
   async function load() {
     setLoading(true)
-    const [w, m] = await Promise.all([
+    const [w, m, h] = await Promise.all([
       fetch("/api/user/progress/weight").then(r => r.json()).catch(() => ({ entries: [] })),
       fetch("/api/user/progress/measurements").then(r => r.json()).catch(() => ({ entries: [] })),
+      fetch("/api/user/health?days=90").then(r => r.json()).catch(() => ({ dailies: [] })),
     ])
     setWeightEntries(w.entries ?? [])
     setMeasurements(m.entries ?? [])
+    setHealthDailies(h.dailies ?? [])
     setLoading(false)
   }
 
@@ -85,6 +94,10 @@ export default function ProgresoPage() {
   const waistChartData = measurements
     .filter(m => m.waistCm != null)
     .map(m => ({ date: m.date.slice(5, 10), cintura: m.waistCm }))
+
+  const stepsChartData = healthDailies
+    .filter(d => d.steps != null)
+    .map(d => ({ date: d.date.slice(5, 10), pasos: d.steps }))
 
   if (loading) {
     return (
@@ -179,6 +192,28 @@ export default function ProgresoPage() {
           )}
         </CardContent>
       </Card>
+
+      {stepsChartData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Footprints className="h-5 w-5 text-primary" /> Pasos diarios
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={stepsChartData}>
+                  <XAxis dataKey="date" fontSize={11} />
+                  <YAxis domain={["auto", "auto"]} fontSize={11} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="pasos" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

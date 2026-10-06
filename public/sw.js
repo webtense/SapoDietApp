@@ -2,7 +2,7 @@
 
 // Generado por scripts/generate-sw.js en cada build (ver lib/version.ts).
 // NO editar public/sw.js a mano: se sobrescribe en el prebuild.
-const CACHE_NAME = "sapofit-3.28.0-a-20261005"
+const CACHE_NAME = "sapofit-3.28.0-b-20261006"
 
 self.addEventListener("install", () => {
   // No activar automáticamente: esperamos a que el cliente confirme la
