@@ -31,8 +31,15 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      # Los runners ubuntu-latest de GitHub ya traen Android SDK preinstalado
+      # en $ANDROID_HOME. "android-actions/setup-android@v3" falla hoy porque
+      # intenta instalar el paquete legacy "tools" (retirado del repositorio
+      # de Google) incluso cuando no hace falta, así que se evita y solo se
+      # asegura la plataforma/build-tools que necesita este proyecto.
+      - name: Ensure Android SDK platform/build-tools
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Install mobile/ dependencies
         working-directory: mobile
