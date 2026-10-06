@@ -42,6 +42,7 @@ export async function getOrCreateTodayWorkout(
           instructions: true,
           tips: true,
           recommendedWeight: true,
+          defaultReps: true,
         },
       },
     },
@@ -91,7 +92,7 @@ export async function getOrCreateTodayWorkout(
         gymMachineId: machine.id,
         order: nextOrder++,
         plannedSets: 3,
-        plannedReps: 12,
+        plannedReps: machine.machineModel.defaultReps,
       },
     });
   }

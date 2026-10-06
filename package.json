@@ -1,6 +1,6 @@
 {
   "name": "sapofit",
-  "version": "3.28.0-b",
+  "version": "3.28.0-c.1",
   "private": true,
   "scripts": {
     "prebuild": "node scripts/generate-sw.js",

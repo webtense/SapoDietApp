@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { requireAdmin } from "@/lib/server/api"
+import { requireAdmin, withAdminAudit } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
 import { z } from "zod"
 
@@ -10,6 +10,7 @@ const updateMachineSchema = z.object({
   instructions: z.string().optional(),
   tips: z.string().optional(),
   recommendedWeight: z.number().optional(),
+  defaultReps: z.number().int().min(1).max(50).optional(),
 })
 
 export async function PATCH(
@@ -27,17 +28,24 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid data" }, { status: 400 })
   }
 
-  try {
-    const machine = await prisma.machineModel.update({
-      where: { id },
-      data: parsed.data,
-    })
+  return withAdminAudit({
+    userId: user.id,
+    method: "PATCH",
+    path: `/api/admin/machines/${id}`,
+    handler: async () => {
+      try {
+        const machine = await prisma.machineModel.update({
+          where: { id },
+          data: parsed.data,
+        })
 
-    return NextResponse.json({ ok: true, machine })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Error updating machine"
-    return NextResponse.json({ error: message }, { status: 400 })
-  }
+        return NextResponse.json({ ok: true, machine })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Error updating machine"
+        return NextResponse.json({ error: message }, { status: 400 })
+      }
+    },
+  })
 }
 
 export async function DELETE(

@@ -1,0 +1,1 @@
+ALTER TABLE "MachineModel" ADD COLUMN "defaultReps" INTEGER DEFAULT 12 NOT NULL;

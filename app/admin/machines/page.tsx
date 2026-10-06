@@ -31,6 +31,7 @@ interface MachineModel {
   instructions?: string
   tips?: string
   recommendedWeight?: number
+  defaultReps: number
   _count: { gymMachines: number }
   globalMax: GlobalMax | null
 }
@@ -54,6 +55,7 @@ export default function MachinesPage() {
   const [formMode, setFormMode] = useState<"create" | "edit" | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [assignGym, setAssignGym] = useState(false)
+  const [savingRepsId, setSavingRepsId] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     name: "",
@@ -133,6 +135,30 @@ export default function MachinesPage() {
     })
     setEditingId(null)
     setAssignGym(false)
+  }
+
+  async function updateDefaultReps(machineId: string, value: number) {
+    if (!Number.isFinite(value) || value < 1 || value > 50) return
+
+    setMachines((prev) =>
+      prev.map((m) => (m.id === machineId ? { ...m, defaultReps: value } : m))
+    )
+    setSavingRepsId(machineId)
+    try {
+      const res = await fetch(`/api/admin/machines/${machineId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ defaultReps: value }),
+      })
+      if (!res.ok) {
+        loadData()
+      }
+    } catch (err) {
+      console.error(err)
+      loadData()
+    } finally {
+      setSavingRepsId(null)
+    }
   }
 
   function handleEdit(machine: MachineModel) {
@@ -327,13 +353,37 @@ export default function MachinesPage() {
                         Máximo: {formatMaxLabel(m.globalMax)}
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(m)}
-                    >
-                      Editar
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <Label htmlFor={`reps-${m.id}`} className="text-xs text-muted-foreground">
+                          Reps
+                        </Label>
+                        <Input
+                          id={`reps-${m.id}`}
+                          type="number"
+                          min={1}
+                          max={50}
+                          defaultValue={m.defaultReps}
+                          className="w-16 h-8"
+                          onBlur={(e) => {
+                            const value = parseInt(e.target.value, 10)
+                            if (value !== m.defaultReps) {
+                              updateDefaultReps(m.id, value)
+                            }
+                          }}
+                        />
+                        {savingRepsId === m.id && (
+                          <span className="text-xs text-muted-foreground">Guardando...</span>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(m)}
+                      >
+                        Editar
+                      </Button>
+                    </div>
                   </Card>
                 ))}
               </div>
@@ -356,13 +406,37 @@ export default function MachinesPage() {
                         Máximo: {formatMaxLabel(m.globalMax)}
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(m)}
-                    >
-                      Editar
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <Label htmlFor={`reps-${m.id}`} className="text-xs text-muted-foreground">
+                          Reps
+                        </Label>
+                        <Input
+                          id={`reps-${m.id}`}
+                          type="number"
+                          min={1}
+                          max={50}
+                          defaultValue={m.defaultReps}
+                          className="w-16 h-8"
+                          onBlur={(e) => {
+                            const value = parseInt(e.target.value, 10)
+                            if (value !== m.defaultReps) {
+                              updateDefaultReps(m.id, value)
+                            }
+                          }}
+                        />
+                        {savingRepsId === m.id && (
+                          <span className="text-xs text-muted-foreground">Guardando...</span>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(m)}
+                      >
+                        Editar
+                      </Button>
+                    </div>
                   </Card>
                 ))}
               </div>
@@ -385,13 +459,37 @@ export default function MachinesPage() {
                         Máximo: {formatMaxLabel(m.globalMax)}
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(m)}
-                    >
-                      Editar
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        <Label htmlFor={`reps-${m.id}`} className="text-xs text-muted-foreground">
+                          Reps
+                        </Label>
+                        <Input
+                          id={`reps-${m.id}`}
+                          type="number"
+                          min={1}
+                          max={50}
+                          defaultValue={m.defaultReps}
+                          className="w-16 h-8"
+                          onBlur={(e) => {
+                            const value = parseInt(e.target.value, 10)
+                            if (value !== m.defaultReps) {
+                              updateDefaultReps(m.id, value)
+                            }
+                          }}
+                        />
+                        {savingRepsId === m.id && (
+                          <span className="text-xs text-muted-foreground">Guardando...</span>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(m)}
+                      >
+                        Editar
+                      </Button>
+                    </div>
                   </Card>
                 ))}
               </div>
