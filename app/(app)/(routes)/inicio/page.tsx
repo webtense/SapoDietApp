@@ -6,6 +6,8 @@ import { LogOut, Target, TrendingDown, TrendingUp, Scale, Droplets, Footprints, 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { toast } from "sonner"
+import EditableCard from "@/components/EditableCard"
 import {
   Line,
   LineChart,
@@ -137,6 +139,76 @@ export default function InicioPage() {
     window.location.href = "/login"
   }
 
+  const refreshWeightData = async () => {
+    const [dailyRes, weightsRes] = await Promise.all([
+      fetch("/api/tracking"),
+      fetch("/api/tracking?type=weights&days=30"),
+    ])
+    if (dailyRes.ok) {
+      const d = await dailyRes.json()
+      if (d.dailyLog) setDailyLog(d.dailyLog)
+    }
+    if (weightsRes.ok) {
+      const w = await weightsRes.json()
+      if (Array.isArray(w.items)) {
+        setWeights(
+          w.items
+            .filter((p: any) => p && typeof p.date === "string" && typeof p.weightKg === "number")
+            .map((p: any) => ({ date: p.date, weightKg: p.weightKg }))
+        )
+      }
+    }
+  }
+
+  const saveWeight = async (value: number) => {
+    const res = await fetch("/api/tracking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        kind: "daily",
+        payload: { dateIso: new Date().toISOString(), weightKg: value },
+      }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      throw new Error(data?.error || "No se pudo guardar el peso")
+    }
+    await refreshWeightData()
+    toast.success("Peso actualizado")
+  }
+
+  const saveWater = async (value: number) => {
+    const res = await fetch("/api/tracking", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        kind: "daily",
+        payload: { dateIso: new Date().toISOString(), waterLiters: value },
+      }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      throw new Error(data?.error || "No se pudo guardar el agua")
+    }
+    await refreshWeightData()
+    toast.success("Agua actualizada")
+  }
+
+  const saveGoal = async (value: number) => {
+    const res = await fetch("/api/profile/goal", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetWeightKg: value }),
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      throw new Error(data?.error || "No se pudo guardar la meta")
+    }
+    const data = await res.json()
+    setGoal(data.goal)
+    toast.success("Meta actualizada")
+  }
+
   const latestWeight = weights.length ? weights[weights.length - 1].weightKg : dailyLog?.weightKg ?? profile?.weightKg ?? null
   const prevWeight = weights.length >= 2 ? weights[weights.length - 2].weightKg : null
   const weightDelta = latestWeight != null && prevWeight != null ? Number((latestWeight - prevWeight).toFixed(1)) : null
@@ -170,7 +242,9 @@ export default function InicioPage() {
               <Scale className="h-4 w-4" />
               <span className="text-xs font-medium">Peso</span>
             </div>
-            <p className="text-2xl font-bold">{latestWeight ?? "--"} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+            <EditableCard value={latestWeight} unit="kg" min={30} max={500} onSave={saveWeight}>
+              <p className="text-2xl font-bold">{latestWeight ?? "--"} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+            </EditableCard>
             <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
               <span>{weights.length ? "Último registro" : "Sin histórico"}</span>
               {weightDelta != null && (
@@ -188,7 +262,9 @@ export default function InicioPage() {
               <Droplets className="h-4 w-4" />
               <span className="text-xs font-medium">Agua</span>
             </div>
-            <p className="text-2xl font-bold">{dailyLog?.waterLiters || 0} <span className="text-sm font-normal text-muted-foreground">L</span></p>
+            <EditableCard value={dailyLog?.waterLiters ?? 0} unit="L" min={0} max={10} onSave={saveWater}>
+              <p className="text-2xl font-bold">{dailyLog?.waterLiters || 0} <span className="text-sm font-normal text-muted-foreground">L</span></p>
+            </EditableCard>
             <div className="mt-2">
               <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
                 <span>Meta {waterTarget}L</span>
@@ -205,7 +281,9 @@ export default function InicioPage() {
               <Target className="h-4 w-4" />
               <span className="text-xs font-medium">Meta</span>
             </div>
-            <p className="text-2xl font-bold">{goal?.targetWeightKg || "--"} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+            <EditableCard value={goal?.targetWeightKg ?? null} unit="kg" min={30} max={500} onSave={saveGoal}>
+              <p className="text-2xl font-bold">{goal?.targetWeightKg || "--"} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+            </EditableCard>
             {weightDirection && (
               <p className="text-xs text-muted-foreground mt-1 flex items-center">
                 {weightDirection === "down" && <><TrendingDown className="h-3 w-3 mr-1" />Perder</>}
