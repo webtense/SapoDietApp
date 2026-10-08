@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
 import { getGlobalMaxWeight } from "@/lib/server/workout-stats"
 import { z } from "zod"
+import { isValidYoutubeUrl } from "@/lib/youtube"
 
 const createMachineSchema = z.object({
   name: z.string().min(1),
@@ -11,6 +12,13 @@ const createMachineSchema = z.object({
   instructions: z.string().optional(),
   tips: z.string().optional(),
   recommendedWeight: z.number().optional(),
+  videoUrl: z
+    .string()
+    .optional()
+    .nullable()
+    .refine((val) => !val || isValidYoutubeUrl(val), {
+      message: "La URL debe ser un enlace válido de YouTube",
+    }),
   gymId: z.string().optional(), // si se proporciona, crear GymMachine también
 })
 
@@ -75,6 +83,7 @@ export async function POST(req: NextRequest) {
           instructions: parsed.data.instructions,
           tips: parsed.data.tips,
           recommendedWeight: parsed.data.recommendedWeight,
+          videoUrl: parsed.data.videoUrl || null,
         },
       })
 

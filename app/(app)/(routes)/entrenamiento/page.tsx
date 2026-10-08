@@ -14,7 +14,7 @@ import Link from "next/link"
 import { enqueuePendingSet, flushPendingSets, getPendingSets } from "@/lib/offline-sets-queue"
 import { getSpanishName } from "@/lib/machine-translations"
 import ExerciseAliasEditor from "@/components/ExerciseAliasEditor"
-import { MachineEvolutionChart } from "@/components/MachineCardWithChart"
+import { MachineEvolutionChart, VideoDemoButton } from "@/components/MachineCardWithChart"
 
 type Group = "UPPER" | "LOWER"
 
@@ -25,6 +25,7 @@ interface MachineModelInfo {
   instructions: string | null
   tips: string | null
   recommendedWeight: number | null
+  videoUrl: string | null
 }
 
 interface WorkoutSetItem {
@@ -580,6 +581,9 @@ export default function EntrenamientoPage() {
                           >
                             <Info className="h-4 w-4" />
                           </Button>
+                        )}
+                        {model?.videoUrl && (
+                          <VideoDemoButton videoUrl={model.videoUrl} machineName={baseName} />
                         )}
                       </span>
                     </CardTitle>

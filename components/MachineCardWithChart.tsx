@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react"
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import { ChartNoAxesCombined } from "lucide-react"
+import { ChartNoAxesCombined, Video } from "lucide-react"
+import { getYoutubeEmbedUrl } from "@/lib/youtube"
 
 interface ExerciseHistoryResponse {
   ok: boolean
@@ -117,5 +119,48 @@ export function MachineEvolutionChart({ exerciseId }: MachineEvolutionChartProps
         </>
       )}
     </div>
+  )
+}
+
+interface VideoDemoButtonProps {
+  videoUrl: string
+  machineName?: string
+}
+
+export function VideoDemoButton({ videoUrl, machineName }: VideoDemoButtonProps) {
+  const [open, setOpen] = useState(false)
+  const embedUrl = getYoutubeEmbedUrl(videoUrl)
+
+  if (!embedUrl) return null
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="gap-1.5"
+        onClick={() => setOpen(true)}
+      >
+        <Video className="h-3.5 w-3.5" />
+        Ver demostración
+      </Button>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{machineName ? `Demostración: ${machineName}` : "Demostración"}</DialogTitle>
+        </DialogHeader>
+        <div className="aspect-video w-full overflow-hidden rounded-lg">
+          {open && (
+            <iframe
+              src={embedUrl}
+              title={machineName ? `Vídeo demostración ${machineName}` : "Vídeo demostración"}
+              className="h-full w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }

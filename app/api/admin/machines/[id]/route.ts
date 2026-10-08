@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireAdmin, withAdminAudit } from "@/lib/server/api"
 import { prisma } from "@/lib/server/prisma"
 import { z } from "zod"
+import { isValidYoutubeUrl } from "@/lib/youtube"
 
 const updateMachineSchema = z.object({
   name: z.string().optional(),
@@ -11,6 +12,14 @@ const updateMachineSchema = z.object({
   tips: z.string().optional(),
   recommendedWeight: z.number().optional(),
   defaultReps: z.number().int().min(1).max(50).optional(),
+  videoUrl: z
+    .string()
+    .optional()
+    .nullable()
+    .refine((val) => !val || isValidYoutubeUrl(val), {
+      message: "La URL debe ser un enlace válido de YouTube",
+    })
+    .transform((val) => (val === undefined ? undefined : val ? val : null)),
 })
 
 export async function PATCH(

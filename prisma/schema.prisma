@@ -537,6 +537,7 @@ model MachineModel {
   tips               String?
   recommendedWeight  Float?
   defaultReps        Int           @default(12)
+  videoUrl           String?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   gymMachines        GymMachine[]

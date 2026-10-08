@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,6 +16,8 @@ import {
 import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { getSpanishName } from "@/lib/machine-translations"
+import { getYoutubeThumbnail, isValidYoutubeUrl } from "@/lib/youtube"
+import { Video } from "lucide-react"
 
 interface GlobalMax {
   weight: number
@@ -32,6 +35,7 @@ interface MachineModel {
   tips?: string
   recommendedWeight?: number
   defaultReps: number
+  videoUrl?: string | null
   _count: { gymMachines: number }
   globalMax: GlobalMax | null
 }
@@ -64,6 +68,7 @@ export default function MachinesPage() {
     instructions: "",
     tips: "",
     recommendedWeight: "",
+    videoUrl: "",
     gymId: "",
   })
 
@@ -97,6 +102,7 @@ export default function MachinesPage() {
       recommendedWeight: formData.recommendedWeight
         ? parseFloat(formData.recommendedWeight)
         : undefined,
+      videoUrl: formData.videoUrl || null,
       ...(assignGym && formData.gymId && { gymId: formData.gymId }),
     }
 
@@ -117,9 +123,14 @@ export default function MachinesPage() {
         setAssignGym(false)
         resetForm()
         loadData()
+        toast.success(formMode === "create" ? "Máquina creada" : "Máquina guardada")
+      } else {
+        const data = await res.json().catch(() => null)
+        toast.error(data?.error || "Error al guardar la máquina")
       }
     } catch (err) {
       console.error(err)
+      toast.error("Error al guardar la máquina")
     }
   }
 
@@ -131,11 +142,13 @@ export default function MachinesPage() {
       instructions: "",
       tips: "",
       recommendedWeight: "",
+      videoUrl: "",
       gymId: "",
     })
     setEditingId(null)
     setAssignGym(false)
   }
+
 
   async function updateDefaultReps(machineId: string, value: number) {
     if (!Number.isFinite(value) || value < 1 || value > 50) return
@@ -169,6 +182,7 @@ export default function MachinesPage() {
       instructions: machine.instructions || "",
       tips: machine.tips || "",
       recommendedWeight: machine.recommendedWeight?.toString() || "",
+      videoUrl: machine.videoUrl || "",
       gymId: "",
     })
     setEditingId(machine.id)
@@ -264,6 +278,36 @@ export default function MachinesPage() {
               placeholder="Consejos y precauciones"
               rows={3}
             />
+          </div>
+
+          <div>
+            <Label htmlFor="videoUrl">Vídeo de demostración (YouTube)</Label>
+            <Input
+              id="videoUrl"
+              value={formData.videoUrl}
+              onChange={(e) =>
+                setFormData({ ...formData, videoUrl: e.target.value })
+              }
+              placeholder="https://youtu.be/..."
+            />
+            {formData.videoUrl && !isValidYoutubeUrl(formData.videoUrl) && (
+              <p className="mt-1 text-xs text-destructive">
+                Esa URL no parece un enlace válido de YouTube
+              </p>
+            )}
+            {formData.videoUrl && isValidYoutubeUrl(formData.videoUrl) && (
+              <div className="mt-2 flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={getYoutubeThumbnail(formData.videoUrl) ?? ""}
+                  alt="Miniatura del vídeo"
+                  className="h-12 w-20 rounded object-cover"
+                />
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Video className="h-3.5 w-3.5" /> Vista previa
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
