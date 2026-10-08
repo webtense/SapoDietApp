@@ -82,6 +82,7 @@ model User {
   foodAnalyses       FoodAnalysis[]
   evolutionMsgs      EvolutionMsg[]
   pushSubscriptions  PushSubscription[]
+  notificationLogs   NotificationLog[]
   reviews            Review[]
   subscriptionStatus String      @default("FREE")
   stripeCustomerId   String?     @unique
@@ -441,6 +442,22 @@ model Reminder {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model NotificationLog {
+  id        String    @id @default(cuid())
+  userId    String
+  reminderId String?
+  channel   String    // 'PUSH' | 'WHATSAPP'
+  title     String
+  body      String
+  status    String    @default("SENT") // 'SENT' | 'FAILED'
+  error     String?
+  seenAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model FoodAnalysis {

@@ -99,7 +99,7 @@ export default function CalendarioPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
-      <section className="rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,_rgba(80,200,120,0.16),_rgba(255,255,255,0.95))] p-5 shadow-sm">
+      <section className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-emerald-900 shadow-sm">
         <h1 className="text-3xl font-semibold tracking-tight">Calendario y reto 30 días</h1>
         <p className="mt-2 text-sm text-muted-foreground">La vista v3 convierte el calendario en una superficie de hábito: peso, entreno y checks visuales de adherencia.</p>
         <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -110,7 +110,7 @@ export default function CalendarioPage() {
         </div>
       </section>
 
-      <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+      <Card className="rounded-2xl border-white/70 bg-white/90 shadow-sm">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))} className="rounded-2xl p-2 hover:bg-muted"><ChevronLeft className="h-5 w-5" /></button>
@@ -141,7 +141,7 @@ export default function CalendarioPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+      <Card className="rounded-2xl border-white/70 bg-white/90 shadow-sm">
         <CardHeader className="pb-3"><CardTitle className="text-base">Reto visual 30 días</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-10 gap-2 md:grid-cols-15">

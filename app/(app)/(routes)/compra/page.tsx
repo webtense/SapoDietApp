@@ -160,7 +160,7 @@ export default function CompraPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
-      <section className="rounded-[2rem] bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
+      <section className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-emerald-900 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium">Compra inteligente</div>
@@ -182,7 +182,7 @@ export default function CompraPage() {
         </div>
       </section>
 
-      <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+      <Card className="rounded-2xl border-white/70 bg-white/85 shadow-sm">
         <CardContent className="space-y-4 p-5">
           <div>
             <p className="text-sm font-medium">Compartir compra por WhatsApp</p>
@@ -196,7 +196,7 @@ export default function CompraPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+      <Card className="rounded-2xl border-white/70 bg-white/85 shadow-sm">
         <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-medium">Vista escalable</p>
@@ -210,7 +210,7 @@ export default function CompraPage() {
       </Card>
 
       {shoppingList.length > 0 && (
-        <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+        <Card className="rounded-2xl border-white/70 bg-white/85 shadow-sm">
           <CardContent className="p-5">
             <div className="mb-2 flex items-center justify-between text-sm"><span>Progreso</span><span>{progress}%</span></div>
             <div className="h-2 w-full rounded-full bg-muted"><div className="h-2 rounded-full bg-emerald-500 transition-all" style={{ width: `${progress}%` }} /></div>
@@ -258,7 +258,7 @@ export default function CompraPage() {
         ))
       )}
 
-      <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+      <Card className="rounded-2xl border-white/70 bg-white/85 shadow-sm">
         <CardContent className="flex items-start gap-3 p-5 text-sm text-muted-foreground">
           <Store className="mt-0.5 h-4 w-4 text-emerald-600" />
           <p>La lista ya se genera agregada por supermercado y pasillos. Desde aquí puedes exportarla en PDF y compartirla por WhatsApp con enlace temporal para recoger precios reales.</p>

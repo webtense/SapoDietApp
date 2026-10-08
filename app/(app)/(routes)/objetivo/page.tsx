@@ -231,51 +231,57 @@ export default function ObjetivoPage() {
     <div className="mx-auto max-w-4xl space-y-4 p-4 md:p-6">
 
       {/* ── HERO ── */}
-      <section className="rounded-[2rem] bg-[linear-gradient(135deg,_rgba(4,47,31,0.94),_rgba(5,150,105,0.75))] p-5 text-white shadow-sm">
+      <section className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-5 shadow-sm">
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600/10 px-3 py-1 text-xs font-semibold text-emerald-700">
               <Target className="h-3 w-3" /> Objetivo
             </div>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-              {currentWeight ? `${currentWeight} kg` : "Sin datos"}
+            <p className="mt-3 text-sm font-medium text-emerald-700/80">Meta de peso</p>
+            <h1 className="mt-1 text-4xl font-bold tracking-tight text-emerald-950">
+              {targetW ? `${targetW} kg` : "Sin meta definida"}
             </h1>
-            <p className="mt-1 text-sm text-white/75">
-              {targetW
-                ? `Meta: ${targetW} kg · ${kgPending != null ? `${kgPending} kg ${objetivoTipo === "perder" ? "por perder" : "por ganar"}` : ""}`
-                : "Define tu meta de peso"}
+            <p className="mt-2 text-sm text-emerald-800/70">
+              {currentWeight != null
+                ? `Peso actual: ${currentWeight} kg${kgPending != null ? ` · ${kgPending} kg ${objetivoTipo === "perder" ? "por perder" : "por ganar"}` : ""}`
+                : "Registra tu peso para empezar a seguir el progreso"}
             </p>
+            {!targetW && (
+              <Button size="sm" className="mt-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700" onClick={() => setEditMode(true)}>
+                <Target className="mr-1.5 h-4 w-4" /> Definir meta
+              </Button>
+            )}
           </div>
 
           {/* Anillo de progreso */}
-          <div className="rounded-[1.5rem] bg-white/12 p-4 backdrop-blur">
-            <div className="flex items-center gap-4">
+          <div className="rounded-2xl border border-emerald-200/70 bg-white/70 p-4 shadow-sm backdrop-blur">
+            <div className="flex items-center gap-5">
               {(() => {
-                const r = 38; const circ = 2 * Math.PI * r
+                const r = 52; const circ = 2 * Math.PI * r
                 const pct = progressPct / 100
                 return (
                   <div className="relative flex-shrink-0">
-                    <svg width="96" height="96" viewBox="0 0 96 96">
-                      <circle cx="48" cy="48" r={r} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="7" />
-                      <circle cx="48" cy="48" r={r} fill="none"
-                        stroke={progressPct >= 100 ? "#fbbf24" : "#34d399"} strokeWidth="7"
+                    <svg width="120" height="120" viewBox="0 0 120 120">
+                      <circle cx="60" cy="60" r={r} fill="none" stroke="#d1fae5" strokeWidth="9" />
+                      <circle cx="60" cy="60" r={r} fill="none"
+                        stroke="#10b981" strokeWidth="9"
                         strokeDasharray={circ} strokeDashoffset={circ * (1 - pct)}
-                        strokeLinecap="round" transform="rotate(-90 48 48)"
+                        strokeLinecap="round" transform="rotate(-90 60 60)"
                         style={{ transition: "stroke-dashoffset 0.8s ease" }} />
-                      <text x="48" y="44" textAnchor="middle" fontSize="16" fontWeight="bold" fill="white">{progressPct}%</text>
-                      <text x="48" y="58" textAnchor="middle" fontSize="9" fill="rgba(255,255,255,0.7)">completado</text>
+                      <text x="60" y="56" textAnchor="middle" fontSize="20" fontWeight="bold" fill="#047857">{progressPct}%</text>
+                      <text x="60" y="74" textAnchor="middle" fontSize="10" fill="#059669">completado</text>
                     </svg>
                   </div>
                 )
               })()}
               <div className="space-y-2 text-sm">
-                <div><p className="text-white/60 text-xs">Inicio</p><p className="font-semibold">{startWeight ?? "--"} kg</p></div>
-                <div><p className="text-white/60 text-xs">Meta</p><p className="font-semibold">{targetW ?? "--"} kg</p></div>
-                <div><p className="text-white/60 text-xs">Días restantes</p><p className="font-semibold">{daysLeft ?? "--"}</p></div>
+                <div><p className="text-xs text-emerald-700/60">Inicio</p><p className="font-semibold text-emerald-950">{startWeight ?? "--"} kg</p></div>
+                <div><p className="text-xs text-emerald-700/60">Meta</p><p className="font-semibold text-emerald-950">{targetW ?? "--"} kg</p></div>
+                <div><p className="text-xs text-emerald-700/60">Días restantes</p><p className="font-semibold text-emerald-950">{daysLeft ?? "--"}</p></div>
               </div>
             </div>
             {viability && (
-              <div className={`mt-3 rounded-xl px-3 py-2 text-xs ${viability.ok ? "bg-emerald-500/20 text-emerald-100" : "bg-red-500/20 text-red-200"}`}>
+              <div className={`mt-3 rounded-2xl px-3 py-2 text-xs font-medium ${viability.ok ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-700"}`}>
                 {viability.ok ? "✓" : "⚠"} {viability.msg}
               </div>
             )}
@@ -283,9 +289,35 @@ export default function ObjetivoPage() {
         </div>
       </section>
 
+      {/* ── RECOMENDACIÓN SEGÚN RITMO ── */}
+      {viability && kgPerWeek != null && (
+        <Card className={`rounded-2xl shadow-sm ${viability.ok ? "border-emerald-200 bg-emerald-50/70" : "border-amber-200 bg-amber-50/70"}`}>
+          <CardContent className="flex items-start gap-3 p-4">
+            {viability.ok
+              ? <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
+              : <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />}
+            <div className="flex-1">
+              <p className={`text-sm font-semibold ${viability.ok ? "text-emerald-800" : "text-amber-800"}`}>
+                {viability.ok ? "Ritmo sostenible — puedes alcanzar tu meta" : "Ritmo agresivo detectado"}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{viability.msg}</p>
+              {!viability.ok && kgPending != null && (
+                <p className="mt-1.5 text-xs text-amber-700">
+                  Alternativa más sostenible: a {(objetivoTipo === "ganar" ? 0.4 : 0.7).toFixed(1)} kg/sem necesitarías{" "}
+                  <strong>{weeksToTarget(0, kgPending, objetivoTipo === "ganar" ? 0.4 : 0.7)} semanas</strong> en vez de {weeksLeft}.
+                </p>
+              )}
+            </div>
+            <Button variant="outline" size="sm" className="flex-shrink-0 rounded-2xl border-emerald-300" onClick={() => setEditMode(true)}>
+              <Edit3 className="mr-1.5 h-3.5 w-3.5" /> Ajustar meta
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* ── MÉTRICAS RÁPIDAS ── */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Card className="rounded-[1.5rem] border-white/70 bg-white/85 shadow-sm">
+        <Card className="rounded-2xl border-emerald-100 bg-white shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-emerald-600 mb-1.5"><Scale className="h-3.5 w-3.5" /><span className="text-xs font-semibold">Peso actual</span></div>
             <p className="text-2xl font-bold">{currentWeight ?? "--"}</p>
@@ -293,7 +325,7 @@ export default function ObjetivoPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.5rem] border-white/70 bg-white/85 shadow-sm">
+        <Card className="rounded-2xl border-blue-100 bg-white shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-blue-600 mb-1.5"><Target className="h-3.5 w-3.5" /><span className="text-xs font-semibold">IMC</span></div>
             <p className="text-2xl font-bold">{bmi ?? "--"}</p>
@@ -301,7 +333,7 @@ export default function ObjetivoPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.5rem] border-white/70 bg-white/85 shadow-sm">
+        <Card className="rounded-2xl border-amber-100 bg-white shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-amber-600 mb-1.5">
               {objetivoTipo === "perder" ? <TrendingDown className="h-3.5 w-3.5" /> : <TrendingUp className="h-3.5 w-3.5" />}
@@ -312,9 +344,9 @@ export default function ObjetivoPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.5rem] border-white/70 bg-white/85 shadow-sm">
+        <Card className="rounded-2xl border-violet-100 bg-white shadow-sm">
           <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-purple-600 mb-1.5"><Flame className="h-3.5 w-3.5" /><span className="text-xs font-semibold">Ritmo</span></div>
+            <div className="flex items-center gap-2 text-violet-600 mb-1.5"><Flame className="h-3.5 w-3.5" /><span className="text-xs font-semibold">Ritmo</span></div>
             <p className="text-2xl font-bold">{kgPerWeek ?? "--"}</p>
             <p className="text-xs text-muted-foreground">kg / semana</p>
           </CardContent>
@@ -323,15 +355,15 @@ export default function ObjetivoPage() {
 
       {/* ── GRÁFICO PESO ── */}
       {weights.length > 1 && (
-        <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+        <Card className="rounded-2xl border-emerald-100 bg-white shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center justify-between text-base">
               <span>Evolución del peso — 90 días</span>
-              {goal?.targetDate && <Badge variant="secondary" className="text-xs">{daysLeft} días restantes</Badge>}
+              {goal?.targetDate && <Badge className="rounded-full bg-emerald-100 text-emerald-700 text-xs">{daysLeft} días restantes</Badge>}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={260}>
               <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} interval="preserveStartEnd" />
                 <YAxis
@@ -342,7 +374,7 @@ export default function ObjetivoPage() {
                   tick={{ fontSize: 11 }} tickLine={false} axisLine={false}
                 />
                 <Tooltip
-                  contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 12 }}
+                  contentStyle={{ borderRadius: 16, border: "1px solid #d1fae5", fontSize: 12 }}
                   formatter={(v, name) => {
                     const labels: Record<string, string> = { peso: "Peso", meta: "Meta", proyectado: "Proyectado" }
                     const key = String(name ?? "")
@@ -350,8 +382,8 @@ export default function ObjetivoPage() {
                   }}
                 />
                 {targetW && <ReferenceLine y={targetW} stroke="#10b981" strokeDasharray="4 4" strokeWidth={1.5} label={{ value: `Meta ${targetW}`, position: "right", fontSize: 10, fill: "#10b981" }} />}
-                <Line type="monotone" dataKey="peso" stroke="#059669" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
-                <Line type="monotone" dataKey="proyectado" stroke="#34d399" strokeWidth={1.5} strokeDasharray="6 3" dot={false} />
+                <Line type="monotone" dataKey="peso" stroke="#10b981" strokeWidth={3} dot={false} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="proyectado" stroke="#6ee7b7" strokeWidth={1.5} strokeDasharray="6 3" dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -360,16 +392,16 @@ export default function ObjetivoPage() {
 
       {/* ── HITOS ── */}
       {hitos.length > 0 && (
-        <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+        <Card className="rounded-2xl border-emerald-100 bg-white shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Hitos del camino</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
               {hitos.map((h, i) => (
-                <div key={i} className="flex min-w-14 flex-col items-center gap-1.5">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${
-                    h.reached ? "border-emerald-500 bg-emerald-500 text-white" : "border-muted-foreground/30 bg-muted/30 text-muted-foreground"
+                <div key={i} className="flex min-w-16 flex-col items-center gap-1.5">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border-2 transition-all ${
+                    h.reached ? "border-emerald-500 bg-emerald-500 text-white shadow-md shadow-emerald-200" : "border-emerald-200 bg-emerald-50 text-emerald-400"
                   }`}>
                     {h.reached ? <CheckCircle2 className="h-5 w-5" /> : <span className="text-xs font-bold">{h.label.split("%")[0]}{h.label.includes("%") ? "%" : ""}</span>}
                   </div>
@@ -386,7 +418,7 @@ export default function ObjetivoPage() {
       {(bmi || idealRange) && (
         <div className="grid gap-4 md:grid-cols-2">
           {bmi && (
-            <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+            <Card className="rounded-2xl border-blue-100 bg-white shadow-sm">
               <CardHeader className="pb-2"><CardTitle className="text-base">IMC — Índice de Masa Corporal</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-end justify-between">
@@ -394,7 +426,7 @@ export default function ObjetivoPage() {
                   <span className={`text-sm font-semibold ${bmiInfo?.color}`}>{bmiInfo?.label}</span>
                 </div>
                 <div className="relative h-3 w-full overflow-hidden rounded-full">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-emerald-400 via-40% via-amber-400 via-70% to-red-400" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-300 via-emerald-300 via-40% via-amber-300 via-70% to-red-300" />
                   <div
                     className="absolute top-0 h-full w-1 bg-gray-900"
                     style={{ left: `${Math.min(95, Math.max(5, ((bmi - 15) / 25) * 100))}%` }}
@@ -408,7 +440,7 @@ export default function ObjetivoPage() {
           )}
 
           {idealRange && (
-            <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+            <Card className="rounded-2xl border-emerald-100 bg-white shadow-sm">
               <CardHeader className="pb-2"><CardTitle className="text-base">Peso ideal estimado</CardTitle></CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-end gap-2">
@@ -417,7 +449,7 @@ export default function ObjetivoPage() {
                 </div>
                 <p className="text-sm text-muted-foreground">Rango saludable según tu altura ({profile?.heightCm} cm) y sexo (fórmula Devine).</p>
                 {targetW && (
-                  <div className={`rounded-xl px-3 py-2 text-xs ${
+                  <div className={`rounded-2xl px-3 py-2 text-xs ${
                     targetW >= idealRange[0] && targetW <= idealRange[1]
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       : "bg-amber-50 text-amber-700 border border-amber-200"
@@ -435,14 +467,14 @@ export default function ObjetivoPage() {
       )}
 
       {/* ── CONFIGURAR META ── */}
-      <Card className={`rounded-[1.75rem] shadow-sm transition-all ${editMode ? "border-emerald-300 bg-[linear-gradient(135deg,rgba(16,185,129,0.04),rgba(255,255,255,0.98))]" : "border-white/70 bg-white/85"}`}>
+      <Card className={`rounded-2xl shadow-sm transition-all ${editMode ? "border-emerald-300 bg-emerald-50/40" : "border-emerald-100 bg-white"}`}>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center justify-between text-base">
             <span>Configurar objetivo</span>
             <Button
               variant={editMode ? "outline" : "ghost"}
               size="sm"
-              className="rounded-xl"
+              className="rounded-2xl"
               onClick={() => setEditMode(!editMode)}
             >
               {editMode ? <ChevronUp className="h-4 w-4" /> : <><Edit3 className="mr-1.5 h-4 w-4" />Editar</>}
@@ -456,7 +488,7 @@ export default function ObjetivoPage() {
               <div>
                 <Label>Tipo de objetivo</Label>
                 <Select value={objetivoTipo} onValueChange={(v) => setObjetivoTipo(v as ObjetivoTipo)}>
-                  <SelectTrigger className="mt-1.5 rounded-xl">
+                  <SelectTrigger className="mt-1.5 rounded-2xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -471,7 +503,7 @@ export default function ObjetivoPage() {
                 <Input
                   type="number"
                   step="0.5"
-                  className="mt-1.5 rounded-xl"
+                  className="mt-1.5 rounded-2xl"
                   value={targetWeight}
                   onChange={(e) => setTargetWeight(e.target.value)}
                   placeholder={String(profile?.weightKg ?? 70)}
@@ -481,7 +513,7 @@ export default function ObjetivoPage() {
                 <Label>Fecha objetivo</Label>
                 <Input
                   type="date"
-                  className="mt-1.5 rounded-xl"
+                  className="mt-1.5 rounded-2xl"
                   value={targetDate}
                   onChange={(e) => setTargetDate(e.target.value)}
                   min={new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]}
@@ -498,46 +530,46 @@ export default function ObjetivoPage() {
               const tipo = currentWeight > parseFloat(targetWeight) ? "perder" : "ganar"
               const v = viabilityLabel(kgs, tipo as ObjetivoTipo)
               return (
-                <div className={`rounded-xl border px-4 py-3 text-sm ${v.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-red-200 bg-red-50 text-red-800"}`}>
+                <div className={`rounded-2xl border px-4 py-3 text-sm ${v.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-red-200 bg-red-50 text-red-800"}`}>
                   <span className="font-semibold">{v.ok ? "✓ Viable" : "⚠ Agresivo"}</span> · {sem} semanas · {kgs} kg/sem · {v.msg}
                 </div>
               )
             })()}
 
             <div className="flex gap-2 pt-1">
-              <Button className="rounded-xl" onClick={guardar} disabled={saving || !targetWeight || !targetDate}>
+              <Button className="rounded-2xl bg-emerald-600 hover:bg-emerald-700" onClick={guardar} disabled={saving || !targetWeight || !targetDate}>
                 {saving ? "Guardando…" : <><Save className="mr-1.5 h-4 w-4" />Guardar objetivo</>}
               </Button>
-              <Button variant="outline" className="rounded-xl" onClick={() => setEditMode(false)}>Cancelar</Button>
+              <Button variant="outline" className="rounded-2xl" onClick={() => setEditMode(false)}>Cancelar</Button>
             </div>
-            {saved && <Badge className="bg-emerald-500 text-white">Objetivo guardado ✓</Badge>}
+            {saved && <Badge className="rounded-full bg-emerald-500 text-white">Objetivo guardado ✓</Badge>}
           </CardContent>
         ) : (
           <CardContent>
             {goal?.targetWeightKg ? (
               <div className="grid gap-3 sm:grid-cols-3 text-sm">
-                <div className="rounded-2xl bg-muted/40 p-3">
+                <div className="rounded-2xl bg-emerald-50 p-3">
                   <p className="text-xs text-muted-foreground">Peso meta</p>
                   <p className="mt-1 text-xl font-bold">{goal.targetWeightKg} kg</p>
                 </div>
-                <div className="rounded-2xl bg-muted/40 p-3">
+                <div className="rounded-2xl bg-emerald-50 p-3">
                   <p className="text-xs text-muted-foreground">Fecha límite</p>
                   <p className="mt-1 font-semibold">
                     {goal.targetDate ? new Date(goal.targetDate).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) : "–"}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-muted/40 p-3">
+                <div className="rounded-2xl bg-emerald-50 p-3">
                   <p className="text-xs text-muted-foreground">Viabilidad</p>
-                  <Badge className={`mt-1 ${goal.viabilityStatus === "viable" ? "bg-emerald-500" : "bg-amber-500"} text-white`}>
+                  <Badge className={`mt-1 rounded-full ${goal.viabilityStatus === "viable" ? "bg-emerald-500" : "bg-amber-500"} text-white`}>
                     {goal.viabilityStatus === "viable" ? "Viable ✓" : "Ambiciosa ⚠"}
                   </Badge>
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl bg-muted/30 p-6 text-center">
-                <Target className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+              <div className="rounded-2xl bg-emerald-50/60 p-6 text-center">
+                <Target className="mx-auto mb-3 h-10 w-10 text-emerald-400" />
                 <p className="text-sm text-muted-foreground">No tienes un objetivo de peso configurado.</p>
-                <Button size="sm" className="mt-3 rounded-xl" onClick={() => setEditMode(true)}>
+                <Button size="sm" className="mt-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700" onClick={() => setEditMode(true)}>
                   Configurar ahora
                 </Button>
               </div>
@@ -547,7 +579,7 @@ export default function ObjetivoPage() {
       </Card>
 
       {/* ── CONSEJOS SEGÚN OBJETIVO ── */}
-      <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+      <Card className="rounded-2xl border-amber-100 bg-white shadow-sm">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
             <AlertTriangle className="h-4 w-4 text-amber-500" /> Claves para tu objetivo

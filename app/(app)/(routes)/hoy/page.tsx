@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { MacroRing } from "@/components/macro-ring"
 import WeightProgressChart from "@/components/WeightProgressChart"
+import EditableCard from "@/components/EditableCard"
 import { defaultV3Preferences, parseV3Preferences, V3_PREFERENCES_KEY } from "@/lib/v3-preferences"
 import { normalizeMacros } from "@/lib/plan-normalizers"
 import type { NormalizedMacros } from "@/lib/plan-normalizers"
@@ -138,14 +139,14 @@ export default function HoyPage() {
         const t = await trackingRes.json()
         setMealTracking((t.mealLogs || []).map((m: any) => ({ mealType: m.mealType, completed: m.completed, followsPlan: m.followsPlan })))
         setExerciseTracking((t.exerciseLogs || []).map((e: any) => ({ exerciseId: e.exerciseId, completed: e.completed })))
-        
+
         if (t.dailyLog) {
           const storedCheckin = window.localStorage.getItem("sapofit_last_checkin")
           let storedParsed = null
           if (storedCheckin) {
             try { storedParsed = JSON.parse(storedCheckin) } catch {}
           }
-          
+
           if (storedParsed) {
             setCheckin(storedParsed)
           } else if (t.dailyLog.waterLiters || t.dailyLog.weightKg || t.dailyLog.energy || t.dailyLog.mood) {
@@ -166,9 +167,10 @@ export default function HoyPage() {
     load()
   }, [])
 
-  const guardarCheckin = async () => {
-    window.localStorage.setItem("sapofit_last_checkin", JSON.stringify(checkin))
-    
+  const guardarCheckin = async (overrides?: Partial<typeof checkin>) => {
+    const next = { ...checkin, ...overrides }
+    window.localStorage.setItem("sapofit_last_checkin", JSON.stringify(next))
+
     await fetch("/api/tracking", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -177,11 +179,11 @@ export default function HoyPage() {
         payload: {
           dateIso: new Date().toISOString(),
           caloriesTarget: plan?.necesidades.calories || 2000,
-          waterLiters: Number(checkin.water || 0),
+          waterLiters: Number(next.water || 0),
           waterTarget: plan?.necesidades.water || 2.5,
-          weightKg: Number(checkin.weight || 0) || undefined,
-          energy: checkin.energy,
-          mood: checkin.mood,
+          weightKg: Number(next.weight || 0) || undefined,
+          energy: next.energy,
+          mood: next.mood,
         },
       }),
     })
@@ -283,12 +285,12 @@ export default function HoyPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4 p-4 md:p-6">
-      <section className="rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
+      <section className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm">
         <div className="flex flex-col gap-5">
           <div>
-            <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium">Agenda del día</div>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight">Hoy</h1>
-            <p className="mt-2 max-w-2xl text-sm text-white/80">
+            <div className="inline-flex rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700">Agenda del día</div>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-emerald-950">Hoy</h1>
+            <p className="mt-2 max-w-2xl text-sm text-emerald-900/70">
               {prefs.needsTupperMeals ? "Modo tupper activado" : "Modo cocina en casa"} · {prefs.hasAirfryer ? "recetas con opción Airfryer" : "recetas estándar"} · {prefs.primaryGoal.toLowerCase()}.
             </p>
           </div>
@@ -302,8 +304,8 @@ export default function HoyPage() {
             if (nextMealIndex !== -1) {
               const nextMeal = mealConfig[nextMealIndex]
               return (
-                <div className="rounded-xl bg-white/10 px-4 py-2 flex items-center gap-2 text-sm">
-                  <ChevronUp className="h-4 w-4 text-yellow-300" />
+                <div className="rounded-xl border border-emerald-200 bg-white px-4 py-2 flex items-center gap-2 text-sm text-emerald-900">
+                  <ChevronUp className="h-4 w-4 text-emerald-500" />
                   <span>Próxima: <strong>{nextMeal.label}</strong></span>
                 </div>
               )
@@ -312,7 +314,7 @@ export default function HoyPage() {
           })()}
 
           {/* Anillos de macros */}
-          <div className="rounded-[1.5rem] bg-white/12 p-4 backdrop-blur space-y-4">
+          <div className="rounded-2xl border border-emerald-100 bg-white p-4 space-y-4">
             {/* Calorías + Resumen */}
             <div className="flex items-start justify-between">
               <div className="flex gap-4">
@@ -321,7 +323,7 @@ export default function HoyPage() {
                   target={Math.round(plan?.necesidades.calories || 2000)}
                   label="Calorías"
                   shortLabel="kcal"
-                  color="#34d399"
+                  color="#10b981"
                   unit=""
                 />
                 <MacroRing
@@ -340,16 +342,16 @@ export default function HoyPage() {
                   const over = remaining < 0
                   return (
                     <div className="mb-2">
-                      <p className={`text-lg font-semibold leading-none ${over ? "text-red-300" : ""}`}>
+                      <p className={`text-lg font-semibold leading-none ${over ? "text-red-500" : "text-emerald-950"}`}>
                         {over ? `+${Math.abs(remaining)}` : remaining}
                       </p>
-                      <p className="text-xs text-white/70">{over ? "excedente" : "restantes"}</p>
+                      <p className="text-xs text-muted-foreground">{over ? "excedente" : "restantes"}</p>
                     </div>
                   )
                 })()}
                 <div className="grid grid-cols-2 gap-2 text-center text-xs">
-                  <div><p className="font-semibold">{completedMeals}/{mealConfig.length}</p><p className="text-white/70">Comidas</p></div>
-                  <div><p className="font-semibold">{completedExercises}</p><p className="text-white/70">Ejercicios</p></div>
+                  <div><p className="font-semibold text-emerald-950">{completedMeals}/{mealConfig.length}</p><p className="text-muted-foreground">Comidas</p></div>
+                  <div><p className="font-semibold text-emerald-950">{completedExercises}</p><p className="text-muted-foreground">Ejercicios</p></div>
                 </div>
               </div>
             </div>
@@ -375,25 +377,37 @@ export default function HoyPage() {
             </div>
 
             {/* Hidratación interactiva + Progreso */}
-            <div className="space-y-3 pt-3 border-t border-white/20">
+            <div className="space-y-3 pt-3 border-t border-emerald-100">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
-                  <div className="mb-2 flex items-center justify-between text-xs text-white/70">
-                    <span className="flex items-center gap-1"><Droplets className="h-3 w-3" /> Hidratación</span>
-                    <span>{checkin.water || 0} / {plan?.necesidades.water || 2.5}L</span>
+                  <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Droplets className="h-3 w-3 text-emerald-500" /> Hidratación</span>
+                    <EditableCard
+                      value={Number(checkin.water || 0)}
+                      unit="L"
+                      min={0}
+                      max={10}
+                      onSave={async (num) => {
+                        const value = String(num.toFixed(2))
+                        setCheckin((p) => ({ ...p, water: value }))
+                        await guardarCheckin({ water: value })
+                      }}
+                    >
+                      <span>{checkin.water || 0} / {plan?.necesidades.water || 2.5}L</span>
+                    </EditableCard>
                   </div>
-                  <Progress value={Math.min(100, ((Number(checkin.water || 0) / (plan?.necesidades.water || 2.5)) * 100))} className="bg-white/20 h-2" />
+                  <Progress value={Math.min(100, ((Number(checkin.water || 0) / (plan?.necesidades.water || 2.5)) * 100))} className="bg-emerald-100 h-2 [&_[data-slot=progress-indicator]]:bg-emerald-500" />
                 </div>
                 <div className="flex gap-1">
                   <button onClick={() => setCheckin((p) => ({ ...p, water: String((Number(p.water || 0) - 0.25).toFixed(2)) }))}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-xs font-bold hover:bg-white/30 active:scale-95">−</button>
+                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-xs font-bold text-emerald-700 hover:bg-emerald-100 active:scale-95">−</button>
                   <button onClick={() => setCheckin((p) => ({ ...p, water: String((Number(p.water || 0) + 0.25).toFixed(2)) }))}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-xs font-bold hover:bg-white/30 active:scale-95">+</button>
+                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-xs font-bold text-emerald-700 hover:bg-emerald-100 active:scale-95">+</button>
                 </div>
               </div>
 
-              <div className="mb-1 flex items-center justify-between text-xs text-white/70"><span>Progreso diario</span><span>{dailyProgress}%</span></div>
-              <Progress value={dailyProgress} className="bg-white/20 [&_[data-slot=progress-indicator]]:bg-white" />
+              <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground"><span>Progreso diario</span><span>{dailyProgress}%</span></div>
+              <Progress value={dailyProgress} className="bg-emerald-100 [&_[data-slot=progress-indicator]]:bg-emerald-500" />
             </div>
           </div>
         </div>
@@ -411,7 +425,7 @@ export default function HoyPage() {
         return alerts.length > 0 ? (
           <div className="space-y-2">
             {alerts.map((alert, i) => (
-              <div key={i} className="flex items-center gap-3 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+              <div key={i} className="flex items-center gap-3 rounded-2xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
                 <AlertCircle className="h-4 w-4 flex-shrink-0 text-amber-600" />
                 {alert}
               </div>
@@ -422,15 +436,15 @@ export default function HoyPage() {
 
       <div className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
         <div className="space-y-4">
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
-            <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><Utensils className="h-4 w-4" /> Menú diario interactivo</CardTitle></CardHeader>
+          <Card className="rounded-2xl border-emerald-100 bg-white shadow-sm">
+            <CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-base"><Utensils className="h-4 w-4 text-emerald-600" /> Menú diario interactivo</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {mealConfig.map((mealInfo) => {
                 const meal = plan?.planComidas[mealInfo.key as keyof MealPlan]
                 const track = mealTracking.find((item) => item.mealType === mealInfo.key)
 
                 return (
-                  <div key={mealInfo.key} className="rounded-[1.5rem] border bg-white p-4 shadow-sm">
+                  <div key={mealInfo.key} className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm">
                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                       <button onClick={() => updateMeal(mealInfo.key, !(track?.completed || false), true)} className="flex flex-1 items-start gap-3 text-left">
                         {track?.completed ? <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-500" /> : <Circle className="mt-0.5 h-5 w-5 text-muted-foreground" />}
@@ -446,9 +460,9 @@ export default function HoyPage() {
                       </button>
 
                       <div className="flex flex-wrap gap-2 md:justify-end">
-                        <Button size="sm" variant="outline" onClick={() => updateMeal(mealInfo.key, true, true)}>Hecho</Button>
-                        <Button size="sm" variant="outline" onClick={() => updateMeal(mealInfo.key, false, false)}><SkipForward className="mr-1 h-4 w-4" /> Omitir</Button>
-                        <Button size="sm" variant="outline" onClick={() => openAlternatives(mealInfo.key)}><Sparkles className="mr-1 h-4 w-4" /> Más opciones</Button>
+                        <Button size="sm" variant="outline" className="rounded-xl" onClick={() => updateMeal(mealInfo.key, true, true)}>Hecho</Button>
+                        <Button size="sm" variant="outline" className="rounded-xl" onClick={() => updateMeal(mealInfo.key, false, false)}><SkipForward className="mr-1 h-4 w-4" /> Omitir</Button>
+                        <Button size="sm" variant="outline" className="rounded-xl" onClick={() => openAlternatives(mealInfo.key)}><Sparkles className="mr-1 h-4 w-4" /> Más opciones</Button>
                       </div>
                     </div>
 
@@ -467,7 +481,7 @@ export default function HoyPage() {
                             {prefs.hasAirfryer && (mealInfo.key === "almuerzo" || mealInfo.key === "cena") ? " También puedes adaptarla a Airfryer para reducir tiempo." : ""}
                           </p>
                         </div>
-                        <div className="rounded-2xl bg-muted/50 p-3 text-sm">
+                        <div className="rounded-2xl bg-emerald-50 p-3 text-sm">
                           <p><span className="font-medium">P</span> {meal.proteinas}g</p>
                           <p><span className="font-medium">C</span> {meal.carbohidratos}g</p>
                           <p><span className="font-medium">G</span> {meal.grasas}g</p>
@@ -476,7 +490,7 @@ export default function HoyPage() {
                     )}
 
                     {alternativesFor === mealInfo.key && (
-                      <div className="mt-3 space-y-2 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-3">
+                      <div className="mt-3 space-y-2 rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/60 p-3">
                         <div className="flex items-center justify-between">
                           <p className="text-xs font-semibold uppercase text-muted-foreground">
                             {loadingAlternatives ? "Generando opciones con IA…" : alternativesFromAi ? "Opciones sugeridas por IA" : "Opciones (sin IA disponible ahora)"}
@@ -487,7 +501,7 @@ export default function HoyPage() {
                         {loadingAlternatives && <p className="text-sm text-muted-foreground">Un momento…</p>}
 
                         {!loadingAlternatives && alternatives.map((alt, i) => (
-                          <div key={i} className="rounded-xl border bg-white p-3">
+                          <div key={i} className="rounded-2xl border border-emerald-100 bg-white p-3">
                             <div className="flex items-start justify-between gap-2">
                               <div>
                                 <p className="font-medium text-sm">{alt.nombre}</p>
@@ -504,7 +518,7 @@ export default function HoyPage() {
                                   </div>
                                 )}
                               </div>
-                              <Button size="sm" disabled={replacingMeal} onClick={() => chooseAlternative(mealInfo.key, alt)}>
+                              <Button size="sm" className="rounded-xl" disabled={replacingMeal} onClick={() => chooseAlternative(mealInfo.key, alt)}>
                                 Elegir
                               </Button>
                             </div>
@@ -524,13 +538,13 @@ export default function HoyPage() {
         </div>
 
         <div className="space-y-4">
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+          <Card className="rounded-2xl border-emerald-100 bg-white shadow-sm">
             <CardHeader className="pb-2"><CardTitle className="text-base">Check-in diario</CardTitle></CardHeader>
             <CardContent className="space-y-4">
 
-              {/* Peso — widget táctil */}
-              <div className="rounded-2xl bg-muted/50 p-4">
-                <p className="mb-3 flex items-center gap-1 text-xs font-medium text-muted-foreground"><Scale className="h-3 w-3" /> Peso de hoy</p>
+              {/* Peso — EditableCard con doble click, más widget táctil */}
+              <div className="rounded-2xl bg-emerald-50 p-4">
+                <p className="mb-3 flex items-center gap-1 text-xs font-medium text-muted-foreground"><Scale className="h-3 w-3 text-emerald-600" /> Peso de hoy</p>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex gap-1">
                     <button onClick={() => setCheckin((p) => ({ ...p, weight: String(Math.max(30, Number(p.weight || 70) - 1).toFixed(1)) }))}
@@ -538,10 +552,22 @@ export default function HoyPage() {
                     <button onClick={() => setCheckin((p) => ({ ...p, weight: String(Math.max(30, Number(p.weight || 70) - 0.1).toFixed(1)) }))}
                       className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-sm font-bold shadow-sm active:scale-95">−.1</button>
                   </div>
-                  <input type="number" step="0.1" inputMode="decimal"
-                    value={checkin.weight}
-                    onChange={(e) => setCheckin((p) => ({ ...p, weight: e.target.value }))}
-                    className="w-24 rounded-2xl border-0 bg-white py-2 text-center text-2xl font-bold shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+                  <EditableCard
+                    value={checkin.weight ? Number(checkin.weight) : null}
+                    unit="kg"
+                    min={30}
+                    max={300}
+                    className="w-24"
+                    onSave={async (num) => {
+                      const value = String(num.toFixed(1))
+                      setCheckin((p) => ({ ...p, weight: value }))
+                      await guardarCheckin({ weight: value })
+                    }}
+                  >
+                    <div className="w-24 rounded-2xl border-0 bg-white py-2 text-center text-2xl font-bold shadow-sm">
+                      {checkin.weight || "--"}
+                    </div>
+                  </EditableCard>
                   <div className="flex gap-1">
                     <button onClick={() => setCheckin((p) => ({ ...p, weight: String((Number(p.weight || 70) + 0.1).toFixed(1)) }))}
                       className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-sm font-bold shadow-sm active:scale-95">+.1</button>
@@ -549,37 +575,37 @@ export default function HoyPage() {
                       className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-lg font-bold shadow-sm active:scale-95">+1</button>
                   </div>
                 </div>
-                <p className="mt-2 text-center text-xs text-muted-foreground">kg</p>
+                <p className="mt-2 text-center text-xs text-muted-foreground">kg · doble click para editar directamente</p>
               </div>
 
               {/* Agua + Energía + Ánimo */}
               <div className="grid grid-cols-3 gap-3">
-                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Droplets className="h-3 w-3" /> Agua (L)</Label><Input type="number" step="0.1" inputMode="decimal" value={checkin.water} onChange={(e) => setCheckin((prev) => ({ ...prev, water: e.target.value }))} /></div>
-                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Flame className="h-3 w-3" /> Energía 1-5</Label><Input type="number" min={1} max={5} value={checkin.energy} onChange={(e) => setCheckin((prev) => ({ ...prev, energy: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))} /></div>
-                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Activity className="h-3 w-3" /> Ánimo 1-5</Label><Input type="number" min={1} max={5} value={checkin.mood} onChange={(e) => setCheckin((prev) => ({ ...prev, mood: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))} /></div>
+                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Droplets className="h-3 w-3 text-emerald-600" /> Agua (L)</Label><Input className="rounded-xl" type="number" step="0.1" inputMode="decimal" value={checkin.water} onChange={(e) => setCheckin((prev) => ({ ...prev, water: e.target.value }))} /></div>
+                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Flame className="h-3 w-3 text-emerald-600" /> Energía 1-5</Label><Input className="rounded-xl" type="number" min={1} max={5} value={checkin.energy} onChange={(e) => setCheckin((prev) => ({ ...prev, energy: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))} /></div>
+                <div><Label className="mb-1 flex items-center gap-1 text-xs"><Activity className="h-3 w-3 text-emerald-600" /> Ánimo 1-5</Label><Input className="rounded-xl" type="number" min={1} max={5} value={checkin.mood} onChange={(e) => setCheckin((prev) => ({ ...prev, mood: Math.min(5, Math.max(1, Number(e.target.value) || 1)) }))} /></div>
               </div>
 
-              <Button className="w-full rounded-2xl" onClick={guardarCheckin}>Guardar check-in</Button>
+              <Button className="w-full rounded-2xl bg-emerald-500 hover:bg-emerald-600" onClick={() => guardarCheckin()}>Guardar check-in</Button>
               {saved && <Badge className="bg-emerald-500 text-white">Check-in guardado</Badge>}
             </CardContent>
           </Card>
 
           <WeightProgressChart />
 
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+          <Card className="rounded-2xl border-emerald-100 bg-white shadow-sm">
             <CardHeader className="pb-2"><CardTitle className="text-base">Objetivos del día</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Hidratación</p><p className="mt-1 text-muted-foreground">Meta {plan?.necesidades.water || 2.5}L. Hoy llevas {checkin.water || 0}L.</p></div>
-              <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Proteína</p><p className="mt-1 text-muted-foreground">Objetivo de {plan?.necesidades.protein || 0}g para apoyar {prefs.primaryGoal.toLowerCase()}.</p></div>
-              <div className="rounded-2xl bg-muted/50 p-4"><p className="font-medium">Constancia</p><p className="mt-1 text-muted-foreground">Marca tus comidas y tu entreno aunque estés offline; el módulo de entrenamiento ya conserva progreso local.</p></div>
+              <div className="rounded-2xl bg-emerald-50 p-4"><p className="font-medium">Hidratación</p><p className="mt-1 text-muted-foreground">Meta {plan?.necesidades.water || 2.5}L. Hoy llevas {checkin.water || 0}L.</p></div>
+              <div className="rounded-2xl bg-emerald-50 p-4"><p className="font-medium">Proteína</p><p className="mt-1 text-muted-foreground">Objetivo de {plan?.necesidades.protein || 0}g para apoyar {prefs.primaryGoal.toLowerCase()}.</p></div>
+              <div className="rounded-2xl bg-emerald-50 p-4"><p className="font-medium">Constancia</p><p className="mt-1 text-muted-foreground">Marca tus comidas y tu entreno aunque estés offline; el módulo de entrenamiento ya conserva progreso local.</p></div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+          <Card className="rounded-2xl border-emerald-100 bg-white shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center justify-between">
                 Últimos 7 días
-                <button onClick={() => setDarkMode(!darkMode)} className="text-xs px-2 py-1 rounded-lg bg-muted hover:bg-muted/80">
+                <button onClick={() => setDarkMode(!darkMode)} className="text-xs px-2 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100">
                   {darkMode ? "🌙" : "☀️"}
                 </button>
               </CardTitle>
@@ -597,7 +623,7 @@ export default function HoyPage() {
                     const height = day.weight ? ((day.weight - minWeight) / range * 100) : 0
                     return (
                       <div key={i} className="flex-1 flex flex-col items-center">
-                        <div className="w-full bg-emerald-200 rounded-t" style={{ height: `${Math.max(height, 20)}%` }} title={day.weight?.toFixed(1)} />
+                        <div className="w-full bg-emerald-300 rounded-t" style={{ height: `${Math.max(height, 20)}%` }} title={day.weight?.toFixed(1)} />
                         <p className="text-[10px] text-muted-foreground mt-1">{day.date.split('-')[2]}</p>
                       </div>
                     )
@@ -634,7 +660,7 @@ export default function HoyPage() {
           </Card>
 
           {/* Plan 4 semanas — acceso rápido */}
-          <Card className="rounded-[1.75rem] shadow-sm border-emerald-200 bg-[linear-gradient(135deg,_rgba(4,47,31,0.03),_rgba(16,185,129,0.06))]">
+          <Card className="rounded-2xl shadow-sm border-emerald-200 bg-emerald-50">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Dumbbell className="h-4 w-4 text-emerald-600" /> Plan 4 semanas
@@ -661,7 +687,7 @@ export default function HoyPage() {
               ) : (
                 <p className="text-muted-foreground">Aún no has iniciado el plan. 4 semanas de progresión sin equipo.</p>
               )}
-              <a href="/entrenamiento" className="block w-full rounded-xl bg-emerald-50 px-3 py-2 text-center text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
+              <a href="/entrenamiento" className="block w-full rounded-2xl bg-white px-3 py-2 text-center text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
                 Ir a Entrenamiento →
               </a>
             </CardContent>
@@ -672,7 +698,7 @@ export default function HoyPage() {
       {/* Botón flotante para marcar comida rápido */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-2 items-end">
         {showQuickMeal && (
-          <div className="bg-white rounded-2xl shadow-lg p-4 mb-2 max-w-xs">
+          <div className="bg-white rounded-2xl border border-emerald-100 shadow-lg p-4 mb-2 max-w-xs">
             <p className="text-sm font-semibold mb-3">Marcar comida como hecha</p>
             <div className="grid grid-cols-2 gap-2">
               {mealConfig.map((mealInfo) => {
@@ -685,7 +711,7 @@ export default function HoyPage() {
                     onClick={() => {
                       updateMeal(mealInfo.key, !track?.completed, true)
                     }}
-                    className="text-xs"
+                    className="rounded-xl text-xs"
                   >
                     {mealInfo.label} {track?.completed && "✓"}
                   </Button>

@@ -20,6 +20,17 @@ interface Reminder {
   lastError?: string | null
 }
 
+interface NotificationLogItem {
+  id: string
+  channel: string
+  title: string
+  body: string
+  status: string
+  error?: string | null
+  seenAt?: string | null
+  createdAt: string
+}
+
 function base64ToUint8Array(base64: string) {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4)
   const normalized = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/")
@@ -34,6 +45,7 @@ export default function RecordatoriosPage() {
   const [showForm, setShowForm] = useState(false)
   const [pushEnabled, setPushEnabled] = useState(false)
   const [pushLoading, setPushLoading] = useState(false)
+  const [history, setHistory] = useState<NotificationLogItem[]>([])
   const [newReminder, setNewReminder] = useState({ title: "", time: "09:00", days: ["1", "2", "3", "4", "5"] })
 
   const daysMap: Record<string, string> = {
@@ -48,9 +60,17 @@ export default function RecordatoriosPage() {
     }
   }
 
+  const fetchHistory = async () => {
+    const res = await fetch("/api/user/notifications?limit=10")
+    if (res.ok) {
+      const data = await res.json()
+      setHistory(data.notifications || [])
+    }
+  }
+
   useEffect(() => {
     const load = async () => {
-      await fetchReminders()
+      await Promise.all([fetchReminders(), fetchHistory()])
 
       if ("serviceWorker" in navigator) {
         const reg = await navigator.serviceWorker.getRegistration()
@@ -225,7 +245,7 @@ export default function RecordatoriosPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-4 p-4 md:p-6">
-      <section className="rounded-[2rem] bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
+      <section className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-emerald-900 shadow-sm">
         <div className="flex items-end justify-between">
           <div>
             <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium">Avisos automáticos</div>
@@ -371,6 +391,41 @@ export default function RecordatoriosPage() {
           ))}
         </div>
       )}
+
+      <Card className="rounded-[1.75rem] border-white/70 bg-white/85 shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Historial de notificaciones</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {history.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aún no hay notificaciones</p>
+          ) : (
+            <div className="space-y-2">
+              {history.map((item) => {
+                const date = new Date(item.createdAt)
+                return (
+                  <div key={item.id} className="flex items-start justify-between gap-3 rounded-xl border border-border/60 p-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-sm">{item.title}</p>
+                        <Badge variant="outline" className="text-[10px]">{item.channel === "WHATSAPP" ? "WhatsApp" : "Push"}</Badge>
+                        {item.status === "FAILED" && <Badge variant="destructive" className="text-[10px]">Fallo</Badge>}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{item.body}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {date.toLocaleDateString("es-ES")} · {date.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </div>
+                    <Badge variant={item.seenAt ? "secondary" : "default"} className="flex-shrink-0 text-[10px]">
+                      {item.seenAt ? "Visto" : "No visto"}
+                    </Badge>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -243,7 +243,7 @@ export default function NutricionPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-4 p-4 md:p-6">
-      <section className="rounded-[2rem] bg-[linear-gradient(135deg,_rgba(14,26,19,0.92),_rgba(80,200,120,0.72))] p-5 text-white shadow-sm">
+      <section className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-emerald-900 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-xs font-medium">

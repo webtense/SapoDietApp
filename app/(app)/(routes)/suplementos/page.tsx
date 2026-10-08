@@ -66,7 +66,7 @@ export default function SuplementosPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-4 p-4 md:p-6">
-      <section className="rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,_rgba(139,92,246,0.15),_rgba(255,255,255,0.95))] p-5 shadow-sm">
+      <section className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-emerald-900 shadow-sm">
         <div className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-purple-700">Suplementación</div>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">Suplementos</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
@@ -82,7 +82,7 @@ export default function SuplementosPage() {
             <button
               key={brand.id}
               onClick={() => selectBrand(brand.id)}
-              className={`relative rounded-[1.5rem] border-2 p-4 text-left transition-all ${
+              className={`relative rounded-2xl border-2 p-4 text-left transition-all ${
                 active
                   ? `${BRAND_COLORS[brand.color]} border-current shadow-md`
                   : "border-transparent bg-white/80 shadow-sm hover:shadow-md"
@@ -104,7 +104,7 @@ export default function SuplementosPage() {
       {activeBrand && (
         <>
           {/* Protocolo diario */}
-          <Card className="rounded-[1.75rem] border-white/70 bg-white/90 shadow-sm">
+          <Card className="rounded-2xl border-white/70 bg-white/90 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Pill className="h-4 w-4 text-purple-600" />

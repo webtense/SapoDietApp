@@ -17,7 +17,7 @@ import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { getSpanishName } from "@/lib/machine-translations"
 import { getYoutubeThumbnail, isValidYoutubeUrl } from "@/lib/youtube"
-import { Video } from "lucide-react"
+import { Video, Search } from "lucide-react"
 
 interface GlobalMax {
   weight: number
@@ -119,11 +119,16 @@ export default function MachinesPage() {
       })
 
       if (res.ok) {
+        const videoChanged = formMode === "edit" && payload.videoUrl
         setFormMode(null)
         setAssignGym(false)
         resetForm()
         loadData()
-        toast.success(formMode === "create" ? "Máquina creada" : "Máquina guardada")
+        if (videoChanged) {
+          toast.success("Vídeo guardado")
+        } else {
+          toast.success(formMode === "create" ? "Máquina creada" : "Máquina guardada")
+        }
       } else {
         const data = await res.json().catch(() => null)
         toast.error(data?.error || "Error al guardar la máquina")
@@ -282,14 +287,40 @@ export default function MachinesPage() {
 
           <div>
             <Label htmlFor="videoUrl">Vídeo de demostración (YouTube)</Label>
-            <Input
-              id="videoUrl"
-              value={formData.videoUrl}
-              onChange={(e) =>
-                setFormData({ ...formData, videoUrl: e.target.value })
-              }
-              placeholder="https://youtu.be/..."
-            />
+            <div className="flex gap-2">
+              <Input
+                id="videoUrl"
+                value={formData.videoUrl}
+                onChange={(e) =>
+                  setFormData({ ...formData, videoUrl: e.target.value })
+                }
+                placeholder="https://youtu.be/..."
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5"
+                onClick={() => {
+                  if (!formData.name) {
+                    toast.error("Primero escribe el nombre de la máquina")
+                    return
+                  }
+                  const query = `${formData.name} form OR technique OR demo`
+                  window.open(
+                    `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`,
+                    "_blank",
+                    "noopener,noreferrer"
+                  )
+                }}
+              >
+                <Search className="h-3.5 w-3.5" />
+                Buscar en YouTube
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Se abre la búsqueda de YouTube en una pestaña nueva. Copia la URL del vídeo elegido y pégala aquí.
+            </p>
             {formData.videoUrl && !isValidYoutubeUrl(formData.videoUrl) && (
               <p className="mt-1 text-xs text-destructive">
                 Esa URL no parece un enlace válido de YouTube

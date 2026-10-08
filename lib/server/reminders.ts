@@ -189,6 +189,36 @@ export async function dispatchReminder(reminder: {
     },
   })
 
+  await prisma.notificationLog
+    .create({
+      data: {
+        userId: reminder.user.id,
+        reminderId: reminder.id,
+        channel: "PUSH",
+        title: copy.title,
+        body: copy.body,
+        status: failedPush ? "FAILED" : "SENT",
+        error: failedPush ? (pushResult.ok ? "NO_SUBSCRIPTIONS" : pushResult.error) : null,
+      },
+    })
+    .catch(() => null)
+
+  if (whatsappResult) {
+    await prisma.notificationLog
+      .create({
+        data: {
+          userId: reminder.user.id,
+          reminderId: reminder.id,
+          channel: "WHATSAPP",
+          title: copy.title,
+          body: copy.body,
+          status: failedWhatsapp ? "FAILED" : "SENT",
+          error: failedWhatsapp ? whatsappResult.error || whatsappResult.status || "failed" : null,
+        },
+      })
+      .catch(() => null)
+  }
+
   return {
     skipped: false as const,
     push: pushResult,
