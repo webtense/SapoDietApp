@@ -68,6 +68,86 @@ export async function getWeightMovingAverage(userId: string, days: number) {
   return result
 }
 
+export interface ExerciseHistoryResult {
+  dates: string[]
+  maxWeight: (number | null)[]
+  weeklyVolume: number[]
+  estimatedOneRM: (number | null)[]
+  sufficientData: boolean
+}
+
+/**
+ * Histórico de una máquina (vía exerciseId) para gráficas de evolución:
+ * peso máximo por día, volumen acumulado por semana y 1RM estimado por día.
+ */
+export async function getExerciseHistory(
+  userId: string,
+  exerciseId: string,
+  days: 30 | 90 | 365,
+): Promise<ExerciseHistoryResult> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+
+  const sets = await prisma.workoutSet.findMany({
+    where: {
+      completed: true,
+      createdAt: { gte: since },
+      workoutExercise: { exerciseId },
+      workoutSession: { userId },
+    },
+    select: { weight: true, reps: true, createdAt: true },
+    orderBy: { createdAt: "asc" },
+  })
+
+  if (sets.length < 3) {
+    return { dates: [], maxWeight: [], weeklyVolume: [], estimatedOneRM: [], sufficientData: false }
+  }
+
+  // Agrupar por día (peso máximo, 1RM) y por semana (volumen acumulado)
+  const byDay = new Map<string, { maxWeight: number; best1RM: number }>()
+  const byWeek = new Map<string, number>()
+
+  function dayKey(d: Date) {
+    return d.toISOString().slice(0, 10)
+  }
+
+  function weekKey(d: Date) {
+    const date = new Date(d)
+    const day = (date.getUTCDay() + 6) % 7 // lunes=0
+    date.setUTCDate(date.getUTCDate() - day)
+    return date.toISOString().slice(0, 10)
+  }
+
+  for (const set of sets) {
+    if (set.weight == null || set.reps == null) continue
+
+    const dKey = dayKey(set.createdAt)
+    const existing = byDay.get(dKey)
+    const oneRm = epley1RM(set.weight, set.reps)
+    if (!existing) {
+      byDay.set(dKey, { maxWeight: set.weight, best1RM: oneRm })
+    } else {
+      byDay.set(dKey, {
+        maxWeight: Math.max(existing.maxWeight, set.weight),
+        best1RM: Math.max(existing.best1RM, oneRm),
+      })
+    }
+
+    const wKey = weekKey(set.createdAt)
+    const volume = set.weight * set.reps
+    byWeek.set(wKey, (byWeek.get(wKey) ?? 0) + volume)
+  }
+
+  const sortedDays = Array.from(byDay.keys()).sort()
+  const dates = sortedDays
+  const maxWeight = sortedDays.map((d) => byDay.get(d)!.maxWeight)
+  const estimatedOneRM = sortedDays.map((d) => Number(byDay.get(d)!.best1RM.toFixed(1)))
+
+  const sortedWeeks = Array.from(byWeek.keys()).sort()
+  const weeklyVolume = sortedWeeks.map((w) => Number(byWeek.get(w)!.toFixed(0)))
+
+  return { dates, maxWeight, weeklyVolume, estimatedOneRM, sufficientData: true }
+}
+
 export interface ExerciseProgressionSetPoint {
   setNumber: number
   weight: number | null

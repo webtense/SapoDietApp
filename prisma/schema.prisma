@@ -86,6 +86,7 @@ model User {
   subscriptionStatus String      @default("FREE")
   stripeCustomerId   String?     @unique
   stripeSubscriptionId String?   @unique
+  machineOrder       Json?
   workoutPlans       WorkoutPlan[] @relation("WorkoutPlan")
   workoutSessions    WorkoutSession[] @relation("WorkoutSession")
   weightEntries      WeightEntry[] @relation("WeightEntry")

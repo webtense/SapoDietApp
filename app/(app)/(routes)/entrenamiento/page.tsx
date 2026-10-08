@@ -9,11 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { CloudOff, Info, Pencil, Trophy } from "lucide-react"
+import { ChartNoAxesCombined, CloudOff, GripVertical, Info, Pencil, Trophy } from "lucide-react"
 import Link from "next/link"
 import { enqueuePendingSet, flushPendingSets, getPendingSets } from "@/lib/offline-sets-queue"
 import { getSpanishName } from "@/lib/machine-translations"
 import ExerciseAliasEditor from "@/components/ExerciseAliasEditor"
+import { MachineEvolutionChart } from "@/components/MachineCardWithChart"
 
 type Group = "UPPER" | "LOWER"
 
@@ -110,6 +111,11 @@ export default function EntrenamientoPage() {
   const [newMachineGroup, setNewMachineGroup] = useState<Group>("UPPER")
   const [addingMachine, setAddingMachine] = useState(false)
 
+  const [orderedIds, setOrderedIds] = useState<string[]>([])
+  const [savingOrder, setSavingOrder] = useState(false)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [openCharts, setOpenCharts] = useState<Record<string, boolean>>({})
+
   const loadCurrent = useCallback(async () => {
     setLoading(true)
     try {
@@ -118,6 +124,7 @@ export default function EntrenamientoPage() {
       if (!res.ok) throw new Error(data.error || "No se pudo cargar el entrenamiento")
       const payload = data as CurrentWorkoutResponse
       setCurrent(payload)
+      setOrderedIds(payload.exercises.map((we) => we.id))
 
       const pending = getPendingSets()
       const nextDrafts: Record<string, SetDraft[]> = {}
@@ -286,6 +293,54 @@ export default function EntrenamientoPage() {
     }
   }
 
+  async function persistOrder(ids: string[]) {
+    setSavingOrder(true)
+    try {
+      const res = await fetch("/api/user/preferences/machine-order", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ machineIds: ids }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo guardar el orden")
+      toast.success("Orden guardado")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error guardando el orden")
+    } finally {
+      setSavingOrder(false)
+    }
+  }
+
+  function moveMachine(id: string, direction: -1 | 1) {
+    setOrderedIds((prev) => {
+      const idx = prev.indexOf(id)
+      const targetIdx = idx + direction
+      if (idx === -1 || targetIdx < 0 || targetIdx >= prev.length) return prev
+      const next = [...prev]
+      ;[next[idx], next[targetIdx]] = [next[targetIdx], next[idx]]
+      persistOrder(next)
+      return next
+    })
+  }
+
+  function handleDrop(targetId: string) {
+    if (!dragId || dragId === targetId) {
+      setDragId(null)
+      return
+    }
+    setOrderedIds((prev) => {
+      const next = [...prev]
+      const fromIdx = next.indexOf(dragId)
+      const toIdx = next.indexOf(targetId)
+      if (fromIdx === -1 || toIdx === -1) return prev
+      next.splice(fromIdx, 1)
+      next.splice(toIdx, 0, dragId)
+      persistOrder(next)
+      return next
+    })
+    setDragId(null)
+  }
+
   async function handleEndSession() {
     if (!current) return
     setEnding(true)
@@ -306,7 +361,12 @@ export default function EntrenamientoPage() {
     }
   }
 
-  const exercises = current?.exercises ?? []
+  const baseExercises = current?.exercises ?? []
+  const exercises = orderedIds.length
+    ? orderedIds
+        .map((id) => baseExercises.find((we) => we.id === id))
+        .filter((we): we is WorkoutExerciseItem => !!we)
+    : baseExercises
   const savedCount = Object.values(savedSets).filter(Boolean).length
 
   const progressionChartData = progression.map((s) => ({
@@ -437,7 +497,7 @@ export default function EntrenamientoPage() {
           )}
 
           <div className="space-y-3">
-            {exercises.map((we) => {
+            {exercises.map((we, index) => {
               const model = we.gymMachine?.machineModel
               const baseName = getSpanishName(model?.name ?? we.exercise.name)
               const alias = we.gymMachine?.userAlias
@@ -451,9 +511,44 @@ export default function EntrenamientoPage() {
                   : null
 
               return (
-                <Card key={we.id}>
+                <Card
+                  key={we.id}
+                  draggable
+                  onDragStart={() => setDragId(we.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleDrop(we.id)}
+                  className={cn(dragId === we.id && "opacity-50")}
+                >
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between text-base">
+                      <span className="flex items-center gap-1">
+                        <span
+                          className="flex cursor-grab touch-none flex-col text-muted-foreground"
+                          aria-label="Arrastrar para reordenar"
+                        >
+                          <GripVertical className="h-4 w-4" />
+                        </span>
+                        <span className="flex flex-col">
+                          <button
+                            type="button"
+                            disabled={index === 0 || savingOrder}
+                            onClick={() => moveMachine(we.id, -1)}
+                            className="text-[10px] leading-none text-muted-foreground disabled:opacity-30"
+                            aria-label="Mover arriba"
+                          >
+                            ▲
+                          </button>
+                          <button
+                            type="button"
+                            disabled={index === exercises.length - 1 || savingOrder}
+                            onClick={() => moveMachine(we.id, 1)}
+                            className="text-[10px] leading-none text-muted-foreground disabled:opacity-30"
+                            aria-label="Mover abajo"
+                          >
+                            ▼
+                          </button>
+                        </span>
+                      </span>
                       {we.gymMachine ? (
                         <ExerciseAliasEditor
                           gymMachineId={we.gymMachine.id}
@@ -468,6 +563,14 @@ export default function EntrenamientoPage() {
                       <span className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
                         {we.plannedSets}x{we.plannedReps}
                         {model?.recommendedWeight ? ` · ${model.recommendedWeight}kg` : ""}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          aria-label="Ver evolución"
+                          onClick={() => setOpenCharts((prev) => ({ ...prev, [we.id]: !prev[we.id] }))}
+                        >
+                          <ChartNoAxesCombined className="h-4 w-4" />
+                        </Button>
                         {model && (model.description || model.instructions || model.tips) && (
                           <Button
                             size="sm"
@@ -504,6 +607,7 @@ export default function EntrenamientoPage() {
                     )}
                   </CardHeader>
                   <CardContent className="space-y-2">
+                    {openCharts[we.id] && <MachineEvolutionChart exerciseId={we.exercise.id} />}
                     {(drafts[we.id] ?? []).map((draft, idx) => {
                       const key = `${we.id}-${idx}`
                       const isSaved = savedSets[key]
