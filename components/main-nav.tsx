@@ -23,6 +23,14 @@ const navItems = [
   { href: "/admin", icon: Settings, label: "Admin", adminOnly: true },
 ]
 
+const adminItems = [
+  { href: "/admin", icon: Settings, label: "Dashboard" },
+  { href: "/admin/machines", icon: Dumbbell, label: "Máquinas" },
+  { href: "/admin/audit", icon: MessageSquare, label: "Auditoría" },
+  { href: "/admin/status", icon: Settings, label: "Estado" },
+  { href: "/admin/version", icon: Settings, label: "Versión" },
+]
+
 const mobileNavItems = [
   { href: "/hoy", icon: ShoppingCart, label: "Hoy" },
   { href: "/inicio", icon: Home, label: "Inicio" },
@@ -76,6 +84,33 @@ export function MainNav({ userRole }: MainNavProps) {
               </Link>
             )
           })}
+
+          {/* Admin submenu (solo para admins) */}
+          {isAdmin && (
+            <div className="mt-4 space-y-1 border-t border-emerald-100 pt-4">
+              <p className="px-3 text-xs font-semibold uppercase text-muted-foreground">Admin</p>
+              {adminItems.map((item) => {
+                const Icon = item.icon
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-xs font-medium transition-colors ml-2",
+                      isActive
+                        ? "bg-orange-500 text-white shadow-sm"
+                        : "text-muted-foreground hover:bg-orange-50 hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         <div className="mt-auto rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm">
