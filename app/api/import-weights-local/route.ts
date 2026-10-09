@@ -17,12 +17,16 @@ export async function POST(req: NextRequest) {
     // Obtener el usuario
     let targetUser = null
     if (userId) {
-      targetUser = await prisma.user.findUnique({ where: { id: userId } })
+      targetUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, role: true }
+      })
     } else {
       // Si no se especifica, usar el primer usuario (admin)
       targetUser = await prisma.user.findFirst({
         where: { role: 'ADMIN' },
         orderBy: { createdAt: 'asc' },
+        select: { id: true, email: true, role: true }
       })
     }
 
