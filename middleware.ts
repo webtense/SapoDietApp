@@ -15,6 +15,7 @@ const PUBLIC_API_PATHS = [
   "/api/newsletter/confirm",
   "/api/newsletter/unsubscribe",
   "/api/import/", // Atajos de iOS: el handler valida su propio token Bearer
+  "/api/import-weights-local", // Temporal: importar pesos (valida token en el handler)
 ]
 
 export function middleware(req: NextRequest) {
