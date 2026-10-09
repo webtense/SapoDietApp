@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/server/prisma'
-import fs from 'fs'
-import path from 'path'
 
 // ⚠️ TEMPORAL: Endpoint para importar pesos localmente (sin auth)
 // Eliminar después de usar
 export async function POST(req: NextRequest) {
   try {
     const token = req.nextUrl.searchParams.get('token')
-    if (token !== process.env.ADMIN_SECRET_TOKEN) {
+    // Token hardcoded para este import único
+    if (token !== 'sapofit-import-2026') {
       return NextResponse.json({ error: 'Invalid token' }, { status: 403 })
     }
 
