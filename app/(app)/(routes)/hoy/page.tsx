@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Activity, CheckCircle2, Circle, Dumbbell, Droplets, Flame, Scale, SkipForward, Sparkles, Utensils, AlertCircle, ChevronUp } from "lucide-react"
+import { Activity, CheckCircle2, Circle, Dumbbell, Droplets, Flame, Scale, SkipForward, Sparkles, Utensils, AlertCircle, ChevronUp, Zap, TrendingUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -77,9 +77,20 @@ export default function HoyPage() {
   const [showQuickMeal, setShowQuickMeal] = useState(false)
   const [darkMode, setDarkMode] = useState(false)
   const [last7Days, setLast7Days] = useState<Array<{ date: string; weight?: number; energy?: number; mood?: number }>>([])
+  const [gymStats, setGymStats] = useState<{ totalSessions: number; streak: number; avgPerWeek: number; avgDuration: number; intensity: { last7: number; last14: number; last30: number } } | null>(null)
 
   useEffect(() => {
-    // Generar datos simulados para últimos 7 días (en producción vendría de API)
+    // Cargar estadísticas de gimnasio
+    const loadGymStats = async () => {
+      const res = await fetch("/api/user/gym-attendance/stats")
+      if (res.ok) {
+        const data = await res.json()
+        setGymStats(data)
+      }
+    }
+    loadGymStats()
+
+    // Generar datos simulados para últimos 7 días
     const days = []
     for (let i = 6; i >= 0; i--) {
       const date = new Date()
@@ -692,6 +703,40 @@ export default function HoyPage() {
               </a>
             </CardContent>
           </Card>
+
+          {/* Asistencias al gimnasio */}
+          {gymStats && (
+            <Card className="rounded-2xl shadow-sm border-emerald-200 bg-emerald-50">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Zap className="h-4 w-4 text-emerald-600" /> Tu racha de entreno
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs text-muted-foreground">🔥 Racha</p>
+                    <p className="mt-1 text-lg font-bold text-emerald-600">{gymStats.streak}</p>
+                    <p className="text-xs text-muted-foreground">días seguidos</p>
+                  </div>
+                  <div className="rounded-xl bg-white p-3">
+                    <p className="text-xs text-muted-foreground">💪 Total</p>
+                    <p className="mt-1 text-lg font-bold text-emerald-600">{gymStats.totalSessions}</p>
+                    <p className="text-xs text-muted-foreground">sesiones</p>
+                  </div>
+                </div>
+                <div className="rounded-xl bg-white p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Últimos 30 días</span>
+                    <Badge className="bg-emerald-500 text-white">{gymStats.intensity.last30} sesiones</Badge>
+                  </div>
+                </div>
+                <a href="/asistencias" className="block w-full rounded-xl bg-white px-3 py-2 text-center text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors">
+                  Ver historial completo →
+                </a>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 

@@ -98,6 +98,7 @@ model User {
   nutritionistPlan   NutritionistPlan? @relation("NutritionistPlan")
   pantryItems        PantryItem[] @relation("PantryItem")
   eatingOutLogs      EatingOutLog[] @relation("EatingOutLog")
+  gymAttendances     GymAttendance[] @relation("GymAttendance")
   gymsCreated        Gym[] @relation("GymCreatedBy")
   workoutSchedules   WorkoutSchedule[] @relation("WorkoutSchedule")
   auditLogs          AdminAuditLog[]
@@ -1029,4 +1030,21 @@ model WorkoutSchedule {
 
   @@unique([userId, weekday])
   @@index([userId])
+}
+
+model GymAttendance {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime // fecha del check-in
+  startTime DateTime // hora inicio
+  endTime   DateTime // hora fin
+  durationMin Int    // duración en minutos
+  gym       String   // nombre del gimnasio
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation("GymAttendance", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([userId, createdAt])
 }
