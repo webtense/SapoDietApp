@@ -8,7 +8,7 @@ import { APP_VERSION } from "@/lib/version"
 
 const navItems = [
   { href: "/hoy", icon: ShoppingCart, label: "Hoy" },
-  { href: "/inicio", icon: Home, label: "Inicio" },
+  { href: "/hoy", icon: Home, label: "Inicio" },
   { href: "/nutricion", icon: Activity, label: "Nutrición" },
   { href: "/entrenamiento", icon: ListTodo, label: "Entreno" },
   { href: "/calendario-entreno", icon: CalendarClock, label: "Calendario Entreno" },
@@ -33,7 +33,7 @@ const adminItems = [
 
 const mobileNavItems = [
   { href: "/hoy", icon: ShoppingCart, label: "Hoy" },
-  { href: "/inicio", icon: Home, label: "Inicio" },
+  { href: "/hoy", icon: Home, label: "Inicio" },
   { href: "/nutricion", icon: Activity, label: "Nutrición" },
   { href: "/entrenamiento", icon: ListTodo, label: "Entreno" },
   { href: "/compra", icon: ShoppingCart, label: "Compra" },
@@ -50,7 +50,7 @@ export function MainNav({ userRole }: MainNavProps) {
   return (
     <>
       <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-white/60 bg-white/75 p-4 backdrop-blur md:flex md:flex-col">
-        <Link href="/inicio" className="rounded-3xl border border-emerald-100 bg-[linear-gradient(135deg,_rgba(80,200,120,0.16),_rgba(10,20,14,0.02))] p-4 shadow-sm">
+        <Link href="/hoy" className="rounded-3xl border border-emerald-100 bg-[linear-gradient(135deg,_rgba(80,200,120,0.16),_rgba(10,20,14,0.02))] p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-sm">
               <Flame className="h-5 w-5" />

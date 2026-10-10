@@ -27,7 +27,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <p className="text-xs text-muted-foreground">Admin · usuarios, IA y operación</p>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/inicio" className="rounded-full border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+            <Link href="/hoy" className="rounded-full border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
               Volver a la app
             </Link>
             <Link href="/perfil" className="rounded-full border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
