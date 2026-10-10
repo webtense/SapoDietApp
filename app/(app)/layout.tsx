@@ -11,10 +11,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/login")
   }
 
-  if (user.role === "ADMIN") {
-    redirect("/admin")
-  }
-
   const userRole = user.role
   const profile = await prisma.profile.findUnique({
     where: { userId: user.id },

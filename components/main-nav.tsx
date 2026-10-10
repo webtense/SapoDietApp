@@ -7,8 +7,7 @@ import { cn } from "@/lib/utils"
 import { APP_VERSION } from "@/lib/version"
 
 const navItems = [
-  { href: "/hoy", icon: ShoppingCart, label: "Hoy" },
-  { href: "/hoy", icon: Home, label: "Inicio" },
+  { href: "/hoy", icon: Home, label: "Hoy" },
   { href: "/nutricion", icon: Activity, label: "Nutrición" },
   { href: "/entrenamiento", icon: ListTodo, label: "Entreno" },
   { href: "/calendario-entreno", icon: CalendarClock, label: "Calendario Entreno" },
@@ -32,8 +31,7 @@ const adminItems = [
 ]
 
 const mobileNavItems = [
-  { href: "/hoy", icon: ShoppingCart, label: "Hoy" },
-  { href: "/hoy", icon: Home, label: "Inicio" },
+  { href: "/hoy", icon: Home, label: "Hoy" },
   { href: "/nutricion", icon: Activity, label: "Nutrición" },
   { href: "/entrenamiento", icon: ListTodo, label: "Entreno" },
   { href: "/compra", icon: ShoppingCart, label: "Compra" },

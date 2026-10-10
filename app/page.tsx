@@ -8,5 +8,5 @@ export default async function RootPage() {
     redirect("/landing")
   }
 
-  redirect(user.role === "ADMIN" ? "/admin" : "/hoy")
+  redirect("/hoy")
 }
