@@ -7,8 +7,8 @@ export async function GET() {
   if (error || !user) return error
 
   const [totalUsers, activeUsers, pendingInvitations, loginsToday] = await Promise.all([
-    prisma.user.count({ where: { role: "USER" } }),
-    prisma.user.count({ where: { role: "USER", status: "ACTIVE" } }),
+    prisma.user.count(),
+    prisma.user.count({ where: { status: "ACTIVE" } }),
     prisma.invitation.count({ where: { status: "PENDING" } }),
     prisma.loginEvent.count({ where: { createdAt: { gte: startOfToday() } } }),
   ])
