@@ -8,5 +8,5 @@ export default async function RootPage() {
     redirect("/landing")
   }
 
-  redirect("/hoy")
-}// Force cache update 1791635084
+  redirect(user.role === "ADMIN" ? "/admin" : "/hoy")
+}
