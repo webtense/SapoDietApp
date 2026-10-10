@@ -31,6 +31,7 @@ import EditableCard from "@/components/EditableCard"
 import WeightProgressChart from "@/components/WeightProgressChart"
 import UserWeightChart from "@/components/UserWeightChart"
 import ConnectWatchCard from "@/components/ConnectWatchCard"
+import { BodyMeasurementDiagram } from "@/components/BodyMeasurementDiagram"
 import { defaultV3Preferences, parseV3Preferences, V3_PREFERENCES_KEY, type V3Preferences } from "@/lib/v3-preferences"
 import { SUPPLEMENT_BRANDS, SUPPLEMENTS_KEY } from "@/lib/supplements"
 import { PaywallDialog } from "@/components/paywall-dialog"
@@ -606,6 +607,16 @@ export default function PerfilPage() {
                               Última actualización: {new Date(lastMeasurement.date).toLocaleDateString("es-ES")}
                             </p>
                           )}
+                        </CardContent>
+                      </Card>
+
+                      <Card className="rounded-2xl border-slate-100">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="flex items-center gap-2 text-sm"><Sparkles className="h-4 w-4" /> Calcular Grasa Corporal</CardTitle>
+                          <CardDescription>Ingresa tus medidas para calcular tu porcentaje de grasa corporal.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <BodyMeasurementDiagram />
                         </CardContent>
                       </Card>
 

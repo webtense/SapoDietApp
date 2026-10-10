@@ -8,5 +8,5 @@ export default async function RootPage() {
     redirect("/landing")
   }
 
-  redirect("/inicio")
+  redirect("/hoy")
 }
