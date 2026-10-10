@@ -9,4 +9,4 @@ export default async function RootPage() {
   }
 
   redirect("/hoy")
-}
+}// Force cache update 1791635084
