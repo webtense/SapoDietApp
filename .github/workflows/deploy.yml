@@ -28,16 +28,7 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
-      - name: Sync sources to VPS
-        run: |
-          rsync -az --delete \
-            --exclude node_modules --exclude .next --exclude .git \
-            --exclude '.env*' --exclude backups --exclude docker-compose.yml \
-            --exclude easypanel.json --exclude backup.sh \
-            -e "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes" \
-            ./ root@${{ secrets.VPS_HOST }}:/opt/sapofit/
-
-      - name: Build image and update service
+      - name: Build image on runner
         env:
           SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
@@ -45,15 +36,23 @@ jobs:
           BUILD_ID="${VERSION}-${SHA::7}"
           TAG="sapofit:v${BUILD_ID}"
           BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes root@${{ secrets.VPS_HOST }} bash -s <<EOS
-            set -euo pipefail
-            cd /opt/sapofit
-            docker build -t "$TAG" --build-arg NEXT_PUBLIC_BUILD_ID="$BUILD_ID" --build-arg BUILD_TIME="$BUILD_TIME" .
-            docker service update --force --image "$TAG" sapofit
-            docker image prune -f --filter "until=168h" >/dev/null || true
-          EOS
+          docker build -t "$TAG" \
+            --build-arg NEXT_PUBLIC_BUILD_ID="$BUILD_ID" \
+            --build-arg BUILD_TIME="$BUILD_TIME" .
           echo "TAG=$TAG" >> "$GITHUB_ENV"
           echo "BUILD_ID=$BUILD_ID" >> "$GITHUB_ENV"
+
+      - name: Ship image and restart app
+        run: |
+          SSH="ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes root@${{ secrets.VPS_HOST }}"
+          docker save "$TAG" | gzip | $SSH 'gunzip | docker load'
+          $SSH bash -s <<EOS
+            set -euo pipefail
+            cd /opt/sapofit-ops
+            sed -i "s/^SAPOFIT_TAG=.*/SAPOFIT_TAG=${TAG#sapofit:}/" prod.env
+            docker compose -p sapofit --env-file prod.env -f docker-compose.prod.yml up -d --no-deps sapofit
+            docker image prune -f --filter "until=168h" >/dev/null || true
+          EOS
 
       - name: Verify deployment
         run: |
